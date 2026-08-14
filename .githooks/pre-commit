@@ -1,0 +1,51 @@
+#!/bin/sh
+# กันข้อมูลจริงหลุดขึ้น GitHub — ด่านสุดท้ายก่อน commit
+# ติดตั้ง: git config core.hooksPath .githooks
+
+staged=$(git diff --cached --name-only)
+
+# 1) ห้ามมีอะไรจาก private/ ถูก stage
+if echo "$staged" | grep -q '^private/'; then
+  echo ""
+  echo "  [หยุด] มีไฟล์ใน private/ ถูก stage ไว้"
+  echo "         โฟลเดอร์นี้มีราคาต้นทุนและเบอร์โทรจริง ห้ามขึ้น GitHub"
+  echo "         แก้ด้วย: git reset private/"
+  echo ""
+  exit 1
+fi
+
+# 2) ถ้า index.html ถูก stage ฐานข้อมูลต้องว่างเปล่า
+if echo "$staged" | grep -q '^index\.html$'; then
+  if [ ! -f index.html ]; then
+    echo "  [หยุด] ไม่พบ index.html"
+    exit 1
+  fi
+  if ! grep -q '"admissions":\[\],"restaurants":\[\],"guides":\[\]' index.html; then
+    echo ""
+    echo "  [หยุด] index.html ยังมีฐานข้อมูลจริงอยู่ข้างใน"
+    echo "         รัน  .\\build.ps1  ก่อน แล้วค่อย commit ใหม่"
+    echo ""
+    exit 1
+  fi
+fi
+
+# 3) กวาดหาเบอร์โทรในทุกไฟล์ที่กำลังจะขึ้น (ยกเว้นเบอร์ตัวอย่างปลอมในเทมเพลต)
+for f in $staged; do
+  case "$f" in
+    private/*) continue ;;
+  esac
+  [ -f "$f" ] || continue
+  hits=$(sed -e 's/081-234-5678//g' "$f" \
+         | grep -Eo '(^|[^0-9])(0[0-9]{1,2}-[0-9]{3}-?[0-9]{3,4})' \
+         | head -3)
+  if [ -n "$hits" ]; then
+    echo ""
+    echo "  [หยุด] เจอเบอร์โทรใน $f"
+    echo "$hits" | sed 's/^/         /'
+    echo "         ถ้าแน่ใจว่าไม่ใช่เบอร์จริง ให้ข้ามด้วย: git commit --no-verify"
+    echo ""
+    exit 1
+  fi
+done
+
+exit 0
