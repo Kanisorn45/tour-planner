@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-14 09:15 · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-14 10:00 · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -88,9 +88,11 @@ header{
 .dp-trigger:hover{border-color:var(--gold)}
 .dp-trigger.set{color:var(--gold-bright)}
 /* ปฏิทิน = โมดัลเต็มจอ (เดิมเป็น popup ในการ์ดแล้วโดน .card{overflow:hidden} ตัดขาด) */
-.dp-pop{display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.78);padding:16px;align-items:center;justify-content:center}
+.dp-pop{display:none;position:fixed;inset:0;height:100vh;height:100dvh;z-index:120;background:rgba(0,0,0,.78);
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));align-items:center;justify-content:center}
 .dp-pop.open{display:flex}
-.dp-sheet{background:var(--panel);border:1px solid var(--gold);border-radius:16px;padding:16px;width:100%;max-width:390px;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.dp-sheet{background:var(--panel);border:1px solid var(--gold);border-radius:16px;padding:16px;width:100%;max-width:390px;
+  max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;box-shadow:0 20px 60px rgba(0,0,0,.7)}
 .dp-title{font-family:var(--disp);font-size:21px;letter-spacing:1px;color:var(--gold);line-height:1.1}
 .dp-cur{font-size:12px;color:var(--ink-dim);font-family:var(--mono);margin:3px 0 12px}
 .dp-sheet .dp-cell{font-size:15px;border-radius:8px}
@@ -345,6 +347,7 @@ body.dnd-active *{cursor:grabbing!important}
   background:linear-gradient(180deg,#101a30 0%,#0a0a0b 100%);
   border-top:2px solid var(--gold);
   box-shadow:0 -8px 30px rgba(0,0,0,.6);
+  padding-bottom:env(safe-area-inset-bottom);   /* กันแถบล่างไปอยู่ใต้ขีดโฮมของ iPhone */
 }
 .sum-collapsed{padding:12px 16px;display:flex;align-items:center;gap:14px;max-width:760px;margin:0 auto}
 .sum-collapsed .price-block{flex:1}
@@ -360,7 +363,7 @@ body.dnd-active *{cursor:grabbing!important}
   max-height:0;overflow:hidden;transition:max-height .3s ease;
   max-width:760px;margin:0 auto;
 }
-.sum-detail.open{max-height:70vh;overflow:auto}
+.sum-detail.open{max-height:70vh;max-height:70dvh;overflow:auto;overscroll-behavior:contain}
 .sum-detail-inner{padding:4px 16px 16px}
 .brk{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
 .brk .bl{color:var(--ink-dim)}
@@ -433,9 +436,14 @@ body.dnd-active *{cursor:grabbing!important}
 .act-reset:hover{background:var(--bad);color:#fff}
 
 /* modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+/* dvh = ความสูงที่ "มองเห็นจริง" — บน iOS ค่า vh นับรวมพื้นที่ใต้แถบที่อยู่เว็บด้วย
+   ถ้าใช้ vh อย่างเดียว กล่องจะสูงเกินจอ แล้วของที่จัดกลางจะถูกดันต่ำลงไปจนล้นขอบล่าง
+   บรรทัด vh ต้องอยู่ก่อนเสมอ เผื่อเบราว์เซอร์รุ่นเก่าที่ยังไม่รู้จัก dvh */
+.modal-bg{position:fixed;inset:0;height:100vh;height:100dvh;background:rgba(0,0,0,.72);z-index:100;display:none;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
 .modal-bg.open{display:flex}
-.modal{background:var(--panel);border:1px solid var(--gold);border-radius:14px;max-width:440px;width:100%;max-height:85vh;overflow:auto}
+.modal{background:var(--panel);border:1px solid var(--gold);border-radius:14px;max-width:440px;width:100%;
+  max-height:85vh;max-height:85dvh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .modal-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center}
 .modal-head .mt{font-family:var(--disp);font-size:19px;letter-spacing:1px;color:var(--gold);flex:1}
 .modal-head .mx{background:none;font-size:22px;color:var(--ink-dim);padding:0 6px}
@@ -565,8 +573,9 @@ body.dnd-active *{cursor:grabbing!important}
   .tripbar .trip-field{flex:1 1 100%!important}
   .date-range{flex-wrap:nowrap}
   .dp-trigger{font-size:12px;padding:10px 4px}
-  .modal{width:100%;max-width:100%;border-radius:14px 14px 0 0;max-height:92vh}
-  .modal-bg{align-items:flex-end}
+  /* เดิมบนมือถือทำเป็นแผ่นเลื่อนขึ้นจากขอบล่าง (align-items:flex-end + มุมโค้งเฉพาะบน)
+     พอเจอ vh ที่สูงเกินจอจริงบน iOS ปุ่มล่างเลยไปจ่อขอบจอ — เปลี่ยนมาจัดกลางทุกจอ */
+  .modal{width:100%;max-width:100%;border-radius:14px;max-height:88vh;max-height:88dvh}
   .adm-thead,.adm-row{grid-template-columns:22px 1fr 74px 62px;gap:6px;font-size:12px}
   .adm-row .ar-area{font-size:10px}
   .sum-detail-inner{padding:12px}

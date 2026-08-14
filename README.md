@@ -28,9 +28,13 @@ private/        ← ไฟล์ที่มีข้อมูลจริง ·
 
 ## วิธีแก้แล้วอัปเดตเว็บ
 
+แก้ที่ `private\master.html` เสมอ แล้วสั่ง build:
+
 ```powershell
-.\build.ps1
+powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
+
+(ถ้าเครื่องอนุญาตให้รันสคริปต์อยู่แล้ว พิมพ์ `.\build.ps1` เฉย ๆ ก็ได้ — Windows ตั้งค่าเริ่มต้นมาบล็อกไฟล์ `.ps1` จึงต้องใส่ `-ExecutionPolicy Bypass`)
 
 แล้ว commit ตามปกติ — `build.ps1` จะ**ลบ `index.html` ทิ้งเองถ้าตรวจเจอข้อมูลจริงหลุดมา** และมี git hook คอยบล็อกอีกชั้นหนึ่ง
 
