@@ -48,4 +48,19 @@ for f in $staged; do
   fi
 done
 
+# 4) ถ้า index.html จะขึ้น ต้องรันชุดทดสอบผ่านก่อน
+if echo "$staged" | grep -q '^index\.html$'; then
+  if [ -f tests/run.ps1 ]; then
+    echo ""
+    echo "  รันชุดทดสอบกับ index.html ก่อน commit..."
+    if ! powershell -ExecutionPolicy Bypass -NoProfile -File tests/run.ps1 -Shipped; then
+      echo ""
+      echo "  [หยุด] ชุดทดสอบไม่ผ่าน — แก้ให้ผ่านก่อน commit"
+      echo "         ถ้าจำเป็นต้องข้ามจริง ๆ ใช้: git commit --no-verify"
+      echo ""
+      exit 1
+    fi
+  fi
+fi
+
 exit 0
