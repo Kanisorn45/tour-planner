@@ -128,12 +128,34 @@ $page = Join-Path $tmp 'run.html'
 
 # ---------- รัน ----------
 $dom = Join-Path $tmp 'dom.html'
+$errf = Join-Path $tmp 'stderr.txt'
 $url = 'file:///' + ($page -replace '\\','/')
-& $chrome --headless=new --disable-gpu --no-sandbox --disable-extensions `
-          --virtual-time-budget=30000 --user-data-dir="$tmp\prof" `
-          --dump-dom $url 2>$null | Out-File $dom -Encoding utf8
 
-if(-not (Test-Path $dom)){ Fail "เบราว์เซอร์ไม่คืนผลลัพธ์" }
+<#  ห้ามเรียก Chrome ด้วย & แล้วต่อท่อ
+    Chrome พ่นข้อความเตือนลง stderr เป็นปกติ (เช่นพยายามติดตั้งเว็บแอป Gmail)
+    PowerShell 5.1 จะห่อ stderr ของโปรแกรมภายนอกทุกบรรทัดเป็น ErrorRecord
+    พอเจอ $ErrorActionPreference='Stop' สคริปต์จะตายทั้งที่ Chrome ทำงานปกติ
+    ใช้ Start-Process เปลี่ยนทาง stdout/stderr ลงไฟล์ตรง ๆ จึงไม่โดนห่อ  #>
+$chromeArgs = @(
+  '--headless=new','--disable-gpu','--no-sandbox','--disable-extensions',
+  '--no-first-run','--no-default-browser-check','--disable-default-apps',
+  '--disable-sync','--disable-background-networking','--disable-component-update',
+  '--virtual-time-budget=30000', "--user-data-dir=$tmp\prof",
+  '--dump-dom', $url
+)
+$proc = Start-Process -FilePath $chrome -ArgumentList $chromeArgs `
+          -NoNewWindow -Wait -PassThru `
+          -RedirectStandardOutput $dom -RedirectStandardError $errf
+
+if(-not (Test-Path $dom) -or (Get-Item $dom).Length -eq 0){
+  Write-Host "  เบราว์เซอร์ไม่คืนผลลัพธ์ (exit $($proc.ExitCode))" -ForegroundColor Red
+  if(Test-Path $errf){
+    $tail = Get-Content $errf -Tail 8 -ErrorAction SilentlyContinue
+    if($tail){ Write-Host "  stderr:" -ForegroundColor DarkGray; $tail | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray } }
+  }
+  if(-not $Keep){ Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue }
+  Fail "รันเบราว์เซอร์ไม่สำเร็จ"
+}
 $html = Get-Content $dom -Raw -Encoding utf8
 $m = [regex]::Match($html, '@@(.*?)@@', [System.Text.RegularExpressions.RegexOptions]::Singleline)
 if(-not $m.Success){
