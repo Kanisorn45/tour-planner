@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-17 15:59 จาก tour_pricing_app_v23.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-17 16:22 จาก tour_pricing_app_v24.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -340,6 +340,55 @@ body.dnd-active *{cursor:grabbing!important}
 .profit-input-wrap .unit{flex:0 0 auto;font-family:var(--disp);font-size:16px;color:var(--ink-dim);white-space:nowrap}
 .profit-input-wrap .unit#profitUnitL{font-size:20px}
 @media (max-width:430px){ .profit-input-wrap input{font-size:22px} .profit-input-wrap .unit{font-size:14px} }
+
+/* ---------- v24 · TIMELINE ---------- */
+.tl-line{
+  display:flex;align-items:center;gap:5px;margin-bottom:3px;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;
+  color:var(--gold-bright);font-variant-numeric:tabular-nums;
+}
+.tl-line .tl-t{
+  background:#16243f;border:1px solid var(--gold);
+  padding:1px 6px;border-radius:5px;white-space:nowrap;
+}
+.tl-line i{font-style:normal;color:var(--ink-faint);margin:0 1px}
+/* ประมาณเอา ไม่ได้มาจากชีต — ทำให้เห็นต่างชัด ๆ ว่าอันไหนเชื่อได้แค่ไหน */
+.tl-line.guess .tl-t{color:var(--ink-dim);border-style:dashed;border-color:var(--ink-faint);background:transparent}
+.tl-flag,.tl-pin{font-size:11px;cursor:help}
+.tl-travel{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  font-size:11px;color:var(--ink-dim);font-family:var(--mono);
+  padding:3px 10px 3px 26px;line-height:1.6;
+}
+.tl-travel b{color:var(--ink);font-weight:700}
+.tl-travel .tl-hint{color:var(--ink-faint);font-size:10px}
+.tl-travel.unknown{color:var(--orange)}
+.tl-travel.unknown b{color:var(--orange)}
+.tl-travel.wait{color:var(--gold)}
+.tl-travel.back{padding-top:6px;padding-bottom:8px;border-top:1px dashed var(--line);margin-top:4px;color:var(--ink-dim)}
+.dh-time{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:5px 10px 7px;font-size:11px;font-family:var(--mono);color:var(--ink-dim);
+  border-bottom:1px dashed var(--line);
+}
+.dh-start{
+  background:var(--panel2);border:1px solid var(--gold);color:var(--gold-bright);
+  font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;
+}
+.dh-start:hover{background:var(--gold);color:#111}
+.dh-end b{color:var(--ink)}
+.dh-tv{color:var(--ink-faint)}
+.dh-unk{color:var(--orange)}
+.dh-warn{color:var(--bad);cursor:help;font-weight:700}
+.tl-off{opacity:.55}
+/* โปรแกรมที่ส่งลูกค้า แบบมีเวลา */
+.itin-timed{display:flex;flex-direction:column;gap:3px;margin:4px 0}
+.itl{display:flex;gap:10px;align-items:baseline}
+.itl-t{
+  flex:0 0 46px;font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--gold);font-variant-numeric:tabular-nums;
+}
+.itl-n{flex:1;min-width:0}
 
 /* ---------- SUMMARY (sticky bottom) ---------- */
 .summary{
@@ -1087,6 +1136,7 @@ input.px:focus{outline:none;border-color:var(--gold)}
     <div class="dash-actions">
       <button id="itinCopy" class="act-dash" style="flex:1;padding:9px;border-radius:8px;font-weight:700">📋 คัดลอกโปรแกรม</button>
     </div>
+    <label class="cf-imgopt" style="padding:0 14px 8px"><input type="checkbox" id="itinTime"> ใส่เวลาในโปรแกรม (ไทม์ไลน์)</label>
     <div class="itin-body" id="itinBody"></div>
   </div>
 </div>
@@ -1571,6 +1621,132 @@ function addMeal(meal){
   renderAdm(); renderDayTabs(); renderAdmTable(); renderRes(); renderResDayTabs(); renderOverview(); recalc(); save();
   toast(added?`เพิ่ม ${meal} ${added} วัน → ไปเลือกร้านที่ 04 Restaurants`:`วันที่เลือกมี ${meal} อยู่แล้ว`);
 }
+/* ============================================================
+   v24 · P2 — ไทม์ไลน์รายวัน
+   เดินไล่รายการของแต่ละวันตามลำดับใน S.adm (ลำดับเดียวกับที่ลากสลับได้)
+   แล้วสะสมเวลา: เดินทาง -> ถึง -> ใช้เวลา -> ออก
+   โรงแรมคืนก่อนหน้าเป็นจุดตั้งต้นของวัน และโรงแรมคืนนี้เป็นจุดจบวัน
+   ============================================================ */
+const TL_DUR_DEF=60;          /* ไม่รู้ว่าใช้เวลาเท่าไร ใช้ 60 นาทีเป็นค่าประมาณ */
+const TL_START_DEF=480;       /* 08:00 */
+const TL_LATE_DEF=1200;       /* จบวันหลัง 20:00 ถือว่าดึกเกิน */
+
+const dayStartOf=d=>{ const m=(S.dayStart||{})[d]; return m==null?(S.tlStart==null?TL_START_DEF:S.tlStart):m; };
+const tlLate=()=>(S.tlLate==null?TL_LATE_DEF:S.tlLate);
+
+/* จุดบนแผนที่ของโรงแรมที่นอนคืนหนึ่ง — ใช้เป็นหมุดต้นวันและท้ายวัน */
+function hotelPlaceOf(night){
+  if(night<1)return null;
+  const h=(typeof hotelForNight==='function')?hotelForNight(night):null;
+  return h?{zone:h.zone||'',prov:h.area||'',name:hotelName(h)}:null;
+}
+/* ข้อมูลที่ไทม์ไลน์ต้องใช้ของรายการหนึ่ง — รวมทั้งสถานที่ มื้ออาหาร และรับส่งสนามบิน */
+function tlRec(it,d){
+  if(it.kind==='meal'){
+    const r=(S.res||[]).find(z=>z.day===d&&z.meal===it.meal);
+    const x=r&&resRec(r.ref);
+    return {name:(it.meal==='Lunch'?'🍽 ':'🌙 ')+(x?(x.en||x.th):it.meal),
+            x:x||null, guess:!(it.dur!=null||(x&&x.dur!=null)),
+            dur:it.dur!=null?it.dur:(x&&x.dur!=null?x.dur:TL_DUR_DEF),
+            place:x?{zone:x.zone||'',prov:x.area||''}:null};
+  }
+  if(it.kind==='transfer'){
+    const x=it.ref?admRec(it.ref):null;
+    return {name:transferName(it), x:x||null, guess:!(it.dur!=null||(x&&x.dur!=null)),
+            dur:it.dur!=null?it.dur:(x&&x.dur!=null?x.dur:TL_DUR_DEF),
+            place:x?{zone:x.zone||'',prov:x.area||''}:null};
+  }
+  const x=admRec(it.ref);
+  if(!x)return null;
+  return {name:it.name||((x.en||x.th)+(x.item?' · '+x.item:'')),
+          x, guess:!(it.dur!=null||x.dur!=null),
+          dur:it.dur!=null?it.dur:(x.dur!=null?x.dur:TL_DUR_DEF),
+          place:{zone:x.zone||'',prov:x.area||''}};
+}
+
+let TL={};        /* id ของรายการ -> ผลคำนวณ · สร้างใหม่ทุกครั้งที่ recalc */
+let TLDay={};     /* เลขวัน -> สรุปของวันนั้น */
+
+function dayTimeline(d){
+  const items=S.adm.filter(it=>it.day===d);
+  const sum={day:d, start:dayStartOf(d), end:null, travel:0, unknown:0, warns:[], items:0};
+  let cur=sum.start;
+  let from=hotelPlaceOf(d-1);          /* ออกจากโรงแรมคืนก่อน */
+  items.forEach(it=>{
+    const r=tlRec(it,d);
+    if(!r){ TL[it.id]=null; return; }
+    sum.items++;
+    const e={dur:r.dur, guess:r.guess, travel:null, travelUnknown:false, wait:0, warns:[], via:''};
+
+    if(from&&r.place&&(r.place.zone||r.place.prov)){
+      const rt=routeMins(REF.routes,from,r.place);
+      if(rt.mins==null){ e.travelUnknown=true; sum.unknown++; }
+      else { e.travel=rt.mins; e.via=rt.via; cur+=rt.mins; sum.travel+=rt.mins; }
+    }
+    /* เวลาตรึง — ใช้กับของที่เลื่อนไม่ได้ เช่น รอบโชว์ เที่ยวบิน */
+    if(it.at!=null){
+      if(it.at<cur) e.warns.push('เวลาตรึง '+fmtClock(it.at)+' แต่กว่าจะมาถึงก็ '+fmtClock(cur)+' แล้ว');
+      else e.wait=it.at-cur;
+      cur=it.at; e.pinned=true;
+    }
+    e.at=cur;
+    /* ยังไม่เปิด — ต้องรอ */
+    const x=r.x;
+    if(x&&x.open!=null&&e.at<x.open){ e.wait+=x.open-e.at; cur=x.open; e.at=cur; e.warns.push('ไปถึงก่อนเปิด รอถึง '+fmtClock(x.open)); }
+    cur+=e.dur;
+    e.leave=cur;
+    /* ปิดแล้ว / ปิดทำการวันนี้ */
+    if(x&&x.close!=null&&e.at>=x.close) e.warns.push('ไปถึง '+fmtClock(e.at)+' แต่ปิด '+fmtClock(x.close)+' แล้ว');
+    else if(x&&x.close!=null&&e.leave>x.close) e.warns.push('ออก '+fmtClock(e.leave)+' เลยเวลาปิด '+fmtClock(x.close));
+    if(x&&closedOn(x,d)) e.warns.push('ปิดทำการวันนี้ ('+closedLabel(x.closed)+')');
+    TL[it.id]=e;
+    if(e.warns.length)sum.warns=sum.warns.concat(e.warns.map(w=>r.name+': '+w));
+    from=r.place||from;
+  });
+  /* กลับเข้าโรงแรมคืนนี้ */
+  const back=hotelPlaceOf(d);
+  sum.backTravel=null; sum.backName=back?back.name:'';
+  if(from&&back&&(back.zone||back.prov)){
+    const rt=routeMins(REF.routes,from,back);
+    if(rt.mins!=null){ sum.backTravel=rt.mins; cur+=rt.mins; sum.travel+=rt.mins; }
+    else sum.unknown++;
+  }
+  sum.end=cur;
+  if(sum.items&&cur>tlLate()) sum.warns.push('วันนี้จบ '+fmtClock(cur)+' ดึกกว่าที่ตั้งไว้ ('+fmtClock(tlLate())+')');
+  TLDay[d]=sum;
+  return sum;
+}
+const tlOn=()=>S.tlOn!==false;
+function rebuildTL(){
+  TL={}; TLDay={};
+  const n=Math.max(1,S.days);
+  for(let d=1;d<=n;d++)dayTimeline(d);
+}
+/* ป้ายเวลาของรายการ — ใช้ทั้งในหน้า Plan และหน้า Overview
+   วางเป็นบรรทัดของตัวเองเหนือชื่อ เพราะ .item .nm เป็น nowrap
+   ถ้าแทรกไว้ในบรรทัดเดียวกัน ชื่อสถานที่จะถูกตัดหายบนจอมือถือ */
+function tlBadge(it){
+  if(!tlOn())return '';
+  const e=TL[it.id]; if(!e)return '';
+  return `<div class="tl-line${e.guess?' guess':''}">`+
+         `<span class="tl-t" title="${e.guess?'ยังไม่ได้กรอก ใช้เวลา ในชีต — ใช้ค่าประมาณ 60 นาที':'ใช้เวลา '+fmtDur(e.dur)+' จากชีต'}">`+
+         `${fmtClock(e.at)}<i>–</i>${fmtClock(e.leave)}</span>`+
+         (e.pinned?`<span class="tl-pin" title="ตรึงเวลาไว้">📌</span>`:'')+
+         (e.warns.length?`<span class="tl-flag" title="${esc(e.warns.join(' · '))}">⚠️</span>`:'')+
+         `</div>`;
+}
+/* แถวเดินทางที่แทรกก่อนรายการ */
+function tlTravelRow(it){
+  if(!tlOn())return '';
+  const e=TL[it.id]; if(!e)return '';
+  if(e.travelUnknown)
+    return `<div class="tl-travel unknown">🚐 <b>—</b> ยังไม่รู้เวลาเดินทาง <span class="tl-hint">เพิ่มคู่โซนนี้ในแท็บ Routes</span></div>`;
+  let s='';
+  if(e.travel!=null)s+=`<div class="tl-travel">🚐 เดินทาง <b>${fmtDur(e.travel)}</b><span class="tl-hint">${esc(e.via)}</span></div>`;
+  if(e.wait>0)s+=`<div class="tl-travel wait">⏳ รอ <b>${fmtDur(e.wait)}</b></div>`;
+  return s;
+}
+
 function renderAdm(){
   const el=$('admItems'); let sum=0; const n=Math.max(1,S.days);
   S.adm.forEach(it=>{ if(!it.day)it.day=1; if(it.day>n)it.day=n; });
@@ -1579,20 +1755,49 @@ function renderAdm(){
     const dayItems=S.adm.filter(it=>it.day===d);
     let dsum=0;
     const rows=dayItems.map(it=>{
-      if(it.kind==='meal')return admItemHTML(it,d);   // มื้ออาหารไม่บวกยอดที่นี่ (คิดที่หมวด 04)
-      if(it.kind==='transfer'){ const a=+it.price||0; dsum+=a; sum+=a; return admItemHTML(it,d); }
+      if(it.kind==='meal')return tlTravelRow(it)+admItemHTML(it,d);   // มื้ออาหารไม่บวกยอดที่นี่ (คิดที่หมวด 04)
+      if(it.kind==='transfer'){ const a=+it.price||0; dsum+=a; sum+=a; return tlTravelRow(it)+admItemHTML(it,d); }
       const x=admRec(it.ref); if(!x)return''; const per=isPerson(x.unit);
       const t=per?it.price*headTotal():it.price*(it.units||1); dsum+=t; sum+=t;
-      return admItemHTML(it,d);
+      return tlTravelRow(it)+admItemHTML(it,d);
     }).join('');
+    const S_=TLDay[d];
+    /* หัววัน: เวลาเริ่ม (แก้ได้) · เวลาจบ · เวลาเดินทางรวม */
+    const timeHead = (tlOn()&&S_&&S_.items)
+      ? `<div class="dh-time"><button class="dh-start" data-daystart="${d}" title="แก้เวลาเริ่มวัน">🕘 ${fmtClock(S_.start)}</button>`+
+        `<span class="dh-end">จบ <b>${fmtClock(S_.end)}</b></span>`+
+        (S_.travel?`<span class="dh-tv">🚐 ${fmtDur(S_.travel)}</span>`:'')+
+        (S_.unknown?`<span class="dh-unk">— ขาดเวลาเดินทาง ${S_.unknown} ช่วง</span>`:'')+
+        (S_.warns.length?`<span class="dh-warn" title="${esc(S_.warns.join(' · '))}">⚠️ ${S_.warns.length}</span>`:'')+
+        `</div>` : '';
+    const backRow = (tlOn()&&S_&&S_.items&&S_.backName)
+      ? `<div class="tl-travel back">🏨 กลับเข้าที่พัก ${esc(S_.backName)}${S_.backTravel!=null?' · เดินทาง <b>'+fmtDur(S_.backTravel)+'</b>':' · <b>—</b> ยังไม่รู้เวลาเดินทาง'}</div>` : '';
     html+=`<div class="daygroup" data-dropday="${d}"><div class="dayhead"><span class="dh-lbl">DAY ${d}${tripDate(d)?' · '+fmtDShort(tripDate(d)):''}</span>`+
       (dayItems.length?`<span class="dh-sum">${fmt(dsum)}</span>`:`<span class="dh-freeeasy">✨ Free &amp; Easy</span>`)+
-      `</div>${rows}</div>`;
+      `</div>${timeHead}${rows}${backRow}</div>`;
   }
   el.innerHTML=html;
   $('subAdm').textContent=fmt(sum);
   wireAdmDnD();
+  wireDayStart();
   return sum;
+}
+/* แก้เวลาเริ่มของแต่ละวัน — ตั้งวันเดียว หรือตั้งให้ทุกวันพร้อมกัน */
+function wireDayStart(){
+  document.querySelectorAll('[data-daystart]').forEach(b=>{
+    b.onclick=()=>{
+      const d=+b.dataset.daystart;
+      const cur=fmtClock(dayStartOf(d));
+      const v=prompt(`เวลาเริ่ม DAY ${d} (เช่น 08:00)\n\nใส่ * ต่อท้ายเพื่อตั้งให้ทุกวัน เช่น 07:30*`,cur);
+      if(v==null)return;
+      const all=/\*\s*$/.test(v);
+      const m=parseClock(String(v).replace(/\*/g,'').trim());
+      if(m==null){ toast('อ่านเวลาไม่ออก — ลองใส่แบบ 08:00'); return; }
+      if(all){ S.tlStart=m; S.dayStart={}; toast('ตั้งเวลาเริ่มทุกวันเป็น '+fmtClock(m)); }
+      else { S.dayStart=S.dayStart||{}; S.dayStart[d]=m; toast(`DAY ${d} เริ่ม ${fmtClock(m)}`); }
+      recalc(); renderOverview(); save();
+    };
+  });
 }
 function admItemHTML(it,d){
   if(it.kind==='transfer'){                   // รับ-ส่งสนามบิน
@@ -1611,7 +1816,7 @@ function admItemHTML(it,d){
         </div></div>`;
     }
     return `<div class="item item-transfer" data-admid="${it.id}" data-day="${d}"><span class="drag-grip">⠿</span>
-      <div class="info"><div class="nm">✈️ ${esc(transferName(it))}</div>
+      <div class="info">${tlBadge(it)}<div class="nm">✈️ ${esc(transferName(it))}</div>
       <div class="meta">${it.dir==='in'?'รับเข้า · วันแรก':'ส่งออก · วันสุดท้าย'}${amt?'':' · รวมอยู่ในค่ารถ'}</div></div>
       <div class="amt">${fmt(amt)}</div>
       <button class="ed-btn" data-edit="${it.id}">✎</button>
@@ -1622,7 +1827,7 @@ function admItemHTML(it,d){
     const rx=r&&resRec(r.ref);
     const amt=rx?(isPerson(rx.unit)?r.price*headTotal():r.price):0;
     return `<div class="item item-meal" data-admid="${it.id}" data-day="${d}"><span class="drag-grip">⠿</span>
-      <div class="info"><div class="nm">${it.meal==='Lunch'?'🍽':'🌙'} ${it.meal} · ${it.meal==='Lunch'?'มื้อกลางวัน':'มื้อเย็น'}</div>
+      <div class="info">${tlBadge(it)}<div class="nm">${it.meal==='Lunch'?'🍽':'🌙'} ${it.meal} · ${it.meal==='Lunch'?'มื้อกลางวัน':'มื้อเย็น'}</div>
       <div class="meta">${rx?esc(rx.en||rx.th):'— ยังไม่ได้เลือกร้าน · ไปที่ 04 Restaurants —'}</div></div>
       <div class="amt">${rx?'('+fmt(amt)+')':'฿0'}</div>
       <button class="del" data-del="admmeal" data-id="${it.id}">×</button></div>`;
@@ -1641,13 +1846,15 @@ function admItemHTML(it,d){
           <label style="flex:1 1 100%">ชื่อรายการ<input class="txt" id="edName" value="${esc(dispName||'')}"></label>
           <label>ราคา<input class="txt qty" id="edPrice" type="number" min="0" value="${it.price}" style="width:82px"></label>
           ${per?'':`<label>จำนวน (${esc(unitLbl)})<input class="txt qty" id="edUnits" type="number" min="1" value="${it.units||1}" style="width:64px"></label>`}
+          <label title="เว้นว่าง = ใช้ค่าจากชีต${x.dur!=null?' ('+x.dur+' นาที)':''}">ใช้เวลา<input class="txt qty" id="edDur" placeholder="${x.dur!=null?x.dur:'60'}" value="${it.dur!=null?it.dur:''}" style="width:72px"></label>
+          <label title="ตรึงเวลาเริ่ม สำหรับของที่เลื่อนไม่ได้ เช่น รอบโชว์ เที่ยวบิน · เว้นว่าง = ไหลตามลำดับ">เริ่ม (ตรึง)<input class="txt qty" id="edAt" placeholder="—" value="${it.at!=null?fmtClock(it.at):''}" style="width:72px"></label>
           <button class="ed-save" data-edsave="${it.id}">✓ บันทึก</button>
           <button class="ed-cancel" data-edcancel="1">ยกเลิก</button>
         </div>
       </div></div>`;
   }
   const shut=closedOn(x,d);
-  return `<div class="item${isDup?' dup-place':''}" data-admid="${it.id}" data-day="${d}"><span class="drag-grip">⠿</span><div class="info"><div class="nm">${esc(dispName)}${it.name?' ✎':(isCustom(it.ref)?' ✏️':'')}</div>
+  return `<div class="item${isDup?' dup-place':''}" data-admid="${it.id}" data-day="${d}"><span class="drag-grip">⠿</span><div class="info">${tlBadge(it)}<div class="nm">${esc(dispName)}${it.name?' ✎':(isCustom(it.ref)?' ✏️':'')}</div>
     <div class="meta">${esc(x.area)} · ${meta(it,x,per,unitLbl)}${shut?` · <span class="shut">⚠️ ปิดวันนี้ (${esc(closedLabel(x.closed))})</span>`:''}</div></div>
     <div class="amt">${fmt(t)}</div>
     <button class="ed-btn" data-edit="${it.id}">✎</button>
@@ -2132,6 +2339,7 @@ function renderHotelItems(){
 /* ============ TOTALS ============ */
 function recalc(){
   retierAll();          /* v23 · ปรับราคาตามช่วง PAX ก่อนวาด — recalc คือทางผ่านเดียวของทุกการเปลี่ยนแปลง */
+  rebuildTL();          /* v24 · คำนวณไทม์ไลน์ก่อนวาด เพราะ admItemHTML ไปอ่านผลจาก TL */
   renderTierNote();
   const a=renderAdm(), c=renderCarItems(), g=guideTotal(), r=renderRes(), h=renderHotelItems();
   renderGuideSub();
@@ -2342,6 +2550,27 @@ function hotelForNight(d){
   for(const sel of S.hotelSel){ if((sel.nights||[]).includes(d)){ const h=S.hotels.find(x=>x.id===sel.hotelId); if(h)return h; } }
   return null;
 }
+/* v24 · ชื่อรายการแบบที่ลูกค้าเห็น (ตัดคำว่า "ค่าเข้า" ออกเหมือนที่ของเดิมทำ) */
+function itinName(it,d){
+  if(it.kind==='transfer')return transferName(it);
+  if(it.kind==='meal'){
+    const r=(S.res||[]).find(z=>z.day===d&&z.meal===it.meal);
+    const x=r&&resRec(r.ref);
+    const lbl=it.meal==='Lunch'?L('มื้อกลางวัน','Lunch'):L('มื้อเย็น','Dinner');
+    return (it.meal==='Lunch'?'🍽 ':'🌙 ')+lbl+(x?' · '+(x.en||x.th):'');
+  }
+  if(it.name)return it.name;
+  const x=admRec(it.ref); if(!x)return null;
+  return (x.en||x.th)+(x.item&&!/^ค่าเข้า/.test(x.item)?' ('+x.item+')':'');
+}
+/* บรรทัดโปรแกรมแบบมีเวลา — เรียงตามลำดับจริงใน S.adm รวมมื้ออาหารที่แทรกไว้ในลำดับ */
+function itinTimedLines(d){
+  return S.adm.filter(it=>it.day===d).map(it=>{
+    const nm=itinName(it,d); if(!nm)return null;
+    const e=TL[it.id];
+    return {t:e?fmtClock(e.at):'', nm};
+  }).filter(Boolean);
+}
 function renderItinerary(){
   const n=Math.max(1,S.days);
   const dateLine=S.startDate?fmtRange(S.startDate,isoOf(tripDate(S.days))):'';
@@ -2354,10 +2583,14 @@ function renderItinerary(){
     const dinner=S.res.find(it=>it.day===d&&it.meal==='Dinner'); const dx=dinner&&resRec(dinner.ref);
     const hotel = d<n ? hotelForNight(d) : null;
     let body='';
-    if(places.length) body+=`<div class="itin-places">${places.map(esc).join(' <span class="sep">/</span> ')}</div>`;
+    const timed=S.itinTime?itinTimedLines(d):null;
+    if(timed&&timed.length)
+      body+=`<div class="itin-timed">${timed.map(l=>`<div class="itl"><span class="itl-t">${esc(l.t)}</span><span class="itl-n">${esc(l.nm)}</span></div>`).join('')}</div>`;
+    else if(places.length) body+=`<div class="itin-places">${places.map(esc).join(' <span class="sep">/</span> ')}</div>`;
     const sub=[];
-    if(lx) sub.push(`<div class="itin-sub-line"><span class="isl-lbl">🍽 กลางวัน</span><span class="isl-val">${esc(lx.en||lx.th)}</span></div>`);
-    if(dx) sub.push(`<div class="itin-sub-line"><span class="isl-lbl">🌙 เย็น</span><span class="isl-val">${esc(dx.en||dx.th)}</span></div>`);
+    /* โหมดมีเวลา มื้ออาหารอยู่ในลำดับแล้ว ไม่ต้องซ้ำอีกด้านล่าง */
+    if(!S.itinTime&&lx) sub.push(`<div class="itin-sub-line"><span class="isl-lbl">🍽 กลางวัน</span><span class="isl-val">${esc(lx.en||lx.th)}</span></div>`);
+    if(!S.itinTime&&dx) sub.push(`<div class="itin-sub-line"><span class="isl-lbl">🌙 เย็น</span><span class="isl-val">${esc(dx.en||dx.th)}</span></div>`);
     if(hotel) sub.push(`<div class="itin-sub-line"><span class="isl-lbl">🏨 พัก</span><span class="isl-val">${esc(hotelName(hotel))}${hotel.stars?' <span class="stars">'+starStr(hotel.stars)+'</span>':''}</span></div>`);
     if(sub.length) body+=`<div class="itin-subs">${sub.join('')}</div>`;
     if(!places.length && !sub.length) body=`<div class="itin-free">✨ อิสระ / Free & Easy</div>`;
@@ -2381,6 +2614,13 @@ function copyItinerary(){
     const lunch=S.res.find(it=>it.day===d&&it.meal==='Lunch'); const lx=lunch&&resRec(lunch.ref);
     const dinner=S.res.find(it=>it.day===d&&it.meal==='Dinner'); const dx=dinner&&resRec(dinner.ref);
     const hotel=d<n?hotelForNight(d):null;
+    const timed=S.itinTime?itinTimedLines(d):null;
+    if(timed&&timed.length){
+      timed.forEach(l=>LN.push(`${l.t}  ${l.nm}`));
+      if(hotel)LN.push('');
+      if(hotel)LN.push(`🏨 ${L('พัก','Hotel')}: ${hotelName(hotel)}${hotel.stars?' '+starStr(hotel.stars):''}`);
+      continue;
+    }
     if(!places.length && !lx && !dx && !hotel){ LN.push(fe); continue; }
     LN.push(places.length ? places.join(' / ') : fe);
     if(lx||dx||hotel)LN.push('');
@@ -2392,7 +2632,11 @@ function copyItinerary(){
   LN.push('━━━━━━━━━━━━━━━━━━━');
   copyText(LN.join('\n'),L('คัดลอกโปรแกรมแล้ว ✓','Program copied ✓'));
 }
-function openItinerary(){ renderItinerary(); $('itinModal').classList.add('open'); }
+function openItinerary(){
+  const cb=$('itinTime');
+  if(cb){ cb.checked=!!S.itinTime; cb.onchange=()=>{ S.itinTime=cb.checked; renderItinerary(); save(); }; }
+  renderItinerary(); $('itinModal').classList.add('open');
+}
 
 /* ============ 4-PAGE SYSTEM ============ */
 function showPage(name){
@@ -4683,6 +4927,11 @@ function wire(){
       if(it){ const pE=scope.querySelector('#edPrice'); const p=parseFloat(pE&&pE.value);
         if(!isNaN(p)){ if(p!==+it.price)it.pxLock=true; it.price=p; }   /* v23 · แก้ราคาเอง = ล็อกไม่ให้ระบบทับ */
         const eu=scope.querySelector('#edUnits'); if(eu){ it.units=Math.max(1,+eu.value||1); }
+        /* v24 · ใช้เวลา และเวลาตรึง — ว่างคือถอนค่าที่ตั้งเอง กลับไปใช้ค่าจากชีต */
+        const ed=scope.querySelector('#edDur');
+        if(ed){ const raw=ed.value.trim(); if(raw===''){ delete it.dur; } else { const m=parseDur(raw); if(m==null)toast('อ่าน "ใช้เวลา" ไม่ออก — ข้ามไป'); else it.dur=m; } }
+        const ea=scope.querySelector('#edAt');
+        if(ea){ const raw=ea.value.trim(); if(raw===''){ delete it.at; } else { const m=parseClock(raw); if(m==null)toast('อ่าน "เริ่ม (ตรึง)" ไม่ออก — ข้ามไป'); else it.at=m; } }
         const en=scope.querySelector('#edName'); if(en){ const nm=en.value.trim(); it.name=nm||null; }
         const eth=scope.querySelector('#edNameTh'); if(eth){ it.nameTh=eth.value.trim()||TRANSFER_DEF[it.dir].th; }
         const eng=scope.querySelector('#edNameEn'); if(eng){ it.nameEn=eng.value.trim()||TRANSFER_DEF[it.dir].en; } }
