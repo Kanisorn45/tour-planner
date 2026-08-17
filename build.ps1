@@ -1,8 +1,9 @@
 ﻿<#
   build.ps1 — สร้างไฟล์สำหรับขึ้นเว็บ โดยถอดข้อมูลจริงออกทั้งหมด
 
-  ต้นทาง : private\master.html   (มีข้อมูลจริง · ห้ามขึ้น GitHub เด็ดขาด)
-  ปลายทาง: index.html            (ตัวโปรแกรมเปล่า ๆ · ขึ้นเว็บได้)
+  ต้นทาง : ไฟล์ tour_pricing_app_v*.html ตัวเลขเวอร์ชันสูงสุดใน -SourceDir
+           (ไฟล์ตัวจริงที่ใช้ทำงาน · มีข้อมูลจริง · ห้ามขึ้น GitHub เด็ดขาด)
+  ปลายทาง: index.html  (ตัวโปรแกรมเปล่า · ขึ้นเว็บได้)
 
   สิ่งที่ถูกถอดออก
     - ฐานข้อมูลสถานที่ / ร้านอาหาร / ไกด์ (รวมราคาต้นทุนและเบอร์โทรทั้งหมด)
@@ -11,11 +12,14 @@
   สิ่งที่เก็บไว้
     - รายชื่อจังหวัด (ไม่ใช่ความลับ และถ้าตัดออกหน้าจอจะพัง)
 
-  วิธีใช้:  .\build.ps1
+  วิธีใช้
+    powershell -ExecutionPolicy Bypass -File .\build.ps1
+    powershell -ExecutionPolicy Bypass -File .\build.ps1 -Source "C:\path\to\ไฟล์.html"
 #>
 param(
-  [string]$Source = "$PSScriptRoot\private\master.html",
-  [string]$Out    = "$PSScriptRoot\index.html"
+  [string]$SourceDir = "$env:USERPROFILE\Downloads",
+  [string]$Source    = '',
+  [string]$Out       = "$PSScriptRoot\index.html"
 )
 $ErrorActionPreference = 'Stop'
 
@@ -23,7 +27,27 @@ function Fail($msg){ Write-Host "  [หยุด] $msg" -ForegroundColor Red; ex
 
 Write-Host "`n=== build ตัวโปรแกรมสำหรับขึ้นเว็บ ===" -ForegroundColor Cyan
 
+# ---------- 0) หาไฟล์ต้นทาง: เวอร์ชันสูงสุดที่เจอ ----------
+if(-not $Source){
+  $cand = @(Get-ChildItem -Path $SourceDir -Filter 'tour_pricing_app_v*.html' -File -ErrorAction SilentlyContinue |
+    ForEach-Object {
+      $v = 0
+      if($_.Name -match 'v(\d+)\.html$'){ $v = [int]$Matches[1] }
+      [pscustomobject]@{ File = $_; V = $v }
+    } | Sort-Object V -Descending)
+
+  if($cand.Count -eq 0){ Fail "ไม่พบไฟล์ tour_pricing_app_v*.html ใน $SourceDir" }
+  $Source = $cand[0].File.FullName
+  Write-Host ("  ต้นทาง: {0} (v{1})" -f $cand[0].File.Name, $cand[0].V) -ForegroundColor Green
+
+  if($cand.Count -gt 1){
+    $old = ($cand[1..($cand.Count-1)] | ForEach-Object { $_.File.Name }) -join ', '
+    Write-Host "  [เตือน] ยังมีเวอร์ชันเก่าค้างอยู่: $old" -ForegroundColor Yellow
+    Write-Host "          กติกาโปรเจกต์นี้คือเหลือเวอร์ชันเดียว ลบตัวเก่าทิ้งด้วย" -ForegroundColor Yellow
+  }
+}
 if(-not (Test-Path $Source)){ Fail "ไม่พบไฟล์ต้นทาง: $Source" }
+
 $s = Get-Content $Source -Raw -Encoding utf8
 Write-Host ("  อ่านต้นทาง {0:N0} ตัวอักษร" -f $s.Length)
 
@@ -48,8 +72,8 @@ $before = $s
 $s = [regex]::Replace($s, "gsUrl:'https://docs\.google\.com/spreadsheets/d/[A-Za-z0-9_\-]+/edit'", "gsUrl:''")
 if($s -ne $before){ Write-Host "  ล้างลิงก์ Google Sheet ค่าเริ่มต้นแล้ว" -ForegroundColor Green }
 
-# ---------- 3) ประทับเวลา build ----------
-$stamp = "<!-- build " + (Get-Date -Format 'yyyy-MM-dd HH:mm') + " · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->"
+# ---------- 3) ประทับที่มาและเวลา build ----------
+$stamp = "<!-- build " + (Get-Date -Format 'yyyy-MM-dd HH:mm') + " จาก " + (Split-Path $Source -Leaf) + " · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->"
 $s = $s -replace '(?m)^<!DOCTYPE html>', ("<!DOCTYPE html>`n" + $stamp)
 
 [System.IO.File]::WriteAllText($Out, $s, [System.Text.UTF8Encoding]::new($false))
