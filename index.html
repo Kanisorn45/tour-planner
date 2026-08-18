@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-18 09:44 จาก tour_pricing_app_v25.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-18 10:02 จาก tour_pricing_app_v26.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -700,6 +700,29 @@ body.dnd-active *{cursor:grabbing!important}
 .gs-b.main:hover{background:#349460;color:#fff}
 .gs-b[disabled]{opacity:.5}
 .gs-log{margin-top:9px;font-size:11px;line-height:1.75;font-family:var(--mono);color:var(--ink-faint);max-height:168px;overflow:auto}
+/* ---------- v26 · กล่องเชื่อม Google Sheet (แบบย่อ) ---------- */
+.gs-step{display:flex;gap:9px;align-items:flex-start;margin-bottom:10px}
+.gs-step>b{
+  flex:0 0 20px;width:20px;height:20px;border-radius:50%;
+  background:var(--gold);color:#111;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-top:3px;
+}
+.gs-step>div{flex:1;min-width:0}
+.gs-step label{display:block;font-size:11px;color:var(--ink-dim);margin-bottom:4px}
+.gs-step .gs-url{margin-bottom:0}
+.gs-status{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px;
+  font-size:11px;font-family:var(--mono);color:var(--ink-dim);
+}
+.gs-dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:0 0 auto}
+.gs-dot.off{background:var(--ink-faint)}
+.gs-links{display:flex;gap:16px;margin-top:10px}
+.gs-link{
+  background:none;border:none;color:var(--ink-dim);cursor:pointer;
+  padding:3px 0;font-size:11px;font-family:var(--mono);
+}
+.gs-link:hover{color:var(--gold-bright)}
+.gs-cfg{margin-top:10px;padding-top:12px;border-top:1px dashed var(--line)}
 .gs-log .ok{color:#7ddc9b}
 .gs-log .er{color:var(--bad)}
 .dow-pick{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
@@ -4561,7 +4584,7 @@ async function gsPushRun(){
            {t:'วิธีแก้',cls:'er',msg:'เอาลิงก์ของชีต "'+(info.name||'?')+'" มาวางในช่องแรก แล้วกด ⬆️ ใหม่'}];
     gsBusy=false; renderGsBox(); return;
   }
-  if(!confirm('จะเขียนทับข้อมูลในชีต "'+(info.name||'')+'" ทั้ง 5 แท็บ ด้วยข้อมูลในเครื่องนี้\n\nอะไรที่แก้ไว้ในชีตแต่ไม่มีในเครื่องนี้จะหายไป\n\nยืนยันส่งขึ้นชีต?')){
+  if(!confirm('จะเขียนทับข้อมูลในชีต "'+(info.name||'')+'" ทั้ง '+GS_TABS.length+' แท็บ ด้วยข้อมูลในเครื่องนี้\n\nอะไรที่แก้ไว้ในชีตแต่ไม่มีในเครื่องนี้จะหายไป\n\nยืนยันส่งขึ้นชีต?')){
     gsBusy=false; gsLog=[]; renderGsBox(); return; }
 
   const data={}; GS_TABS.forEach(t=>{ data[t.sheet]=gsTabRows(t); });
@@ -4611,7 +4634,7 @@ async function gsPushRun(){
     });
   }catch(e){ out.push({t:'อ่านยืนยันไม่ได้',cls:'er',msg:(e&&e.message)||String(e)}); }
   gsLog=out; S.gsAt=new Date().toISOString(); gsBusy=false; save(); renderGsBox();
-  toast(bad?`ขึ้นชีตไม่ครบ ${bad} แท็บ`:'ส่งขึ้นชีตครบทั้ง 5 แท็บ ✓');
+  toast(bad?`ขึ้นชีตไม่ครบ ${bad} แท็บ`:'ส่งขึ้นชีตครบทั้ง '+GS_TABS.length+' แท็บ ✓');
 }
 
 /* วิธีที่ 0 — ยิงตรงแล้วอ่านคำตอบได้เลย ใช้ได้เฉพาะตอนเปิดแอปจากเว็บ (http/https)
@@ -4675,7 +4698,7 @@ async function gsPushChunks(payload,info){
   if(!cal) return {err:[
     {t:'ส่งข้อมูลไม่ผ่านทั้งสองวิธี',cls:'er',msg:'ทั้งแบบฟอร์มและแบบหั่นชิ้นเล็กสุด 150 ตัวอักษร ก็ยังไม่ถึงสคริปต์'},
     {t:'น่าจะเป็น',cls:'er',msg:'สคริปต์ในชีตยังเป็นรุ่นเก่า — กด 📜 วางตัวใหม่ แล้วต้อง "การทำให้ใช้งานได้ใหม่" (URL /exec ต้องเปลี่ยน)'},
-    {t:'ทางสำรอง',cls:'',msg:'ระหว่างนี้ใช้ปุ่ม 📤 ไฟล์ 5 แท็บ นำเข้าเองในชีตไปก่อนได้'}]};
+    {t:'ทางสำรอง',cls:'',msg:'ระหว่างนี้ใช้ปุ่ม 📄 ไฟล์เริ่มต้น (ในเมนูตั้งค่า) นำเข้าเองในชีตไปก่อนได้'}]};
   if(cal.ver!==GS_VER) return {err:[gsOldScript(cal.ver)]};
 
   const CH=cal.size, n=Math.ceil(b64.length/CH);
@@ -4751,55 +4774,92 @@ async function gsSync(){
   toast(`ซิงค์เสร็จ · เพิ่ม ${tA} · อัปเดต ${tU}`);
 }
 
+/* กล่องเชื่อม Google Sheet — v26 · แสดงเฉพาะสิ่งที่ตรงกับสถานะปัจจุบัน
+   ของเดิมโชว์ 7 ปุ่มพร้อมกันหมด ทั้งที่ 5 ปุ่มใช้ครั้งเดียวตอนตั้งค่า
+   ยังไม่เชื่อม -> เห็นแค่ 3 ขั้นตอนตั้งค่า
+   เชื่อมแล้ว   -> เห็นแค่ 2 ปุ่มที่ใช้จริง ที่เหลือพับไว้ใต้ ตั้งค่า        */
+let gsCfgOpen=false;
+
+function gsFieldsHtml(){
+  return `<div class="gs-step"><b>1</b><div>`+
+      `<label>วางลิงก์ Google Sheet</label>`+
+      `<input class="gs-url" id="gsUrl" placeholder="https://docs.google.com/spreadsheets/..." value="${esc(S.gsUrl||'')}"></div></div>`+
+    `<div class="gs-step"><b>2</b><div>`+
+      `<label>ติดตั้งสคริปต์ในชีต — ทำครั้งเดียวจบ</label>`+
+      `<button class="gs-b" id="gsConnBtn" type="button">📜 รับสคริปต์ + วิธีติดตั้ง</button></div></div>`+
+    `<div class="gs-step"><b>3</b><div>`+
+      `<label>วางลิงก์ Web App ที่ได้ (ลงท้าย /exec)</label>`+
+      `<input class="gs-url" id="gsExecInput" placeholder="https://script.google.com/.../exec" value="${esc(S.gsExec||'')}"></div></div>`;
+}
+
 function renderGsBox(){
   const el=$('gsBox'); if(!el)return;
   const id=gsSheetId(S.gsUrl), ready=gsHasExec();
   const w=S.gsAt?new Date(S.gsAt):null;
-  el.innerHTML=
-    `<div class="gs-head"><span class="gs-t">📗 GOOGLE SHEET</span>`+
-    `<span class="gs-when">${w?'ซิงค์ล่าสุด '+w.toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'ยังไม่เคยซิงค์'}</span></div>`+
-    `<input class="gs-url" id="gsUrl" placeholder="ลิงก์ Google Sheet" value="${esc(S.gsUrl||'')}">`+
-    `<input class="gs-url" id="gsExecInput" placeholder="ลิงก์ Web App ลงท้าย /exec — ใส่ครั้งเดียวพอ" value="${esc(S.gsExec||'')}">`+
-    `<div class="gs-btns">`+
-      `<button class="gs-b main" id="gsSyncBtn" type="button"${gsBusy?' disabled':''}>${gsBusy?'⏳ รอสักครู่…':'⬇️ ดึงจากชีต'}</button>`+
-      `<button class="gs-b main" id="gsPushBtn" type="button"${gsBusy||!ready?' disabled':''}>⬆️ ส่งขึ้นชีต</button>`+
-    `</div><div class="gs-btns" style="margin-top:6px">`+
-      `<button class="gs-b" id="gsConnBtn" type="button">📜 สคริปต์เชื่อมต่อ</button>`+
-      `<button class="gs-b" id="gsCheckBtn" type="button"${ready?'':' disabled'}>🔎 ตรวจการเชื่อมต่อ</button>`+
-      `<button class="gs-b" id="gsSeedBtn" type="button">📤 ไฟล์ 5 แท็บ</button>`+
-      `<button class="gs-b" id="gsOpenBtn" type="button"${id?'':' disabled'}>↗ เปิดชีต</button>`+
-    `</div>`+
-    /* v23 · สำรองโปรแกรมขึ้นแท็บ Programs */
-    `<div class="gs-btns" style="margin-top:6px;align-items:center">`+
-      `<button class="gs-b" id="gsBkNow" type="button"${ready&&!bkBusy?'':' disabled'}>${bkBusy?'⏳ กำลังสำรอง…':'☁️ สำรองเดี๋ยวนี้'}</button>`+
-      `<label class="gs-b" style="display:flex;align-items:center;gap:6px;cursor:pointer">`+
-        `<input type="checkbox" id="gsAutoBk"${S.autoBackup!==false?' checked':''} style="accent-color:var(--gold)"> สำรองอัตโนมัติ</label>`+
-    `</div>`+
-    `<div class="gs-log" style="margin-top:6px">`+
-      (ready
+  const when=w?w.toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+  let html='';
+
+  html+=`<div class="gs-head"><span class="gs-t">📗 GOOGLE SHEET</span>`+
+        `<span class="gs-when">${ready?(when?'ซิงค์ล่าสุด '+esc(when):'เชื่อมแล้ว'):'ยังไม่ได้เชื่อม'}</span></div>`;
+
+  if(!ready){
+    /* ยังตั้งค่าไม่เสร็จ — ไม่โชว์ปุ่มที่ยังกดไม่ได้ให้รก */
+    html+=gsFieldsHtml();
+    html+=`<div class="gs-log">ทำครบ 3 ขั้นแล้วปุ่มดึง/ส่งข้อมูลจะขึ้นมาแทนที่ตรงนี้เอง</div>`;
+  }else{
+    html+=`<div class="gs-btns">`+
+        `<button class="gs-b main" id="gsSyncBtn" type="button"${gsBusy?' disabled':''}>${gsBusy?'⏳ รอสักครู่…':'⬇️ ดึงจากชีต'}</button>`+
+        `<button class="gs-b main" id="gsPushBtn" type="button"${gsBusy?' disabled':''}>⬆️ ส่งขึ้นชีต</button>`+
+      `</div>`;
+    /* สถานะสำรองอัตโนมัติ — บอกผลอย่างเดียว ไม่ต้องมีปุ่มถ้ามันทำงานอยู่แล้ว */
+    const auto=S.autoBackup!==false;
+    html+=`<div class="gs-status"><span class="gs-dot${auto?'':' off'}"></span>`+
+      (auto
         ? (S.lastAutoBackupAt
-            ? `☁️ สำรองโปรแกรมล่าสุด <b>${esc(fmtSavedAt(S.lastAutoBackupAt))}</b> · ${(SAVED||[]).length} โปรแกรม อยู่ในแท็บ <b>Programs</b>`
-            : `☁️ ยังไม่เคยสำรองโปรแกรมขึ้นชีต — กด <b>☁️ สำรองเดี๋ยวนี้</b> หนึ่งครั้ง แล้วหลังจากนั้นจะทำเองทุกครั้งที่กดบันทึกโปรแกรม`)
-        : `☁️ ใส่ลิงก์ Web App (/exec) ด้านบน แล้วโปรแกรมทั้งหมดจะถูกสำรองขึ้นแท็บ <b>Programs</b> ให้เองอัตโนมัติ`)+
-      (bkOversize?`<br><span class="er">⚠️ มี ${bkOversize} โปรแกรมใหญ่เกิน 50,000 ตัวอักษร สำรองในชีตไม่ได้ — ใช้ 💾 สำรองข้อมูล เก็บไฟล์ .json ควบไว้ด้วย</span>`:'')+
-    `</div>`+
-    (gsLog.length
-      ? `<div class="gs-log">${gsLog.map(l=>`<div class="${l.cls}">${esc(l.t)} — ${esc(l.msg)}</div>`).join('')}</div>`
-      : ready
-        ? `<div class="gs-log">${gsCanFetch()?'✓ เปิดจากเว็บอยู่ — ส่งขึ้นชีตได้ตรงๆ':'⚠️ เปิดจากไฟล์ในเครื่องอยู่ — Google ไม่ยอมให้ส่งตรง แอปจะใช้ทางอ้อมให้ (ช้ากว่า) · เอาไฟล์ไปวางบนเว็บจะเสถียรกว่ามาก'}<br><b>⬆️ ส่งขึ้นชีต</b> = เอาข้อมูลเครื่องนี้ทับชีต · <b>⬇️ ดึงจากชีต</b> = เอาชีตทับเครื่องนี้</div>`
-        : `<div class="gs-log">อยากกดปุ่มเดียวแล้วขึ้นชีตเลย ให้กด <b>📜 สคริปต์เชื่อมต่อ</b> แล้วทำตามในไฟล์ (ทำครั้งเดียวจบ)<br>เสร็จแล้วเอาลิงก์ /exec มาวางในช่องที่สอง ปุ่ม ⬆️ จะใช้งานได้ทันที</div>`);
+            ? `สำรองอัตโนมัติ · ล่าสุด ${esc(fmtSavedAt(S.lastAutoBackupAt))} · ${(SAVED||[]).length} โปรแกรม`
+            : `สำรองอัตโนมัติเปิดอยู่ · ยังไม่เคยสำรอง`)
+        : `ปิดสำรองอัตโนมัติอยู่`)+
+      `</div>`;
+    if(bkOversize)html+=`<div class="gs-log er">⚠️ มี ${bkOversize} โปรแกรมใหญ่เกิน 50,000 ตัวอักษร สำรองในชีตไม่ได้ — ใช้ 💾 สำรองข้อมูล เก็บไฟล์ .json ควบไว้ด้วย</div>`;
+    if(!gsCanFetch())html+=`<div class="gs-log">⚠️ เปิดจากไฟล์ในเครื่องอยู่ — ส่งขึ้นชีตจะช้ากว่าปกติ เปิดจากเว็บจะเสถียรกว่ามาก</div>`;
+
+    html+=`<div class="gs-links">`+
+        (id?`<button class="gs-link" id="gsOpenBtn" type="button">↗ เปิดชีต</button>`:'')+
+        `<button class="gs-link" id="gsCfgBtn" type="button">${gsCfgOpen?'▾':'▸'} ตั้งค่า</button>`+
+      `</div>`;
+
+    if(gsCfgOpen){
+      html+=`<div class="gs-cfg">`+gsFieldsHtml()+
+        `<div class="gs-btns" style="margin-top:4px">`+
+          `<button class="gs-b" id="gsCheckBtn" type="button">🔎 ตรวจการเชื่อมต่อ</button>`+
+          `<button class="gs-b" id="gsSeedBtn" type="button">📄 ไฟล์เริ่มต้น ${GS_TABS.length} แท็บ</button>`+
+        `</div>`+
+        `<div class="gs-btns" style="margin-top:6px;align-items:center">`+
+          `<button class="gs-b" id="gsBkNow" type="button"${bkBusy?' disabled':''}>${bkBusy?'⏳ กำลังสำรอง…':'☁️ สำรองเดี๋ยวนี้'}</button>`+
+          `<label class="gs-b" style="display:flex;align-items:center;gap:6px;cursor:pointer">`+
+            `<input type="checkbox" id="gsAutoBk"${S.autoBackup!==false?' checked':''} style="accent-color:var(--gold)"> สำรองอัตโนมัติ</label>`+
+        `</div>`+
+        `<div class="gs-log">⬆️ ส่งขึ้นชีต = เอาข้อมูลเครื่องนี้ทับชีต · ⬇️ ดึงจากชีต = เอาชีตทับเครื่องนี้</div>`+
+      `</div>`;
+    }
+  }
+  if(gsLog.length)html+=`<div class="gs-log">${gsLog.map(l=>`<div class="${l.cls}">${esc(l.t)} — ${esc(l.msg)}</div>`).join('')}</div>`;
+
+  el.innerHTML=html;
+
   const gon=(i,f)=>{ const b=$(i); if(b)b.onclick=f; };
   const u=$('gsUrl'); if(u)u.oninput=e=>{ S.gsUrl=e.target.value.trim(); save(); };
   const x=$('gsExecInput'); if(x)x.oninput=e=>{
+    const was=gsHasExec();
     S.gsExec=e.target.value.trim(); save();
-    const ok=gsHasExec();
-    const pb=$('gsPushBtn'); if(pb)pb.disabled=gsBusy||!ok;
-    const cb=$('gsCheckBtn'); if(cb)cb.disabled=!ok;
+    /* พอใส่ /exec ครบ หน้าตาต้องเปลี่ยนจากโหมดตั้งค่าเป็นโหมดใช้งานทันที */
+    if(gsHasExec()!==was){ gsCfgOpen=false; renderGsBox(); }
   };
   gon('gsSyncBtn',gsSync); gon('gsPushBtn',gsPush); gon('gsCheckBtn',gsCheck);
-  gon('gsBkNow',()=>runBackup(false));
-  const ab=$('gsAutoBk'); if(ab)ab.onchange=e=>{ S.autoBackup=e.target.checked; save(); updateBackupNag(); };
   gon('gsConnBtn',gsConnScript); gon('gsSeedBtn',gsSeed);
+  gon('gsBkNow',()=>runBackup(false));
+  gon('gsCfgBtn',()=>{ gsCfgOpen=!gsCfgOpen; renderGsBox(); });
+  const ab=$('gsAutoBk'); if(ab)ab.onchange=e=>{ S.autoBackup=e.target.checked; save(); renderGsBox(); updateBackupNag(); };
   gon('gsOpenBtn',()=>{ const i=gsSheetId(S.gsUrl);
     if(i)window.open('https://docs.google.com/spreadsheets/d/'+i+'/edit','_blank','noopener'); });
 }
