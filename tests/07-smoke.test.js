@@ -112,9 +112,8 @@ group('แอปยังทำงานครบ', function(){
 group('ไม่มีข้อมูลอ้างอิงเลยก็ต้องไม่พัง', function(){
   test('ไม่มี Areas / Routes / Tiers', function(){
     reset();
-    S.ref={areas:[],routes:[],tiers:[]};
+    S.ref={areas:[],routes:[]};
     refRebuild();
-    no(tiersOn());
     eq(REF.routes.size, 0);
     eq(REF.areas.zones.size, 0);
     S.adm=[];

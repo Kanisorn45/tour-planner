@@ -22,18 +22,7 @@ group('ฟอร์มมีช่องครบตามคอลัมน์�
     ok(document.getElementById('dfClose'));
   });
 
-  test('ไม่มีแท็บ Tiers = ไม่โชว์ช่องราคาตามขนาดกรุ๊ป', function(){
-    reset(); S.ref={areas:[],routes:[],tiers:[]}; refRebuild();
-    openForm('adm');
-    no(document.getElementById('dfT0'), 'ไม่ควรมีช่องที่ยังไม่มีความหมาย');
-  });
 
-  test('มีแท็บ Tiers = โชว์ช่องเท่าจำนวนช่วงจริง', function(){
-    reset(); fixture(); openForm('adm');
-    eq(document.querySelectorAll('#dbFormFields .tier-row input').length, REF.tiers.length);
-    ok(document.getElementById('dfT0'));
-    ok(document.getElementById('dfT'+(REF.tiers.length-1)));
-  });
 });
 
 group('บันทึกแล้วค่าเข้าไปจริง', function(){
@@ -43,14 +32,12 @@ group('บันทึกแล้วค่าเข้าไปจริง', f
     setVal('dfNameTh','วัดทดสอบ'); setVal('dfNameEn','Test Wat'); setVal('dfPrice','50');
     setVal('dfZone','ในเมือง'); setVal('dfDur','1 ชม 30 นาที');
     setVal('dfOpen','08:00'); setVal('dfClose','17:00');
-    setVal('dfT0','100'); setVal('dfT1','90');
     saveDbForm();
     var rec=S.customAdm[S.customAdm.length-1];
     eq(rec.zone,'ในเมือง');
     eq(rec.dur,90,'"1 ชม 30 นาที" ต้องเป็น 90');
     eq(rec.open,480);
     eq(rec.close,1020);
-    eq(rec.tiers,[100,90,null,null],'ช่องว่างเก็บเป็น null');
   });
 
   test('ร้านอาหาร — เก็บครบเหมือนกัน', function(){
@@ -69,7 +56,6 @@ group('บันทึกแล้วค่าเข้าไปจริง', f
     saveDbForm();
     var rec=S.customAdm[S.customAdm.length-1];
     eq(rec.zone,null); eq(rec.dur,null); eq(rec.open,null); eq(rec.close,null);
-    eq(rec.tiers,null);
   });
 
   test('เปิดแก้ของเดิม ค่าที่เคยกรอกต้องขึ้นมาให้เห็น', function(){
@@ -79,7 +65,6 @@ group('บันทึกแล้วค่าเข้าไปจริง', f
     eq(document.getElementById('dfOpen').value,'08:00');
     eq(document.getElementById('dfClose').value,'17:00');
     ok(document.getElementById('dfDur').value.indexOf('45')>=0, 'ใช้เวลาต้องขึ้นมา');
-    eq(document.getElementById('dfT0').value,'100');
   });
 
   test('อ่านเวลาแบบไหนก็ได้เหมือนตอนนำเข้าจากชีต', function(){

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-18 10:34 จาก tour_pricing_app_v27.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-18 10:50 จาก tour_pricing_app_v28.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -702,8 +702,30 @@ body.dnd-active *{cursor:grabbing!important}
 .gs-log{margin-top:9px;font-size:11px;line-height:1.75;font-family:var(--mono);color:var(--ink-faint);max-height:168px;overflow:auto}
 /* ---------- v26 · กล่องเชื่อม Google Sheet (แบบย่อ) ---------- */
 .flabel .fhint{color:var(--ink-faint);font-weight:400;font-size:10px;margin-left:4px}
-.tier-row{gap:6px}
-.tier-row .fcol{min-width:0}
+
+/* ---------- v28 · ตัวช่วยกรอกรหัสกรุ๊ป ---------- */
+.gc-box{display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;margin:8px 0 4px}
+.gc-f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.gc-f label{font-size:10px;color:var(--ink-faint);letter-spacing:.4px}
+.gc-f .txt{width:76px;padding:8px 9px;font-family:var(--mono);font-weight:700;text-transform:uppercase;text-align:center}
+.gc-f.gc-date{flex:0 0 auto}
+.gc-auto{
+  display:block;width:76px;padding:8px 9px;text-align:center;
+  font-family:var(--mono);font-weight:700;font-size:13px;
+  color:var(--ink-dim);background:var(--panel2);border:1px dashed var(--line);border-radius:8px;
+}
+.gc-go{
+  background:var(--panel2);border:1px solid var(--gold);color:var(--gold-bright);
+  font-size:11px;font-weight:700;padding:9px 13px;border-radius:8px;cursor:pointer;white-space:nowrap;
+}
+.gc-go:hover{background:var(--gold);color:#111}
+.gc-go:disabled{opacity:.4;cursor:default;border-color:var(--line);color:var(--ink-faint);background:none}
+.gc-hint{font-size:11px;color:var(--ink-faint);font-family:var(--mono);margin-bottom:12px;min-height:14px}
+.gc-hint b{color:var(--gold)}
+@media (max-width:430px){
+  .gc-f .txt,.gc-auto{width:64px}
+  .gc-go{flex:1 1 100%}
+}
 
 .gs-step{display:flex;gap:9px;align-items:flex-start;margin-bottom:10px}
 .gs-step>b{
@@ -813,7 +835,14 @@ input.px:focus{outline:none;border-color:var(--gold)}
         <div class="card-title"><div class="en">TRIP INPUT</div><div class="th">ข้อมูลทัวร์</div></div></div>
       <div class="card-body">
         <label class="flabel">Group Code / รหัสกรุ๊ป · ชื่อโปรแกรม</label>
-        <input class="txt" id="quoteName" style="font-family:var(--thai);font-size:15px;padding:13px 12px;margin-bottom:14px" placeholder="เช่น GST1708NST">
+        <input class="txt" id="quoteName" style="font-family:var(--thai);font-size:15px;padding:13px 12px" placeholder="เช่น TS1910GB">
+        <div class="gc-box">
+          <div class="gc-f"><label>บริษัท</label><input class="txt" id="gcCo" maxlength="6" placeholder="TS"></div>
+          <div class="gc-f gc-date"><label>วัน/เดือน</label><span class="gc-auto" id="gcDate">—</span></div>
+          <div class="gc-f"><label>ลูกค้า</label><input class="txt" id="gcCust" maxlength="8" placeholder="GB"></div>
+          <button class="gc-go" id="gcGo" type="button">สร้างรหัส →</button>
+        </div>
+        <div class="gc-hint" id="gcHint"></div>
         <div class="tripbar">
           <div class="trip-field" style="flex:0 0 auto">
             <label>👥 จำนวนคน / Pax</label>
@@ -841,7 +870,6 @@ input.px:focus{outline:none;border-color:var(--gold)}
   <div class="page" id="pagePlan">
 
   <div class="plan-tools"><button class="btn-ghost" id="planCollapseAll" type="button">⌄ ย่อทั้งหมด</button></div>
-  <div class="note" id="tierNote" style="display:none;border-left-color:var(--gold)"></div>
 
   <!-- 1. ADMISSION -->
   <section class="card" data-card="adm">
@@ -1210,7 +1238,7 @@ const KEY='tourPriceBuilder_v1';
 /* ============ STATE ============ */
 const DEFAULT_RATES={Chinese:1500,English:1500,Indo:1500,Japanese:2000,Biker:1500,Driver:0};
 let S={
-  pax:2, paxTypes:[{id:'pt1',code:'S',label:'ลูกทัวร์',count:2,pay:true}], days:3, quoteName:'', startDate:'', endDate:'',
+  pax:2, paxTypes:[{id:'pt1',code:'S',label:'ลูกทัวร์',count:2,pay:true}], days:3, quoteName:'', gcCo:'TS', gcCust:'', startDate:'', endDate:'',
   adm:[], res:[], guideCount:{}, guideRates:{...DEFAULT_RATES},
   cars:[], carSel:[], hotels:[], hotelSel:[], carFuel:4000,
   customAdm:[], customRes:[],
@@ -1282,7 +1310,7 @@ function pxChange(e){
   const v=Math.max(0,+t.value||0), id=t.dataset.id;
   if(t.dataset.px==='car'){ const s=(S.carSel||[]).find(x=>x.id===id); if(s)s.price=v; }
   else if(t.dataset.px==='hotel'){ const s=(S.hotelSel||[]).find(x=>x.id===id); if(s)s.price=v; }
-  else if(t.dataset.px==='res'){ const s=(S.res||[]).find(x=>x.id===id); if(s){ s.price=v; s.pxLock=true; } }
+  else if(t.dataset.px==='res'){ const s=(S.res||[]).find(x=>x.id===id); if(s)s.price=v; }
   recalc(); save();
 }
 function fmtD(date){ return date? TH_DOW[date.getDay()]+' '+date.getDate()+' '+TH_MON[date.getMonth()] : ''; }
@@ -1395,8 +1423,50 @@ async function load(){
 }
 
 /* ============ RENDER: settings ============ */
+/* ============================================================
+   v28 · ตัวช่วยกรอกรหัสกรุ๊ป
+   รูปแบบที่ใช้จริง: [รหัสบริษัท] + [วันเดือน DDMM] + [รหัสลูกค้า]
+   เช่น TS + 1910 + GB = TS1910GB
+   วันเดือนดึงจากวันเดินทางวันแรกอัตโนมัติ ไม่ต้องพิมพ์ซ้ำ
+   ช่องชื่อโปรแกรมยังพิมพ์เองทับได้เสมอ ตัวช่วยนี้แค่ "สร้างให้"
+   ============================================================ */
+const gcUp=s=>String(s==null?'':s).trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+/* DDMM จากวันเดินทางวันแรก */
+function gcDatePart(){
+  const d=parseISO(S.startDate);
+  return d?(pad2(d.getDate())+pad2(d.getMonth()+1)):'';
+}
+function gcBuild(){
+  const co=gcUp(S.gcCo), dt=gcDatePart(), cu=gcUp(S.gcCust);
+  return (co&&dt&&cu)?(co+dt+cu):'';
+}
+function renderGroupCode(){
+  const co=$('gcCo'), cu=$('gcCust'), dt=$('gcDate'), go=$('gcGo'), hint=$('gcHint');
+  if(!co||!cu)return;
+  if(document.activeElement!==co)co.value=S.gcCo||'';
+  if(document.activeElement!==cu)cu.value=S.gcCust||'';
+  const dp=gcDatePart();
+  if(dt)dt.textContent=dp?(dp.slice(0,2)+'/'+dp.slice(2)):'—';
+  const code=gcBuild();
+  if(go)go.disabled=!code||code===(S.quoteName||'').trim();
+  if(hint){
+    if(!dp)hint.innerHTML='ใส่วันเดินทางก่อน แล้วรหัสจะสร้างให้อัตโนมัติ';
+    else if(!code)hint.innerHTML='กรอกรหัสบริษัทและรหัสลูกค้า';
+    else if(code===(S.quoteName||'').trim())hint.innerHTML=`ใช้รหัส <b>${esc(code)}</b> อยู่แล้ว`;
+    else hint.innerHTML=`จะได้ <b>${esc(code)}</b> — กดปุ่มเพื่อใส่ในช่องด้านบน`;
+  }
+}
+function applyGroupCode(){
+  const code=gcBuild(); if(!code)return;
+  S.quoteName=code;
+  const q=$('quoteName'); if(q)q.value=code;
+  renderGroupCode(); renderHome(); save();
+  toast('ตั้งรหัสกรุ๊ปเป็น '+code);
+}
+
 function renderSettings(){
   $('quoteName').value=S.quoteName||'';
+  renderGroupCode();
   renderPaxButton();
   renderTripDates();
 }
@@ -1422,6 +1492,7 @@ function renderPaxModal(){
 }
 function openPaxModal(){ renderPaxModal(); $('paxModal').classList.add('open'); }
 function renderTripDates(){
+  renderGroupCode();   /* v28 Â· à¹à¸à¸¥à¸µà¹à¸¢à¸à¸§à¸±à¸à¹à¸à¸´à¸à¸à¸²à¸ à¸§à¸±à¸à¹à¸à¸·à¸­à¸à¹à¸à¸£à¸«à¸±à¸ªà¸à¸£à¸¸à¹à¸à¸à¹à¸­à¸à¸à¸²à¸¡à¸à¹à¸§à¸¢ */
   const st=$('startTrigger'), et=$('endTrigger');
   st.textContent=S.startDate?fmtDMY(S.startDate):'— เลือกวัน —'; st.classList.toggle('set',!!S.startDate);
   et.textContent=S.endDate?fmtDMY(S.endDate):'— เลือกวัน —'; et.classList.toggle('set',!!S.endDate);
@@ -1595,7 +1666,7 @@ function renderAdmTable(){
 function toggleAdm(ref,checked){
   if(!admDaySel.size){ toast('เลือกวันก่อน'); return false; }
   if(checked){
-    const x=admRec(ref); let price=tierPrice(x);
+    const x=admRec(ref); let price=x.price;
     if(price==null){ const p=prompt('รายการนี้ยังไม่มีราคาในไฟล์ — กรอกราคา (บาท):'); price=parseFloat(p); if(isNaN(price))return false; }
     const per=isPerson(x.unit);
     [...admDaySel].forEach(d=>{ if(!S.adm.some(it=>!it.kind&&it.ref===ref&&it.day===d)) S.adm.push({id:nid(),ref,day:d,units:per?null:1,price}); });
@@ -2153,7 +2224,7 @@ function updateResNote(){
 function addRes(){
   const r=$('resSelect').value; if(r===''){toast('เลือกร้านก่อน');return;}
   if(!resDaySel.size){ toast('เลือกวันก่อน (กดปุ่มวัน กดได้หลายวัน)'); return; }
-  const x=resRec(r); let price=tierPrice(x);
+  const x=resRec(r); let price=x.price;
   if(price==null){ const p=prompt('ร้านนี้ยังไม่มีราคาในไฟล์ — กรอกราคา (บาท/ท่าน):'); price=parseFloat(p); if(isNaN(price))return; }
   let replaced=0;
   [...resDaySel].forEach(day=>{
@@ -2386,9 +2457,7 @@ function renderHotelItems(){
 
 /* ============ TOTALS ============ */
 function recalc(){
-  retierAll();          /* v23 · ปรับราคาตามช่วง PAX ก่อนวาด — recalc คือทางผ่านเดียวของทุกการเปลี่ยนแปลง */
   rebuildTL();          /* v24 · คำนวณไทม์ไลน์ก่อนวาด เพราะ admItemHTML ไปอ่านผลจาก TL */
-  renderTierNote();
   const a=renderAdm(), c=renderCarItems(), g=guideTotal(), r=renderRes(), h=renderHotelItems();
   renderGuideSub();
   const cost=a+c+g+r+h;
@@ -3317,9 +3386,8 @@ function selFld(label,id,opts,val){ return `<div class="frow"><div class="fcol">
 
 /* v27 · ช่องที่ใช้กับไทม์ไลน์และราคาตามช่วง PAX
    เดิมมีแต่ในคอลัมน์ชีต แต่ฟอร์มในแอปกรอกไม่ได้ ทำให้เพิ่มจากแอปแล้วช่องพวกนี้ว่างเสมอ
-   ราคา T1-T4 โผล่เฉพาะตอนมีแท็บ Tiers เท่านั้น ไม่งั้นเป็นช่องว่างที่ไม่มีความหมาย */
+   เดิมมีแต่ในคอลัมน์ชีต แต่ฟอร์มในแอปกรอกไม่ได้ ทำให้เพิ่มจากแอปแล้วช่องพวกนี้ว่างเสมอ */
 function dfExtraHtml(rec){
-  const t=Array.isArray(rec.tiers)?rec.tiers:[];
   let h=`<div class="frow"><div class="fcol"><label class="flabel">โซน <small class="fhint">ใช้คิดเวลาเดินทาง · ว่าง = ใช้จังหวัด</small></label>
       <input class="txt" id="dfZone" value="${esc(rec.zone||'')}" placeholder="เช่น ในเมือง"></div>
     <div class="fcol" style="flex:0 0 120px"><label class="flabel">ใช้เวลา</label>
@@ -3329,14 +3397,6 @@ function dfExtraHtml(rec){
     <div class="fcol" style="flex:0 0 110px"><label class="flabel">ปิด</label>
       <input class="txt" id="dfClose" value="${rec.close!=null?fmtClock(rec.close):''}" placeholder="17:00"></div>
     <div class="fcol"></div></div>`;
-  if(tiersOn()){
-    h+=`<label class="flabel" style="margin-top:10px">ราคาตามขนาดกรุ๊ป <small class="fhint">เว้นว่าง = ใช้ราคาด้านบน</small></label><div class="frow tier-row">`+
-      REF.tiers.map((tr,i)=>{
-        const rng=(tr.max==null)?(tr.min+'+'):(tr.min+'–'+tr.max);
-        return `<div class="fcol"><label class="flabel">${esc(tr.code||'T'+(i+1))} <small class="fhint">${rng} คน</small></label>
-          <input class="txt" id="dfT${i}" type="number" min="0" value="${t[i]!=null?t[i]:''}" placeholder="—"></div>`;
-      }).join('')+`</div>`;
-  }
   return h;
 }
 /* อ่านค่าจากช่องที่เพิ่มมา · ว่าง = ถอนค่าออก ไม่ใช่เก็บเป็น 0 */
@@ -3344,10 +3404,6 @@ function dfExtraRead(){
   const g=id=>{ const e=$(id); return e?e.value.trim():''; };
   const out={ zone:g('dfZone')||null, dur:g('dfDur')?parseDur(g('dfDur')):null,
               open:g('dfOpen')?parseClock(g('dfOpen')):null, close:g('dfClose')?parseClock(g('dfClose')):null };
-  if(tiersOn()){
-    const arr=REF.tiers.map((_,i)=>{ const raw=g('dfT'+i); return raw===''?null:(+raw||0); });
-    out.tiers=arr.some(v=>v!=null)?arr:null;
-  }
   return out;
 }
 
@@ -3701,94 +3757,6 @@ function impDow(v){
 /* ---- ตัวช่วยเขียนค่ากลับลงชีต (ต้องอ่านกลับเข้ามาได้เหมือนเดิม) ---- */
 const fmtClockCell=m=>(m==null?'':fmtClock(m));
 const dowCell=c=>(!Array.isArray(c)||!c.length)?'':c.slice().sort((a,b)=>a-b).map(k=>TH_DOW[k]).join(',');
-/* ราคาตาม tier · เว้นว่าง = สืบทอดราคาหลัก · 0 = ฟรีจริง ๆ (คนละความหมาย) */
-function impTiers(g){
-  const out=['p1','p2','p3','p4'].map(k=>{
-    const raw=String(g(k)==null?'':g(k)).trim();
-    return raw===''?null:impNum(raw);
-  });
-  return out.some(v=>v!=null)?out:null;
-}
-const tierCells=x=>{
-  const t=Array.isArray(x.tiers)?x.tiers:[null,null,null,null];
-  return [0,1,2,3].map(i=>(t[i]==null?'':t[i]));
-};
-/* ราคาที่ใช้จริงตามขนาดกรุ๊ป · tiers ยังไม่ถูกใช้คิดเงินจนกว่าจะถึง P1
-   แต่เก็บค่าไว้ตั้งแต่ตอนนี้ เพื่อให้เริ่มกรอกชีตได้เลย */
-function tierIndexOf(pax,tiers){
-  if(!Array.isArray(tiers)||!tiers.length)return -1;
-  for(let i=0;i<tiers.length;i++){
-    const t=tiers[i]; if(!t)continue;
-    const lo=t.min==null?1:+t.min, hi=(t.max==null||t.max==='')?Infinity:+t.max;
-    if(pax>=lo&&pax<=hi)return i;
-  }
-  return -1;
-}
-function priceFor(rec,pax,tiers){
-  if(!rec)return null;
-  const i=tierIndexOf(pax,tiers);
-  if(i>=0&&Array.isArray(rec.tiers)&&rec.tiers[i]!=null)return rec.tiers[i];
-  return rec.price;
-}
-
-/* ============================================================
-   v23 · P1 — ราคาตามช่วงจำนวน PAX
-   หัวใจ: ราคาไม่ได้ถูก "แช่แข็ง" ตอนกดเลือกอีกต่อไป
-   เปลี่ยนจำนวนคนเมื่อไหร่ ราคาของรายการที่ยังไม่ถูกแก้ด้วยมือจะขยับตาม
-   รายการที่ผู้ใช้พิมพ์ราคาเองจะติดธง pxLock และไม่ถูกทับเด็ดขาด
-   ไม่มีแท็บ Tiers = ทุกอย่างทำงานเหมือน v22 เป๊ะ ๆ
-   ============================================================ */
-const tiersOn=()=>Array.isArray(REF.tiers)&&REF.tiers.length>0;
-const curTierIdx=()=>tierIndexOf(headTotal(),REF.tiers);
-function curTier(){ const i=curTierIdx(); return i>=0?REF.tiers[i]:null; }
-function tierLabel(){
-  if(!tiersOn())return '';
-  const t=curTier();
-  if(!t)return `⚠️ ${headTotal()} คน ไม่อยู่ในช่วงไหนเลย — ใช้ราคาตั้งต้น`;
-  const hi=(t.max==null)?'ขึ้นไป':t.max;
-  return `${t.code||'T'+(curTierIdx()+1)}${t.name?' · '+t.name:''} (${t.min}–${hi} คน)`;
-}
-/* ราคาที่ควรเป็นของรายการนี้ ณ จำนวนคนปัจจุบัน */
-const tierPrice=rec=>rec?priceFor(rec,headTotal(),REF.tiers):null;
-
-/* คำนวณราคาใหม่ให้เฉพาะรายการที่ยังไม่ถูกแก้ด้วยมือ · คืนจำนวนที่เปลี่ยน */
-function retierAll(){
-  if(!tiersOn())return 0;
-  let n=0;
-  (S.adm||[]).forEach(it=>{
-    if(it.kind||it.pxLock)return;
-    const p=tierPrice(admRec(it.ref));
-    if(p!=null&&+it.price!==+p){ it.price=+p; n++; }
-  });
-  (S.res||[]).forEach(it=>{
-    if(it.pxLock)return;
-    const p=tierPrice(resRec(it.ref));
-    if(p!=null&&+it.price!==+p){ it.price=+p; n++; }
-  });
-  return n;
-}
-/* ปลดล็อกทุกรายการ แล้วดึงกลับมาใช้ราคาตามช่วง PAX */
-function unlockAllPrices(){
-  let n=0;
-  (S.adm||[]).forEach(it=>{ if(it.pxLock){ delete it.pxLock; n++; } });
-  (S.res||[]).forEach(it=>{ if(it.pxLock){ delete it.pxLock; n++; } });
-  retierAll();
-  return n;
-}
-const lockedCount=()=>(S.adm||[]).filter(it=>it.pxLock).length+(S.res||[]).filter(it=>it.pxLock).length;
-
-/* แถบบอกว่าตอนนี้กำลังใช้ราคาช่วงไหน — ผู้ใช้ต้องเห็นได้ทันทีว่าทำไมตัวเลขขยับ */
-function renderTierNote(){
-  const el=$('tierNote'); if(!el)return;
-  if(!tiersOn()){ el.style.display='none'; return; }
-  const lk=lockedCount();
-  el.style.display='block';
-  el.innerHTML=`💰 ราคาที่ใช้อยู่: <b>${esc(tierLabel())}</b> — เปลี่ยนจำนวนคนแล้วราคาค่าเข้า/ร้านอาหารจะขยับตามเอง`+
-    (lk?`<br>🔒 มี <b>${lk}</b> รายการที่คุณแก้ราคาเอง ระบบจะไม่ทับให้ `+
-        `<button class="rtag" id="tierUnlock" type="button" style="margin-left:4px">↺ คืนราคาตามช่วง PAX</button>`:'');
-  const b=$('tierUnlock');
-  if(b)b.onclick=()=>{ const n=unlockAllPrices(); recalc(); renderOverview(); save(); toast(`คืนราคาอัตโนมัติ ${n} รายการแล้ว`); };
-}
 
 /* ============================================================
    v23 · เวลาเดินทางแบบมีลำดับชั้น
@@ -3863,13 +3831,9 @@ const IMP_SCHEMA={
       {k:'dur',  label:'ใช้เวลา', req:false, alias:['ใช้เวลา','ระยะเวลา','duration','dur']},
       {k:'open', label:'เปิด', req:false, alias:['เปิด','เวลาเปิด','open','opens']},
       {k:'close',label:'ปิด', req:false, alias:['ปิด','เวลาปิด','close','closes']},
-      {k:'closed',label:'วันหยุด', req:false, alias:['วันหยุด','ปิดทำการ','วันปิด','closed day','holiday']},
-      {k:'p1',   label:'ราคา T1', req:false, alias:['ราคา t1','ราคาt1','price t1','t1']},
-      {k:'p2',   label:'ราคา T2', req:false, alias:['ราคา t2','ราคาt2','price t2','t2']},
-      {k:'p3',   label:'ราคา T3', req:false, alias:['ราคา t3','ราคาt3','price t3','t3']},
-      {k:'p4',   label:'ราคา T4', req:false, alias:['ราคา t4','ราคาt4','price t4','t4']}
+      {k:'closed',label:'วันหยุด', req:false, alias:['วันหยุด','ปิดทำการ','วันปิด','closed day','holiday']}
     ],
-    sample:['เชียงใหม่','วัดพระธาตุดอยสุเทพ','Doi Suthep Temple','ค่าเข้า','50','ท่าน','แต่งกายสุภาพ','ในเมือง','45','06:00','20:00','','','45','40','35'],
+    sample:['เชียงใหม่','วัดพระธาตุดอยสุเทพ','Doi Suthep Temple','ค่าเข้า','50','ท่าน','แต่งกายสุภาพ','ในเมือง','45','06:00','20:00',''],
     build(g){
       const th=g('th'), en=g('en'), price=impNum(g('price'));
       if(!th&&!en)return{err:'ไม่มีชื่อสถานที่'};
@@ -3880,10 +3844,10 @@ const IMP_SCHEMA={
       return{data:{area:g('area')||admAreaList()[0], th:th||en, en:en||th, item:g('item')||null, price, unit, note:g('note')||null,
         zone:g('zone')||null, dur:parseDur(g('dur')),
         open:parseClock(g('open')), close:parseClock(g('close')),
-        closed:impDow(g('closed')), tiers:impTiers(g)}};
+        closed:impDow(g('closed'))}};
     },
     toRow:x=>[x.area||'',x.th||'',x.en||'',x.item||'',x.price==null?'':x.price,String(x.unit||'').replace('บาท/',''),x.note||'',
-              x.zone||'',x.dur==null?'':x.dur,fmtClockCell(x.open),fmtClockCell(x.close),dowCell(x.closed)].concat(tierCells(x)),
+              x.zone||'',x.dur==null?'':x.dur,fmtClockCell(x.open),fmtClockCell(x.close),dowCell(x.closed)],
     label:d=>(d.en||d.th)+(d.item?' · '+d.item:''),
     sub:d=>`${d.area} · ฿${d.price} ${d.unit}`
   },
@@ -3899,13 +3863,9 @@ const IMP_SCHEMA={
       {k:'dur',  label:'ใช้เวลา', req:false, alias:['ใช้เวลา','ระยะเวลา','duration','dur']},
       {k:'open', label:'เปิด', req:false, alias:['เปิด','เวลาเปิด','open','opens']},
       {k:'close',label:'ปิด', req:false, alias:['ปิด','เวลาปิด','close','closes']},
-      {k:'closed',label:'วันหยุด', req:false, alias:['วันหยุด','ปิดทำการ','วันปิด','closed day','holiday']},
-      {k:'p1',   label:'ราคา T1', req:false, alias:['ราคา t1','ราคาt1','price t1','t1']},
-      {k:'p2',   label:'ราคา T2', req:false, alias:['ราคา t2','ราคาt2','price t2','t2']},
-      {k:'p3',   label:'ราคา T3', req:false, alias:['ราคา t3','ราคาt3','price t3','t3']},
-      {k:'p4',   label:'ราคา T4', req:false, alias:['ราคา t4','ราคาt4','price t4','t4']}
+      {k:'closed',label:'วันหยุด', req:false, alias:['วันหยุด','ปิดทำการ','วันปิด','closed day','holiday']}
     ],
-    sample:['เชียงใหม่','ร้านตัวอย่าง','Sample Restaurant','250','ไม่','เซ็ตอาหารเหนือ','ในเมือง','60','10:00','21:00','','250','240','220','200'],
+    sample:['เชียงใหม่','ร้านตัวอย่าง','Sample Restaurant','250','ไม่','เซ็ตอาหารเหนือ','ในเมือง','60','10:00','21:00',''],
     build(g){
       const th=g('th'), en=g('en'), price=impNum(g('price'));
       if(!th&&!en)return{err:'ไม่มีชื่อร้าน'};
@@ -3913,10 +3873,10 @@ const IMP_SCHEMA={
       return{data:{area:g('area')||DB.resAreas[0], th:th||en, en:en||th, price, unit:'บาท/ท่าน', halal:impBool(g('halal')), note:g('note')||null,
         zone:g('zone')||null, dur:parseDur(g('dur')),
         open:parseClock(g('open')), close:parseClock(g('close')),
-        closed:impDow(g('closed')), tiers:impTiers(g)}};
+        closed:impDow(g('closed'))}};
     },
     toRow:x=>[x.area||'',x.th||'',x.en||'',x.price==null?'':x.price,x.halal?'ใช่':'ไม่',x.note||'',
-              x.zone||'',x.dur==null?'':x.dur,fmtClockCell(x.open),fmtClockCell(x.close),dowCell(x.closed)].concat(tierCells(x)),
+              x.zone||'',x.dur==null?'':x.dur,fmtClockCell(x.open),fmtClockCell(x.close),dowCell(x.closed)],
     label:d=>(d.en||d.th)+(d.halal?' 🕌':''),
     sub:d=>`${d.area} · ฿${d.price}/ท่าน`
   },
@@ -4186,13 +4146,10 @@ const GS_REF=[
      active:['ใช้งาน','active','ใช้'], order:['ลำดับ','order'], note:['หมายเหตุ','note']}},
   {key:'routes',sheet:'Routes', label:'เวลาเดินทาง', spec:{
      from:['จาก','from'], to:['ถึง','to'], mins:['นาที','mins','minutes'],
-     km:['กม.','กม','km','ระยะทาง'], note:['หมายเหตุ','note']}},
-  {key:'tiers', sheet:'Tiers',  label:'ช่วง PAX',     spec:{
-     code:['รหัส','code','tier'], min:['ตั้งแต่','min'], max:['ถึง','max'],
-     name:['ชื่อเรียก','name','ชื่อ']}}
+     km:['กม.','กม','km','ระยะทาง'], note:['หมายเหตุ','note']}}
 ];
 /* ดัชนีที่สร้างจากแท็บอ้างอิง — สร้างใหม่ทุกครั้งที่ข้อมูลเปลี่ยน */
-let REF={areas:buildAreas([]), routes:buildRoutes([]), tiers:[]};
+let REF={areas:buildAreas([]), routes:buildRoutes([])};
 
 function refParse(rows,spec){
   const head=(rows[0]||[]).map(impNorm);
@@ -4216,11 +4173,6 @@ function refRebuild(){
   const r=S.ref||{};
   REF.areas=buildAreas((r.areas||[]).map(x=>({prov:x.prov,zone:x.zone,active:refActive(x.active)})));
   REF.routes=buildRoutes(r.routes||[]);
-  REF.tiers=(r.tiers||[]).map(x=>({
-    code:String(x.code||'').trim(),
-    min:impNum(x.min), max:(String(x.max==null?'':x.max).trim()===''?null:impNum(x.max)),
-    name:String(x.name||'').trim()
-  })).filter(t=>t.min!=null);
 }
 /* โซนที่พิมพ์ไว้ในข้อมูลจริง — เอาไปเทียบกับทะเบียนเพื่อจับโซนผีจากการพิมพ์ผิด */
 function zonesInUse(){
@@ -4955,7 +4907,12 @@ function wire(){
   });
   wireDP('start'); wireDP('end');
   document.addEventListener('click',()=>closeDP());
-  $('quoteName').oninput=e=>{S.quoteName=e.target.value; renderOverview(); renderConfirm(); save();};
+  $1  /* v28 · ตัวช่วยรหัสกรุ๊ป */
+  ['gcCo','gcCust'].forEach(id=>{ const el=$(id); if(!el)return;
+    el.oninput=e=>{ const k=(id==='gcCo')?'gcCo':'gcCust'; S[k]=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''); e.target.value=S[k]; renderGroupCode(); save(); };
+    el.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); applyGroupCode(); } };
+  });
+  { const g=$('gcGo'); if(g)g.onclick=applyGroupCode; }
 
   $('admAreas').onclick=e=>{
     const adel=e.target.closest('[data-areadel]');
@@ -5017,7 +4974,7 @@ function wire(){
       const scope=e.currentTarget;
       const it=S.adm.find(x=>x.id===sv.dataset.edsave);
       if(it){ const pE=scope.querySelector('#edPrice'); const p=parseFloat(pE&&pE.value);
-        if(!isNaN(p)){ if(p!==+it.price)it.pxLock=true; it.price=p; }   /* v23 · แก้ราคาเอง = ล็อกไม่ให้ระบบทับ */
+        if(!isNaN(p))it.price=p;
         const eu=scope.querySelector('#edUnits'); if(eu){ it.units=Math.max(1,+eu.value||1); }
         /* v24 · ใช้เวลา และเวลาตรึง — ว่างคือถอนค่าที่ตั้งเอง กลับไปใช้ค่าจากชีต */
         const ed=scope.querySelector('#edDur');
@@ -5201,7 +5158,7 @@ async function init(){
   await loadSaved();
   /* v23 · สร้างดัชนีพื้นที่/เวลาเดินทางจากค่าที่เก็บไว้ในเครื่อง — ทำงานออฟไลน์ได้ทันที
      ไม่ต้องรอต่อเน็ต ชีตเป็นแค่ต้นทางตอนซิงค์ */
-  if(!S.ref||typeof S.ref!=='object')S.ref={areas:[],routes:[],tiers:[]};
+  if(!S.ref||typeof S.ref!=='object')S.ref={areas:[],routes:[]};
   if(S.autoBackup===undefined)S.autoBackup=true;
   refRebuild();
   // default travel dates: start = today, end = start + (days-1)

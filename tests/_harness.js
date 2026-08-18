@@ -34,7 +34,7 @@ function reset(){
   S.adm=[]; S.res=[]; S.guideCount={}; S.carSel=[]; S.hotelSel=[];
   S.customAdm=[]; S.customRes=[];
   S.hotels=[]; S.transferOff={in:true,out:true};
-  S.ref={areas:[],routes:[],tiers:[]};
+  S.ref={areas:[],routes:[]};
   S.dayStart={}; S.tlStart=480; S.tlOn=true; S.itinTime=false;
   S.days=1; S.startDate='2026-08-18'; S.endDate='2026-08-18';
   S.paxTypes=[{id:'p',code:'S',label:'ลูกทัวร์',count:4,pay:true}];
@@ -53,15 +53,11 @@ function fixture(){
             {from:'นครศรีธรรมราช/*',to:'นครศรีธรรมราช/*',mins:60},
             {from:'กระบี่/*',to:'กระบี่/*',mins:40},
             {from:'นครศรีธรรมราช/*',to:'กระบี่/*',mins:180},
-            {from:'ในเมือง',to:'ขนอม',mins:90}],
-    tiers:[{code:'T1',min:1,max:5,name:'กรุ๊ปเล็ก'},
-           {code:'T2',min:6,max:10,name:'กรุ๊ปกลาง'},
-           {code:'T3',min:11,max:20,name:'กรุ๊ปใหญ่'},
-           {code:'T4',min:21,max:null,name:'เหมาคัน'}]
+            {from:'ในเมือง',to:'ขนอม',mins:90}]
   };
   S.customAdm=[
     {id:'A',area:'นครศรีธรรมราช',zone:'ในเมือง',th:'วัดA',en:'Wat A',item:'ค่าเข้าชม',
-     price:100,unit:'บาท/ท่าน',dur:45,open:480,close:1020,tiers:[100,90,80,70]},
+     price:100,unit:'บาท/ท่าน',dur:45,open:480,close:1020},
     {id:'B',area:'นครศรีธรรมราช',zone:'ในเมือง',th:'วัดB',en:'Wat B',price:50,unit:'บาท/ท่าน',dur:30},
     {id:'C',area:'นครศรีธรรมราช',zone:'ขนอม',th:'หาดC',en:'Beach C',price:0,unit:'บาท/ท่าน',dur:60},
     {id:'D',area:'นครศรีธรรมราช',zone:'ในเมือง',th:'ปิดจันทร์',en:'Closed Mon',price:50,unit:'บาท/ท่าน',dur:60,closed:[1]},
@@ -70,7 +66,7 @@ function fixture(){
     {id:'Z',area:'ภูเก็ต',zone:'ป่าตอง',th:'ไกลมาก',en:'Far Away',price:0,unit:'บาท/ท่าน',dur:30}
   ];
   S.customRes=[
-    {id:'R',area:'นครศรีธรรมราช',zone:'ในเมือง',th:'ร้านR',en:'Res R',price:250,unit:'บาท/ท่าน',dur:60,tiers:[250,240,220,200]},
+    {id:'R',area:'นครศรีธรรมราช',zone:'ในเมือง',th:'ร้านR',en:'Res R',price:250,unit:'บาท/ท่าน',dur:60},
     {id:'R2',area:'นครศรีธรรมราช',zone:'ขนอม',th:'ร้านD',en:'Res D',price:300,unit:'บาท/ท่าน',dur:60}
   ];
   refRebuild(); dbRefreshAll();

@@ -14,29 +14,21 @@ group('จับคู่คอลัมน์ · impAutoMap', function(){
 
   test('ชีตเต็มรูปแบบของ v24 (Places 16 คอลัมน์)', function(){
     var m=mapHead('adm',['จังหวัด','ชื่อไทย','ชื่ออังกฤษ','รายการ','ราคา','หน่วย','หมายเหตุ',
-                         'โซน','ใช้เวลา','เปิด','ปิด','วันหยุด','ราคา T1','ราคา T2','ราคา T3','ราคา T4']);
+                         'โซน','ใช้เวลา','เปิด','ปิด','วันหยุด']);
     eq(m.area,0); eq(m.th,1); eq(m.en,2); eq(m.item,3);
     eq(m.price,4,'ราคา เปล่า');
     eq(m.unit,5); eq(m.note,6); eq(m.zone,7); eq(m.dur,8);
-    eq(m.open,9); eq(m.close,10); eq(m.closed,11);
-    eq(m.p1,12); eq(m.p2,13); eq(m.p3,14); eq(m.p4,15);
+    eq(m.open,9); eq(m.close,10); eq(m.closed,11);
   });
 
   test('ชีตเก่าที่ยังไม่มีคอลัมน์ใหม่ ต้องยังอ่านได้', function(){
     var m=mapHead('adm',['จังหวัด','ชื่อไทย','ชื่ออังกฤษ','รายการ','ราคา','หน่วย','หมายเหตุ']);
-    eq(m.price,4);
-    eq(m.p1,-1,'ไม่มีก็ต้องเป็น -1 ไม่ใช่ไปหยิบของคนอื่น');
+    eq(m.price,4);
     eq(m.dur,-1);
     eq(m.zone,-1);
     eq(m.closed,-1);
   });
 
-  test('บั๊กหลัก: มี ราคา T1 แต่ไม่มี ราคา เปล่า', function(){
-    var m=mapHead('adm',['ชื่อไทย','ราคา T1','ราคา T2']);
-    eq(m.price,-1,'ห้ามไปขโมยค่าของ T1 มาเป็นราคาหลัก');
-    eq(m.p1,1);
-    eq(m.p2,2);
-  });
 
   test('คอลัมน์เดียวถูกจองแล้ว ช่องอื่นห้ามใช้ซ้ำ', function(){
     var m=mapHead('adm',['ชื่อไทย','ราคา']);
@@ -62,10 +54,10 @@ group('จับคู่คอลัมน์ · impAutoMap', function(){
     ok(m.open>=0,'open'); ok(m.close>=0,'close');
   });
 
-  test('Restaurants 15 คอลัมน์', function(){
+  test('Restaurants 11 คอลัมน์', function(){
     var m=mapHead('res',['จังหวัด','ชื่อไทย','ชื่ออังกฤษ','ราคา/ท่าน','ฮาลาล','หมายเหตุ',
-                         'โซน','ใช้เวลา','เปิด','ปิด','วันหยุด','ราคา T1','ราคา T2','ราคา T3','ราคา T4']);
-    eq(m.price,3); eq(m.halal,4); eq(m.zone,6); eq(m.dur,7); eq(m.p4,14);
+                         'โซน','ใช้เวลา','เปิด','ปิด','วันหยุด']);
+    eq(m.price,3); eq(m.halal,4); eq(m.zone,6); eq(m.dur,7); eq(m.closed,10);
   });
 
   test('Hotels เพิ่มโซนต่อท้าย', function(){
@@ -85,13 +77,13 @@ group('จับคู่คอลัมน์ · impAutoMap', function(){
 group('โครงคอลัมน์ต้องยาวเท่ากันทุกทาง', function(){
 
   test('จำนวนช่อง เท่ากับ ตัวอย่าง เท่ากับ แถวที่เขียนกลับ', function(){
-    eq(IMP_SCHEMA.adm.fields.length, 16, 'Places มี 16 ช่อง');
-    eq(IMP_SCHEMA.adm.sample.length, 16, 'ตัวอย่างต้องครบ 16');
-    eq(IMP_SCHEMA.adm.toRow({area:'a',th:'b',price:1}).length, 16, 'แถวที่เขียนกลับต้องครบ 16');
+    eq(IMP_SCHEMA.adm.fields.length, 12, 'Places มี 12 ช่อง');
+    eq(IMP_SCHEMA.adm.sample.length, 12, 'ตัวอย่างต้องครบ 12');
+    eq(IMP_SCHEMA.adm.toRow({area:'a',th:'b',price:1}).length, 12, 'แถวที่เขียนกลับต้องครบ 12');
 
-    eq(IMP_SCHEMA.res.fields.length, 15);
-    eq(IMP_SCHEMA.res.sample.length, 15);
-    eq(IMP_SCHEMA.res.toRow({area:'a',th:'b',price:1}).length, 15);
+    eq(IMP_SCHEMA.res.fields.length, 11);
+    eq(IMP_SCHEMA.res.sample.length, 11);
+    eq(IMP_SCHEMA.res.toRow({area:'a',th:'b',price:1}).length, 11);
 
     eq(IMP_SCHEMA.hotel.fields.length, 11);
     eq(IMP_SCHEMA.hotel.samples[0].length, 11);
@@ -100,7 +92,7 @@ group('โครงคอลัมน์ต้องยาวเท่ากั�
   test('นำเข้าแล้วเก็บค่าคอลัมน์ใหม่ครบ', function(){
     reset();
     var row=['นครศรีธรรมราช','วัดทดสอบ','Test Wat','ค่าเข้า','50','ท่าน','โน้ต',
-             'ในเมือง','1 ชม 30 นาที','08:00','17:00','จ,อ','','45','40','35'];
+             'ในเมือง','1 ชม 30 นาที','08:00','17:00','จ,อ'];
     var head=IMP_SCHEMA.adm.fields.map(function(f){ return f.label; });
     var keep=dbTab; dbTab='adm';
     impRows=[head,row]; impAutoMap();
@@ -113,17 +105,8 @@ group('โครงคอลัมน์ต้องยาวเท่ากั�
     eq(d.dur,90,'"1 ชม 30 นาที" ต้องเป็น 90 ไม่ใช่ 130');
     eq(d.open,480);
     eq(d.close,1020);
-    eq(d.closed,[1,2]);
-    eq(d.tiers,[null,45,40,35],'ช่องว่างเก็บเป็น null ไม่ใช่ 0');
+    eq(d.closed,[1,2]);
   });
 
-  test('ช่องราคา tier ว่างทั้งหมด = ไม่เก็บ tiers เลย', function(){
-    var g=function(k){ return ({p1:'',p2:'',p3:'',p4:''})[k]||''; };
-    eq(impTiers(g), null);
-  });
 
-  test('ราคา 0 ต่างจากช่องว่าง', function(){
-    var g=function(k){ return ({p1:'0',p2:'',p3:'',p4:''})[k]||''; };
-    eq(impTiers(g), [0,null,null,null], '0 คือฟรีจริง ว่างคือสืบทอด');
-  });
 });
