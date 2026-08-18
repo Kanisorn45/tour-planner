@@ -144,3 +144,48 @@ group('ตรวจลิงก์ Web App แล้วบอกเหตุผ�
     ok(why && why.textContent.length>0, 'ต้องมีข้อความอธิบาย ไม่ใช่เงียบ');
   });
 });
+
+group('ตรวจการเชื่อมต่อต้องไม่ล็อกปุ่ม', function(){
+  var EXEC='https://script.google.com/macros/s/AKfycbQ/exec';
+
+  test('โหมดเงียบ ไม่ตั้ง gsBusy ปุ่มยังกดได้', function(){
+    reset(); S.gsUrl='x'; S.gsExec=EXEC; gsCfgOpen=false;
+    gsBusy=false;
+    openDb('adm');
+    gsCheck(true);                       /* ไม่ await — ดูสถานะระหว่างกำลังตรวจ */
+    no(gsBusy, 'โหมดเงียบห้ามตั้ง gsBusy');
+    renderGsBox();
+    var sync=document.getElementById('gsSyncBtn');
+    var push=document.getElementById('gsPushBtn');
+    ok(sync && !sync.disabled, 'ปุ่มดึงต้องยังกดได้');
+    ok(push && !push.disabled, 'ปุ่มส่งต้องยังกดได้');
+    gsBusy=false;
+  });
+
+  test('กดปุ่มตรวจเอง = ล็อกปุ่มระหว่างรอ (ตั้งใจ)', function(){
+    reset(); S.gsUrl='x'; S.gsExec=EXEC; gsCfgOpen=true;
+    gsBusy=false;
+    openDb('adm');
+    gsCheck();
+    ok(gsBusy, 'กดเองต้องแสดงว่ากำลังทำงาน');
+    gsBusy=false;
+  });
+
+  test('ปุ่มตรวจไม่ส่ง event เข้าไปเป็นโหมดเงียบ', function(){
+    reset(); S.gsUrl='x'; S.gsExec=EXEC; gsCfgOpen=true; gsBusy=false;
+    openDb('adm'); renderGsBox();
+    var b=document.getElementById('gsCheckBtn');
+    ok(b, 'ต้องมีปุ่ม');
+    b.click();
+    ok(gsBusy, 'กดปุ่มต้องเข้าโหมดปกติ ไม่ใช่โหมดเงียบ');
+    gsBusy=false;
+  });
+
+  test('ไม่มีลิงก์ + โหมดเงียบ = ไม่เด้ง toast', function(){
+    reset(); S.gsExec=''; gsBusy=false;
+    var msgs=[], orig=toast;
+    toast=function(m){ msgs.push(m); };
+    try{ gsCheck(true); } finally { toast=orig; }
+    eq(msgs.length, 0, 'เบื้องหลังห้ามรบกวนผู้ใช้');
+  });
+});

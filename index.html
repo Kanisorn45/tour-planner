@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-18 11:42 จาก tour_pricing_app_v29.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-18 11:48 จาก tour_pricing_app_v30.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -4533,10 +4533,13 @@ async function gsReadAll(){
   return {via:'gviz', id, data};
 }
 
-async function gsCheck(){
+/* quiet = ตรวจอยู่เบื้องหลัง ห้ามปิดปุ่มหลัก
+   การตรวจเป็นแค่การวินิจฉัย ไม่ควรล็อกทั้งกล่องไว้ 30 วินาทีระหว่างรอ */
+async function gsCheck(quiet){
   if(gsBusy)return;
-  if(!gsHasExec()){ toast('ใส่ลิงก์ Web App (ลงท้าย /exec) ก่อน'); return; }
-  gsBusy=true; gsLog=[{t:'กำลังตรวจ',cls:'',msg:'…'}]; renderGsBox();
+  if(!gsHasExec()){ if(!quiet)toast('ใส่ลิงก์ Web App (ลงท้าย /exec) ก่อน'); return; }
+  if(!quiet)gsBusy=true;
+  gsLog=[{t:quiet?'กำลังตรวจการเชื่อมต่อ':'กำลังตรวจ',cls:'',msg:'รออีกสักครู่ · ระหว่างนี้ใช้ปุ่มอื่นได้'}]; renderGsBox();
   try{
     const i=await gsPing(), want=gsSheetId(S.gsUrl);
     const same=!want||i.id===want;
@@ -4554,7 +4557,8 @@ async function gsCheck(){
     if(!same) gsLog.push({t:'วิธีแก้',cls:'er',
       msg:'เอาลิงก์ของชีต "'+(i.name||'')+'" มาวางในช่องแรก'});
   }catch(e){ gsLog=[{t:'เชื่อมต่อไม่ได้',cls:'er',msg:(e&&e.message)||String(e)}]; }
-  gsBusy=false; renderGsBox();
+  if(!quiet)gsBusy=false;
+  renderGsBox();
 }
 
 /* ครอบไว้ชั้นนอก เพื่อรับประกันว่าปุ่มจะไม่ค้างอยู่ที่ "รอสักครู่" ถ้ามีอะไรพังกลางทาง */
@@ -4824,7 +4828,7 @@ function renderGsBox(){
     html+=`<div class="gs-log">ทำครบ 3 ขั้นแล้วปุ่มดึง/ส่งข้อมูลจะขึ้นมาแทนที่ตรงนี้เอง</div>`;
   }else{
     html+=`<div class="gs-btns">`+
-        `<button class="gs-b main" id="gsSyncBtn" type="button"${gsBusy?' disabled':''}>${gsBusy?'⏳ รอสักครู่…':'⬇️ ดึงจากชีต'}</button>`+
+        `<button class="gs-b main" id="gsSyncBtn" type="button"${gsBusy?' disabled':''}>${gsBusy?'⏳ กำลังทำงาน…':'⬇️ ดึงจากชีต'}</button>`+
         `<button class="gs-b main" id="gsPushBtn" type="button"${gsBusy?' disabled':''}>⬆️ ส่งขึ้นชีต</button>`+
       `</div>`;
     /* สถานะสำรองอัตโนมัติ — บอกผลอย่างเดียว ไม่ต้องมีปุ่มถ้ามันทำงานอยู่แล้ว */
@@ -4873,10 +4877,10 @@ function renderGsBox(){
     if(why)why.textContent=r.msg;
     /* ลิงก์เพิ่งใช้ได้ -> สลับเป็นโหมดใช้งาน แล้วตรวจการเชื่อมต่อให้เลยครั้งเดียว
        จะได้รู้ทันทีว่าตั้ง Deploy ถูกไหม ไม่ต้องเดาต่อ */
-    if(gsHasExec()&&!was){ gsCfgOpen=false; renderGsBox(); gsCheck(); }
+    if(gsHasExec()&&!was){ gsCfgOpen=false; renderGsBox(); gsCheck(true); }
     else if(!gsHasExec()&&was){ renderGsBox(); }
   };
-  gon('gsSyncBtn',gsSync); gon('gsPushBtn',gsPush); gon('gsCheckBtn',gsCheck);
+  gon('gsSyncBtn',gsSync); gon('gsPushBtn',gsPush); gon('gsCheckBtn',()=>gsCheck());
   gon('gsConnBtn',gsConnScript); gon('gsSeedBtn',gsSeed);
   gon('gsBkNow',()=>runBackup(false));
   gon('gsCfgBtn',()=>{ gsCfgOpen=!gsCfgOpen; renderGsBox(); });
