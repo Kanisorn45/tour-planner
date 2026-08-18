@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-18 09:17 จาก tour_pricing_app_v24.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-18 09:44 จาก tour_pricing_app_v25.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -317,20 +317,34 @@ body.dnd-active *{cursor:grabbing!important}
 .empty{text-align:center;color:var(--ink-faint);font-size:12px;padding:14px;font-style:italic}
 
 /* guide list */
-.gtype-group{margin-bottom:12px}
-.gtype-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.gtype-head .lbl{font-family:var(--disp);font-size:16px;letter-spacing:1px;color:var(--gold)}
-.gtype-head .rate{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-dim)}
-.gtype-head .rate input{width:78px;padding:5px 7px;font-family:var(--mono);font-weight:700;text-align:right;font-size:13px}
-.glist{display:flex;flex-direction:column;gap:3px;max-height:0;overflow:hidden;transition:max-height .25s ease}
-.glist.open{max-height:600px;overflow:auto}
-.gitem{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;background:var(--panel2);font-size:13px}
-.gitem input{width:17px;height:17px;accent-color:var(--orange);flex-shrink:0}
-.gitem .gnm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gitem .gnick{color:var(--ink-dim);font-size:11px}
-.gitem .gtel{color:var(--gold);font-size:10px;font-family:var(--mono);margin-left:4px}
-.gtoggle{background:none;color:var(--ink-dim);font-size:11px;letter-spacing:.5px;padding:9px 10px;border-radius:7px}
-.gtoggle:hover{background:var(--panel2);color:var(--gold)}
+/* ---------- v25 · GUIDE (เลือกเป็นจำนวนตามประเภท) ---------- */
+.gtype-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel2);margin-bottom:8px;
+}
+.gtype-row.on{border-color:var(--gold);background:#16243f}
+.gtype-row .gt-lbl{flex:1 1 150px;min-width:0;font-size:13px;font-weight:600}
+.gtype-row .gt-rate{font-size:11px;color:var(--ink-dim);font-family:var(--mono);white-space:nowrap}
+.gtype-row .gt-rate input{
+  width:66px;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  border-radius:6px;padding:5px 6px;font-family:var(--mono);font-size:12px;text-align:right;
+}
+.gtype-row .gt-num{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.gtype-row .gt-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);font-size:17px;line-height:1;cursor:pointer;
+}
+.gtype-row .gt-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold-bright)}
+.gtype-row .gt-btn:disabled{opacity:.3;cursor:default}
+.gtype-row .gt-in{
+  width:46px;text-align:center;background:var(--panel);border:1px solid var(--line);
+  color:var(--ink);border-radius:8px;padding:6px 2px;font-family:var(--mono);font-weight:700;font-size:14px;
+}
+@media (max-width:560px){
+  .gtype-row .gt-lbl{flex:1 1 100%}
+  .gtype-row .gt-rate{flex:1}
+}
 
 /* ---------- PROFIT ---------- */
 .profit-input-wrap{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:8px 14px;box-sizing:border-box;max-width:100%;overflow:hidden}
@@ -873,10 +887,8 @@ input.px:focus{outline:none;border-color:var(--gold)}
     </div>
     <div class="card-body">
       <div id="guideSelected" class="guide-selected"></div>
-      <input class="txt" id="guideSearch" placeholder="🔍 ค้นหาไกด์ (ชื่อ/ชื่อเล่น/เบอร์)" style="margin-bottom:10px">
       <div id="guideGroups"></div>
       <div class="calc-formula" id="guideCalc"></div>
-      <button class="btn-ghost" id="guideAddNew" style="margin:4px 0 10px">🗄 ดู/แก้/เพิ่ม ฐานข้อมูลไกด์</button>
       <div class="note">เรตค่าตัว/วัน แก้ได้ในช่องขวาของแต่ละประเภท (เก็บค่าถาวร) · ต้นทุนไกด์รวม = เรตไกด์ที่เลือก × จำนวนวัน · ต่อหัว = ÷ จำนวนลูกทัวร์<br><b>คนขับรถ / Driver</b> ตั้งเรตไว้ ฿0 เพราะปกติค่าคนขับรวมอยู่ในค่ารถแล้ว — เลือกไว้เพื่อเก็บเบอร์ติดต่อ ถ้าจ่ายแยกให้ใส่เรตเอง</div>
     </div>
   </section>
@@ -1067,7 +1079,6 @@ input.px:focus{outline:none;border-color:var(--gold)}
     <div class="dbtabs" id="dbTabs">
       <button data-t="adm" class="on">สถานที่</button>
       <button data-t="res">ร้านอาหาร</button>
-      <button data-t="guide">ไกด์</button>
       <button data-t="car">รถ</button>
       <button data-t="hotel">โรงแรม</button>
     </div>
@@ -1154,7 +1165,7 @@ input.px:focus{outline:none;border-color:var(--gold)}
 <div class="toast" id="toast"></div>
 
 <script>
-const DB = {"admissions":[],"restaurants":[],"guides":[],"admAreas":["เชียงใหม่","เชียงราย","ปาย-แม่ฮ่องสอน"],"resAreas":["เชียงใหม่","เชียงราย"]};
+const DB = {"admissions":[],"restaurants":[],"guides":[{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"Chinese"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"English"},{"type":"Biker"},{"type":"Biker"},{"type":"Japanese"},{"type":"Japanese"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Indo"},{"type":"Driver"},{"type":"Driver"},{"type":"Driver"},{"type":"Driver"},{"type":"Driver"},{"type":"Driver"},{"type":"Indo"},{"type":"Indo"},{"type":"Driver"}],"admAreas":["เชียงใหม่","เชียงราย","ปาย-แม่ฮ่องสอน"],"resAreas":["เชียงใหม่","เชียงราย"]};
 /* ============ STORAGE (persistent, with fallbacks) ============ */
 const Store={
   async get(k){
@@ -1173,10 +1184,10 @@ const KEY='tourPriceBuilder_v1';
 const DEFAULT_RATES={Chinese:1500,English:1500,Indo:1500,Japanese:2000,Biker:1500,Driver:0};
 let S={
   pax:2, paxTypes:[{id:'pt1',code:'S',label:'ลูกทัวร์',count:2,pay:true}], days:3, quoteName:'', startDate:'', endDate:'',
-  adm:[], res:[], guides:[], guideRates:{...DEFAULT_RATES},
+  adm:[], res:[], guideCount:{}, guideRates:{...DEFAULT_RATES},
   cars:[], carSel:[], hotels:[], hotelSel:[], carFuel:4000,
-  customAdm:[], customRes:[], customGuides:[],
-  admEdits:{}, admHidden:[], resEdits:{}, resHidden:[], guideEdits:{}, guideHidden:[],
+  customAdm:[], customRes:[],
+  admEdits:{}, admHidden:[], resEdits:{}, resHidden:[],
   profitVal:500, hideCost:false, page:'home', lang:'th', progId:null, collapsed:{}, transferOff:{},
   userName:'', lastSyncAt:null, hubName:'',
   gsUrl:'', gsAt:null, gsExec:'', gsKey:'',
@@ -1277,13 +1288,11 @@ const isPerson=u=>!u||PERSON_UNITS.includes(u);
 /* resolvers: ref 'd<idx>' = from file, 'c<id>' = custom (user-added); edits overlay applied */
 function admRec(r){ if(r==null)return null; if(typeof r==='number')r='d'+r; let b=r[0]==='c'?(S.customAdm||[]).find(x=>x.id===r.slice(1)):DB.admissions[+r.slice(1)]; if(!b)return b; const o=(S.admEdits||{})[r]; return o?{...b,...o}:b; }
 function resRec(r){ if(typeof r==='number')r='d'+r; let b=r[0]==='c'?(S.customRes||[]).find(x=>x.id===r.slice(1)):DB.restaurants[+r.slice(1)]; if(!b)return b; const o=(S.resEdits||{})[r]; return o?{...b,...o}:b; }
-function guideRec(r){ if(typeof r==='number')r='d'+r; let b=r[0]==='c'?(S.customGuides||[]).find(x=>x.id===r.slice(1)):DB.guides[+r.slice(1)]; if(!b)return b; const o=(S.guideEdits||{})[r]; return o?{...b,...o}:b; }
 const isCustom=r=>String(r)[0]==='c';
-const isEdited=(r,tab)=>{ const m={adm:'admEdits',res:'resEdits',guide:'guideEdits'}[tab]; return !!(S[m]&&S[m][r]); };
+const isEdited=(r,tab)=>{ const m={adm:'admEdits',res:'resEdits'}[tab]; return !!(S[m]&&S[m][r]); };
 /* all-records helpers (file + custom), with hidden flag */
 function admAll(){ return DB.admissions.map((x,i)=>'d'+i).concat((S.customAdm||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:admRec(r),custom:isCustom(r),hidden:(S.admHidden||[]).includes(r)})); }
 function resAll(){ return DB.restaurants.map((x,i)=>'d'+i).concat((S.customRes||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:resRec(r),custom:isCustom(r),hidden:(S.resHidden||[]).includes(r)})); }
-function guideAll(){ return DB.guides.map((x,i)=>'d'+i).concat((S.customGuides||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:guideRec(r),custom:isCustom(r),hidden:(S.guideHidden||[]).includes(r)})); }
 
 const fmt=n=>'฿'+Math.round(n||0).toLocaleString('en-US');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1334,10 +1343,9 @@ function updateBackupNag(){
 async function load(){
   const d=await Store.get(KEY);
   if(d){ S={...S,...d}; S.guideRates={...DEFAULT_RATES,...(d.guideRates||{})};
-    S.customAdm=d.customAdm||[]; S.customRes=d.customRes||[]; S.customGuides=d.customGuides||[];
+    S.customAdm=d.customAdm||[]; S.customRes=d.customRes||[];
     S.admEdits=d.admEdits||{}; S.admHidden=d.admHidden||[];
     S.resEdits=d.resEdits||{}; S.resHidden=d.resHidden||[];
-    S.guideEdits=d.guideEdits||{}; S.guideHidden=d.guideHidden||[];
     // migrate admission line items -> day/units + prefixed refs
     (S.adm||[]).forEach(it=>{
       if(typeof it.ref==='number')it.ref='d'+it.ref;
@@ -1346,7 +1354,7 @@ async function load(){
       delete it.qty;
     });
     (S.res||[]).forEach(it=>{ if(typeof it.ref==='number')it.ref='d'+it.ref; });
-    S.guides=(S.guides||[]).map(g=>typeof g==='number'?'d'+g:g);
+    migrateGuides();   /* v25 Â· à¸à¸­à¸à¹à¸à¹à¸²à¹à¸à¹à¸à¹à¸à¹à¸à¸£à¸²à¸¢à¸à¸ à¹à¸à¸¥à¸à¹à¸à¹à¸à¸à¸³à¸à¸§à¸à¸à¸²à¸¡à¸à¸£à¸°à¹à¸ à¸ */
     // migrate hotel selections lacking a nights[] -> default to all trip nights
     const nc=Math.max(1,S.days-1);
     (S.hotelSel||[]).forEach(s=>{ if(!Array.isArray(s.nights)){ s.nights=Array.from({length:s.nights?Math.min(s.nights,nc):nc},(_,k)=>k+1); } });
@@ -1983,60 +1991,72 @@ function renderCarItems(){
   return sum;
 }
 
-/* ============ GUIDES ============ */
-function renderGuideSelected(){
-  const el=$('guideSelected'); if(!el)return;
-  if(!S.guides.length){ el.innerHTML='<span class="gsel-empty">ยังไม่ได้เลือกไกด์</span>'; return; }
-  el.innerHTML=S.guides.map(r=>{
-    const g=guideRec(r); if(!g)return'';
-    return `<span class="gsel-chip">${esc(TYPE_LABELS[g.type]?TYPE_LABELS[g.type].replace(' Guide',''):g.type)} · ${esc(g.name)}${g.nick?' ('+esc(g.nick)+')':''}<span class="gx" data-gunsel="${r}">×</span></span>`;
-  }).join('');
+/* ============ GUIDES ============
+   v25 · เก็บเป็น "จำนวนตามประเภท" ไม่เก็บชื่อและเบอร์ของบุคคลอีกต่อไป
+   ต้นทุนคิดจากเรตรายวันของแต่ละประเภท ซึ่งไม่ต้องรู้ว่าเป็นใคร
+   ชื่อกับเบอร์ไกด์เป็นข้อมูลส่วนบุคคลของบุคคลที่สาม การไม่เก็บตั้งแต่แรก
+   ปลอดภัยกว่าการเก็บแล้วไล่ป้องกันทีหลัง                                  */
+const guideCount=()=>{ if(!S.guideCount||typeof S.guideCount!=='object')S.guideCount={}; return S.guideCount; };
+const guideNum=t=>Math.max(0,+guideCount()[t]||0);
+const guideTotalHeads=()=>TYPE_ORDER.reduce((s,t)=>s+guideNum(t),0);
+
+/* แปลงข้อมูลเก่าที่เก็บเป็นรายคน -> จำนวนตามประเภท
+   DB.guides ยังเหลือ type ไว้ (ไม่มีชื่อ/เบอร์แล้ว) จึงแปลงใบเก่าได้ครบ */
+function migrateGuides(){
+  if(!Array.isArray(S.guides)||!S.guides.length){ guideCount(); }
+  else{
+    const cnt={...guideCount()};
+    S.guides.forEach(r=>{
+      let t=null;
+      if(typeof r==='string'&&r[0]==='c'){ const g=(S.customGuides||[]).find(x=>x.id===r.slice(1)); t=g&&g.type; }
+      else { const i=(typeof r==='number')?r:+String(r).slice(1); const g=DB.guides[i]; t=g&&g.type; }
+      if(t&&TYPE_ORDER.indexOf(t)>=0)cnt[t]=(cnt[t]||0)+1;
+    });
+    S.guideCount=cnt;
+  }
+  delete S.guides; delete S.customGuides; delete S.guideEdits; delete S.guideHidden;
+}
+
+function setGuideNum(t,n){
+  guideCount()[t]=Math.max(0,Math.min(99,+n||0));
+  if(!guideCount()[t])delete guideCount()[t];
+  renderGuideGroups(); recalc(); renderOverview(); save();
 }
 function renderGuideGroups(){
-  const q=($('guideSearch')?$('guideSearch').value:'').toLowerCase().trim();
-  const byType={};
-  guideAll().filter(o=>!o.hidden && o.x).filter(o=>!q||((o.x.name||'')+(o.x.nick||'')+(o.x.tel||'')).toLowerCase().includes(q))
-    .forEach(o=>{(byType[o.x.type]=byType[o.x.type]||[]).push({g:o.x,ref:o.ref,custom:o.custom});});
-  const types=TYPE_ORDER.filter(t=>byType[t]);
-  $('guideGroups').innerHTML=types.map(t=>{
-    const rate=S.guideRates[t]??1500;
-    const rows=byType[t].map(o=>{
-      const on=S.guides.includes(o.ref);
-      return `<label class="gitem"><input type="checkbox" data-g="${o.ref}" ${on?'checked':''}>
-        <span class="gnm">${esc(o.g.name)}${o.g.nick?' <span class="gnick">('+esc(o.g.nick)+')</span>':''}${o.g.tel?' <span class="gtel">📞'+esc(o.g.tel)+'</span>':''}${o.custom?' ✏️':''}</span></label>`;
-    }).join('');
-    const cnt=byType[t].filter(o=>S.guides.includes(o.ref)).length;
-    const open=cnt||q;   // auto-open when searching
-    return `<div class="gtype-group">
-      <div class="gtype-head">
-        <span class="lbl">${TYPE_LABELS[t]}</span>
-        <button class="gtoggle" data-gt="${t}">${cnt?cnt+' เลือก ':''}[${byType[t].length}] ▾</button>
-        <span class="rate">฿<input type="number" data-rate="${t}" value="${rate}" min="0"> /วัน</span>
-      </div>
-      <div class="glist ${open?'open':''}" data-glist="${t}">${rows}</div>
+  const el=$('guideGroups'); if(!el)return;
+  el.innerHTML=TYPE_ORDER.map(t=>{
+    const rate=S.guideRates[t]??1500, n=guideNum(t);
+    return `<div class="gtype-row${n?' on':''}">
+      <span class="gt-lbl">${esc(TYPE_LABELS[t]||t)}</span>
+      <span class="gt-rate">฿<input type="number" data-rate="${t}" value="${rate}" min="0" inputmode="numeric"> /วัน</span>
+      <span class="gt-num">
+        <button class="gt-btn" data-gminus="${t}" type="button"${n?'':' disabled'}>−</button>
+        <input class="gt-in" type="number" data-gnum="${t}" value="${n}" min="0" max="99" inputmode="numeric">
+        <button class="gt-btn" data-gplus="${t}" type="button">+</button>
+      </span>
     </div>`;
-  }).join('')||'<div class="empty">ไม่พบไกด์</div>';
+  }).join('');
   renderGuideSelected();
 }
-function guideTotal(){
-  let rateSum=0;
-  S.guides.forEach(r=>{ const g=guideRec(r); if(g) rateSum+=(+S.guideRates[g.type]||0); });
-  return rateSum*S.days;
+function renderGuideSelected(){
+  const el=$('guideSelected'); if(!el)return;
+  const picked=TYPE_ORDER.filter(t=>guideNum(t)>0);
+  if(!picked.length){ el.innerHTML='<span class="gsel-empty">ยังไม่ได้ใส่ไกด์</span>'; return; }
+  el.innerHTML=picked.map(t=>
+    `<span class="gsel-chip">${esc((TYPE_LABELS[t]||t).replace(' Guide',''))} × ${guideNum(t)}`+
+    `<span class="gx" data-gclear="${t}">×</span></span>`).join('');
 }
+function guideRateSum(){ return TYPE_ORDER.reduce((s,t)=>s+guideNum(t)*(+S.guideRates[t]||0),0); }
+function guideTotal(){ return guideRateSum()*S.days; }
 function renderGuideSub(){
   const total=guideTotal(); $('subGuide').textContent=fmt(total);
-  const gc=$('guideCalc');
-  if(gc){
-    if(S.guides.length){
-      let rateSum=0; S.guides.forEach(r=>{const g=guideRec(r); if(g)rateSum+=(+S.guideRates[g.type]||0);});
-      const hp=headPay();
-      const tels={};
-      S.guides.forEach(r=>{const g=guideRec(r); if(g&&g.tel){const k=String(g.tel).replace(/[^\d]/g,''); if(k)(tels[k]=tels[k]||[]).push(g.name);}});
-      const dups=Object.values(tels).filter(v=>v.length>1);
-      const warn=dups.length?`<br><span style="color:var(--bad)">⚠️ เบอร์โทรซ้ำ — อาจเป็นคนเดียวกันถูกเลือก 2 ครั้ง: ${esc(dups.map(v=>v.join(' / ')).join(' · '))}</span>`:'';
-      gc.innerHTML=`<span class="cf-lbl">วิธีคิด:</span> (เรตไกด์รวม ${fmt(rateSum)} × ${S.days} วัน) ÷ ${hp} คน = <b>${fmt(total/hp)}/หัว</b>${warn}`;
-    } else gc.innerHTML='';
-  }
+  const gc=$('guideCalc'); if(!gc)return;
+  const heads=guideTotalHeads();
+  if(!heads){ gc.innerHTML=''; return; }
+  const hp=headPay();
+  const parts=TYPE_ORDER.filter(t=>guideNum(t)>0)
+    .map(t=>`${guideNum(t)}×฿${(+S.guideRates[t]||0).toLocaleString()}`).join(' + ');
+  gc.innerHTML=`<span class="cf-lbl">วิธีคิด:</span> (${parts} = ${fmt(guideRateSum())}/วัน × ${S.days} วัน) ÷ ${hp} คน = <b>${fmt(total/hp)}/หัว</b>`;
 }
 
 /* ============ RESTAURANTS ============ */
@@ -2406,11 +2426,11 @@ function copyQuote(){
 }
 
 /* ============ DASHBOARD + EXPORT ============ */
-function catArray(cat){ return {adm:S.adm,car:S.carSel,guide:S.guides,res:S.res,hotel:S.hotelSel}[cat]; }
+function catArray(cat){ return {adm:S.adm,car:S.carSel,res:S.res,hotel:S.hotelSel}[cat]; }
 function dashRows(cat){
   if(cat==='adm') return S.adm.map((it,i)=>{if(it.kind==='transfer'){const dt1=tripDate(it.day);return{i,amt:+it.price||0,nm:'✈️ '+(it.nameEn||TRANSFER_DEF[it.dir].en),meta:`Day ${it.day}${dt1?' '+fmtDShort(dt1):''} · ${it.dir==='in'?'รับสนามบิน':'ส่งสนามบิน'}`};}if(it.kind==='meal'){const dt0=tripDate(it.day);return{i,amt:0,nm:(it.meal==='Lunch'?'🍽':'🌙')+' '+it.meal+' (มื้ออาหาร)',meta:`Day ${it.day}${dt0?' '+fmtDShort(dt0):''} · ค่าอาหารคิดที่หมวด 04`};}const x=admRec(it.ref);const per=isPerson(x&&x.unit);const amt=per?it.price*headTotal():it.price*(it.units||1);const dt=tripDate(it.day);return{i,amt,nm:(x?(x.en||x.th):'?')+(x&&x.item?' · '+x.item:''),meta:`Day ${it.day}${dt?' '+fmtDShort(dt):''} · ${per?`฿${it.price}×${headTotal()}คน`:`฿${it.price}×${it.units||1}`}`};});
   if(cat==='car') return S.carSel.map((sel,i)=>{const c=S.cars.find(x=>x.id===sel.carId);if(!c)return{i,amt:0,nm:'(ลบแล้ว)',meta:''};const mult=c.mode==='day'?S.days:1;const amt=(+c.price)*sel.qty*mult;return{i,amt,nm:c.type,meta:`${c.seats} ที่นั่ง · ฿${(+c.price).toLocaleString()}×${sel.qty}${c.mode==='day'?'×'+S.days+'วัน':''}`};});
-  if(cat==='guide') return S.guides.map((r,i)=>{const g=guideRec(r);if(!g)return{i,amt:0,nm:'(ลบแล้ว)',meta:''};const amt=(+S.guideRates[g.type]||0)*S.days;return{i,amt,nm:g.name+(g.nick?' ('+g.nick+')':''),meta:`${TYPE_LABELS[g.type]||g.type} · ฿${(+S.guideRates[g.type]||0).toLocaleString()}×${S.days}วัน`};});
+  if(cat==='guide') return TYPE_ORDER.filter(t=>guideNum(t)>0).map((t,i)=>({i,amt:guideNum(t)*(+S.guideRates[t]||0)*S.days,nm:TYPE_LABELS[t]||t,meta:`${guideNum(t)} คน · ฿${(+S.guideRates[t]||0).toLocaleString()}×${S.days}วัน`}));
   if(cat==='res') return S.res.map((it,i)=>{const x=resRec(it.ref);const per=isPerson(x&&x.unit);const amt=per?it.price*headTotal():it.price;const dt=tripDate(it.day);const ic=it.meal==='Lunch'?'🍽':'🌙';return{i,amt,nm:`${ic} ${it.meal} · ${(x?(x.en||x.th):'?')}`,meta:`Day ${it.day}${dt?' '+fmtDShort(dt):''} · ฿${it.price}${per?'×'+headTotal()+'คน':''}`};});
   if(cat==='hotel') return S.hotelSel.map((sel,i)=>{const h=(S.hotels||[]).find(x=>x.id===sel.hotelId);if(!h)return{i,amt:0,nm:'(ลบแล้ว)',meta:''};const rt=findRT(h,sel.rtId);if(!rt)return{i,amt:0,nm:'(ห้องถูกลบ)',meta:''};const nights=(sel.nights||[]).filter(x=>x<=nightsCount());const nn=nights.length;const amt=(+rt.price||0)*sel.rooms*nn;return{i,amt,nm:hotelName(h)+(rtRoomBed(rt)?' · '+rtRoomBed(rt):''),meta:`คืน ${fmtNights(nights)} · ฿${(+rt.price||0).toLocaleString()}×${sel.rooms}ห้อง×${nn}คืน`};});
   return [];
@@ -2947,6 +2967,7 @@ function renderHome(){
 
 /* วาดทุกส่วนใหม่หลังสลับชุดข้อมูล (เปิด/สร้าง/ทำสำเนาโปรแกรม) */
 function afterStateSwap(){
+  migrateGuides();   /* v25 Â· à¹à¸à¹à¸à¹à¸²à¸à¸µà¹à¹à¸à¹à¸à¹à¸à¸à¹à¹à¸à¹à¸à¸£à¸²à¸¢à¸à¸ à¹à¸à¸¥à¸à¸à¸­à¸à¹à¸à¸´à¸ */
   migrateHotels();
   ensureTransfers();
   admDaySel=new Set([1]); resDaySel=new Set(); hotelNightSel=new Set(); admEditId=null; resTagSel=new Set();
@@ -2979,7 +3000,7 @@ function delProgram(id){
 function newProgram(){
   if(!confirm('สร้างโปรแกรมใหม่?\nโปรแกรมที่กำลังทำอยู่จะถูกล้าง — ถ้ายังไม่ได้บันทึก ให้กดยกเลิกแล้วไปกด 💾 บันทึก ก่อน'))return;
   S.progId=null; S.quoteName='';
-  S.adm=[]; S.res=[]; S.guides=[]; S.carSel=[]; S.hotelSel=[];
+  S.adm=[]; S.res=[]; S.guideCount={}; S.carSel=[]; S.hotelSel=[];
   S.paxTypes=[{id:nid(),code:'S',label:'ลูกทัวร์',count:2,pay:true}];
   S.days=3; S.startDate=isoToday(); S.endDate=isoOf(addDays(parseISO(S.startDate),2));
   afterStateSwap(); showPage('input'); toast('เริ่มโปรแกรมใหม่');
@@ -3000,9 +3021,9 @@ function applyCollapse(){
    - ถ้าเบราว์เซอร์เชื่อมไฟล์อัตโนมัติไม่ได้ ยังใช้แบบเลือกไฟล์เองได้ทุกอย่าง */
 let hubHandle=null, hubPending=null, hubNeedsPerm=false;
 const HUB_OK=()=>typeof window.showOpenFilePicker==='function'&&typeof window.showSaveFilePicker==='function';
-const HUB_ARR={customAdm:'adm',customRes:'res',customGuides:'guide',cars:'car',hotels:'hotel'};
-const HUB_MAP=['admEdits','resEdits','guideEdits'];
-const HUB_LIST=['admHidden','resHidden','guideHidden','customAreas','resTags'];
+const HUB_ARR={customAdm:'adm',customRes:'res',cars:'car',hotels:'hotel'};
+const HUB_MAP=['admEdits','resEdits'];
+const HUB_LIST=['admHidden','resHidden','customAreas','resTags'];
 const HUB_OBJ=['guideRates','bedLabels'];
 
 /* --- เก็บ handle ของไฟล์กลางไว้ใน IndexedDB เพื่อจำข้ามการเปิดแอป --- */
@@ -3211,7 +3232,6 @@ let dbFormAbf=false, dbRTs=[];
 const DB_META={
   adm:  {title:'สถานที่', addLabel:'เพิ่มสถานที่'},
   res:  {title:'ร้านอาหาร', addLabel:'เพิ่มร้านอาหาร'},
-  guide:{title:'ไกด์', addLabel:'เพิ่มไกด์'},
   car:  {title:'รถ', addLabel:'เพิ่มรถ'},
   hotel:{title:'โรงแรม', addLabel:'เพิ่มโรงแรม'}
 };
@@ -3241,10 +3261,6 @@ function dbRows(){
     ref:o.ref, custom:o.custom, hidden:o.hidden, edited:isEdited(o.ref,'res'),
     nm:(o.x.en||o.x.th)+(o.x.halal?' 🕌':''),
     meta:`${o.x.area} · ฿${o.x.price!=null?(+o.x.price).toLocaleString():'—'} ${o.x.unit||''}`}));
-  if(dbTab==='guide') return guideAll().filter(o=>o.x).filter(o=>hit((o.x.name||'')+(o.x.nick||'')+(o.x.type||'')+(o.x.tel||''))).map(o=>({
-    ref:o.ref, custom:o.custom, hidden:o.hidden, edited:isEdited(o.ref,'guide'),
-    nm:o.x.name+(o.x.nick?' ('+o.x.nick+')':''),
-    meta:`${TYPE_LABELS[o.x.type]||o.x.type}${o.x.tel?' · 📞 '+o.x.tel:''}`}));
   if(dbTab==='car') return (S.cars||[]).filter(c=>hit(c.type)).map(c=>({
     ref:'car:'+c.id, custom:true, hidden:false, edited:false,
     nm:c.type, meta:`${c.seats} ที่นั่ง · ฿${(+c.price).toLocaleString()} ${c.mode==='day'?'/วัน':'/ทริป'}`}));
@@ -3312,14 +3328,6 @@ function showDbForm(ref){
       dowPickHtml(dbFormClosed);
     wireDowPick();
     (()=>{ $('dfHalal').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;dbFormHalal=(b.dataset.h==='halal');[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));}; })();
-  }
-  else if(dbTab==='guide'){
-    if(editing)rec=guideRec(ref)||{};
-    F.innerHTML=
-      selFld('Category / ประเภทไกด์','dfType',TYPE_ORDER,rec.type||'English')+
-      fld('ชื่อ-นามสกุล','dfName',rec.name||'')+
-      `<div class="frow"><div class="fcol"><label class="flabel">ชื่อเล่น</label><input class="txt" id="dfNick" value="${(rec.nick||'').replace(/"/g,'&quot;')}"></div>
-        <div class="fcol"><label class="flabel">เบอร์โทรติดต่อ</label><input class="txt" id="dfTel" type="tel" value="${(rec.tel||'').replace(/"/g,'&quot;')}" placeholder="08X-XXX-XXXX"></div></div>`;
   }
   else if(dbTab==='car'){
     if(editing)rec=(S.cars||[]).find(c=>'car:'+c.id===ref)||{};
@@ -3408,14 +3416,6 @@ function saveDbForm(){
     else S.customRes.push({id:nid(),...data});
     fillResSelect(); renderRes();
   }
-  else if(dbTab==='guide'){
-    const name=v('dfName');
-    if(!name){toast('กรอกชื่อไกด์');return;}
-    const data={type:v('dfType'),name,nick:v('dfNick')||null,tel:v('dfTel')||null};
-    if(dbEditRef){ if(isCustom(dbEditRef)){Object.assign(guideRec(dbEditRef),data);} else {S.guideEdits[dbEditRef]={...S.guideEdits[dbEditRef],...data};} }
-    else S.customGuides.push({id:nid(),...data});
-    renderGuideGroups();
-  }
   else if(dbTab==='car'){
     const type=v('dfType'),seats=n('dfSeats'),price=n('dfPrice');
     if(!type||!seats||isNaN(price)){toast('กรอกให้ครบ');return;}
@@ -3447,7 +3447,6 @@ function saveDbForm(){
 function dbDelete(ref){
   if(dbTab==='adm'){ if(isCustom(ref)){S.customAdm=S.customAdm.filter(x=>'c'+x.id!==ref);S.adm=S.adm.filter(it=>it.ref!==ref);delete S.admEdits[ref];} else {if(!S.admHidden.includes(ref))S.admHidden.push(ref);} renderAdmTable(); renderAdm(); renderDayTabs(); }
   else if(dbTab==='res'){ if(isCustom(ref)){S.customRes=S.customRes.filter(x=>'c'+x.id!==ref);S.res=S.res.filter(it=>it.ref!==ref);delete S.resEdits[ref];} else {if(!S.resHidden.includes(ref))S.resHidden.push(ref);} fillResSelect(); renderRes(); }
-  else if(dbTab==='guide'){ if(isCustom(ref)){S.customGuides=S.customGuides.filter(x=>'c'+x.id!==ref);S.guides=S.guides.filter(r=>r!==ref);delete S.guideEdits[ref];} else {if(!S.guideHidden.includes(ref))S.guideHidden.push(ref);} S.guides=S.guides.filter(r=>r!==ref); renderGuideGroups(); }
   else if(dbTab==='car'){ const id=ref.slice(4); S.cars=S.cars.filter(c=>c.id!==id); S.carSel=S.carSel.filter(s=>S.cars.find(c=>c.id===s.carId)); fillCarSelect(); renderCarItems(); }
   else if(dbTab==='hotel'){ const id=ref.slice(6); S.hotels=S.hotels.filter(h=>h.id!==id); S.hotelSel=S.hotelSel.filter(s=>S.hotels.find(h=>h.id===s.hotelId)); fillHotelSelect(); renderHotelItems(); }
   recalc(); save(); renderDbList();
@@ -3455,7 +3454,6 @@ function dbDelete(ref){
 function dbRestore(ref){
   if(dbTab==='adm')S.admHidden=S.admHidden.filter(r=>r!==ref);
   else if(dbTab==='res')S.resHidden=S.resHidden.filter(r=>r!==ref);
-  else if(dbTab==='guide')S.guideHidden=S.guideHidden.filter(r=>r!==ref);
   renderAdmTable(); fillResSelect(); renderGuideGroups(); recalc(); save(); renderDbList();
 }
 
@@ -3487,16 +3485,6 @@ function parseDelimited(text){
 }
 const impNum=v=>{ const n=parseFloat(String(v==null?'':v).replace(/[^\d.\-]/g,'')); return isNaN(n)?null:n; };
 const impBool=v=>/^(ใช่|y|yes|true|1|halal|ฮาลาล|มี|รวม|included|include|incl|abf|✓|✔)$/i.test(String(v==null?'':v).trim());
-function impGuideType(v){
-  const s=String(v||'').trim();
-  const hit=TYPE_ORDER.find(t=>t.toLowerCase()===s.toLowerCase());
-  if(hit)return hit;
-  if(/จีน|chinese|cn/i.test(s))return 'Chinese';
-  if(/อินโด|มาเลย์|indo|malay/i.test(s))return 'Indo';
-  if(/ญี่ปุ่น|japan/i.test(s))return 'Japanese';
-  if(/ไบ|มอเตอร์|bike/i.test(s))return 'Biker';
-  return 'English';
-}
 
 /* ============================================================
    v23 · ตัวอ่านเวลา — แทน impNum สำหรับทุกคอลัมน์ที่เป็นเวลา
@@ -3867,23 +3855,6 @@ const IMP_SCHEMA={
     label:d=>(d.en||d.th)+(d.halal?' 🕌':''),
     sub:d=>`${d.area} · ฿${d.price}/ท่าน`
   },
-  guide:{
-    fields:[
-      {k:'type',label:'ประเภท', req:false, alias:['ประเภท','ภาษา','type','category','lang']},
-      {k:'name',label:'ชื่อ-นามสกุล', req:true, alias:['ชื่อ-นามสกุล','ชื่อ','name','fullname']},
-      {k:'nick',label:'ชื่อเล่น', req:false, alias:['ชื่อเล่น','nick','nickname']},
-      {k:'tel', label:'เบอร์โทร', req:false, alias:['เบอร์โทร','เบอร์','โทร','tel','phone','mobile']}
-    ],
-    sample:['English','นายสมชาย ใจดี','โทนี่','081-234-5678'],
-    build(g){
-      const name=g('name');
-      if(!name)return{err:'ไม่มีชื่อไกด์'};
-      return{data:{type:impGuideType(g('type')), name, nick:g('nick')||null, tel:g('tel')||null}};
-    },
-    toRow:x=>[x.type||'',x.name||'',x.nick||'',x.tel||''],
-    label:d=>d.name+(d.nick?' ('+d.nick+')':''),
-    sub:d=>(TYPE_LABELS[d.type]||d.type)+(d.tel?' · '+d.tel:'')
-  },
   car:{
     fields:[
       {k:'type', label:'ประเภทรถ', req:true, alias:['ประเภทรถ','ชนิดรถ','รถ','type','vehicle']},
@@ -4008,7 +3979,6 @@ function impExistingMap(){
   const m=new Map();
   if(dbTab==='adm')  admAll().forEach(o=>{if(o.x)m.set(impKey('adm',o.x),o.ref);});
   else if(dbTab==='res')  resAll().forEach(o=>{if(o.x)m.set(impKey('res',o.x),o.ref);});
-  else if(dbTab==='guide')guideAll().forEach(o=>{if(o.x)m.set(impKey('guide',o.x),o.ref);});
   else if(dbTab==='car')  (S.cars||[]).forEach(c=>m.set(impKey('car',c),'car:'+c.id));
   else if(dbTab==='hotel')(S.hotels||[]).forEach(h=>m.set(impKey('hotel',h),'hotel:'+h.id));
   return m;
@@ -4043,7 +4013,6 @@ function renderImpPreview(){
 function impAddRec(d){
   if(dbTab==='adm')S.customAdm.push({id:nid(),...d});
   else if(dbTab==='res')S.customRes.push({id:nid(),...d});
-  else if(dbTab==='guide')S.customGuides.push({id:nid(),...d});
   else if(dbTab==='car')S.cars.push({id:nid(),...d});
   else if(dbTab==='hotel')S.hotels.push({id:nid(),...d});
 }
@@ -4051,7 +4020,6 @@ function impUpdateRec(ref,d){
   const raw=(arr,r)=>(arr||[]).find(x=>'c'+x.id===r);
   if(dbTab==='adm'){ if(isCustom(ref)){const o=raw(S.customAdm,ref); if(o)Object.assign(o,d);} else S.admEdits[ref]={...S.admEdits[ref],...d}; }
   else if(dbTab==='res'){ if(isCustom(ref)){const o=raw(S.customRes,ref); if(o)Object.assign(o,d);} else S.resEdits[ref]={...S.resEdits[ref],...d}; }
-  else if(dbTab==='guide'){ if(isCustom(ref)){const o=raw(S.customGuides,ref); if(o)Object.assign(o,d);} else S.guideEdits[ref]={...S.guideEdits[ref],...d}; }
   else if(dbTab==='car'){ const c=(S.cars||[]).find(x=>'car:'+x.id===ref); if(c)Object.assign(c,d); }
   else if(dbTab==='hotel'){ const h=(S.hotels||[]).find(x=>'hotel:'+x.id===ref); if(h)Object.assign(h,d); }
 }
@@ -4113,7 +4081,6 @@ function dbExportCsv(){
   const sc=impSchema();
   const src = dbTab==='adm'  ? admAll().filter(o=>!o.hidden&&o.x).map(o=>o.x)
             : dbTab==='res'  ? resAll().filter(o=>!o.hidden&&o.x).map(o=>o.x)
-            : dbTab==='guide'? guideAll().filter(o=>!o.hidden&&o.x).map(o=>o.x)
             : dbTab==='car'  ? (S.cars||[]) : (S.hotels||[]);
   const rows=[sc.fields.map(f=>f.label)];
   src.forEach(x=>{ if(sc.toRows)sc.toRows(x).forEach(r=>rows.push(r)); else rows.push(sc.toRow(x)); });
@@ -4141,7 +4108,6 @@ function impReadFile(f){
    เงื่อนไข: ชีตต้องแชร์ "ทุกคนที่มีลิงก์ · ผู้อ่าน" และแท็บต้องชื่อตรงตาม GS_TABS */
 const GS_TABS=[{tab:'adm',sheet:'Places',label:'สถานที่'},
                {tab:'res',sheet:'Restaurants',label:'ร้านอาหาร'},
-               {tab:'guide',sheet:'Guides',label:'ไกด์'},
                {tab:'car',sheet:'Cars',label:'รถ'},
                {tab:'hotel',sheet:'Hotels',label:'โรงแรม'}];
 
@@ -4319,7 +4285,6 @@ function gsTabRows(t){
   const sc=IMP_SCHEMA[t.tab];
   const src = t.tab==='adm'  ? admAll().filter(o=>!o.hidden&&o.x).map(o=>o.x)
             : t.tab==='res'  ? resAll().filter(o=>!o.hidden&&o.x).map(o=>o.x)
-            : t.tab==='guide'? guideAll().filter(o=>!o.hidden&&o.x).map(o=>o.x)
             : t.tab==='car'  ? (S.cars||[]) : (S.hotels||[]);
   const head=sc.fields.map(f=>f.label), rows=[head];
   src.forEach(x=>{ if(sc.toRows)sc.toRows(x).forEach(r=>rows.push(r)); else rows.push(sc.toRow(x)); });
@@ -4966,27 +4931,20 @@ function wire(){
   $('admItems').addEventListener('click',admEditHandler);
   $('overviewBody').addEventListener('click',admEditHandler);
 
-  // guide interactions (delegated)
+  // guide interactions (delegated) — v25 · เลือกเป็นจำนวนตามประเภท ไม่มีรายชื่อบุคคลแล้ว
   $('guideGroups').addEventListener('click',e=>{
-    const gt=e.target.closest('[data-gt]');
-    if(gt){ const l=document.querySelector(`[data-glist="${gt.dataset.gt}"]`); l.classList.toggle('open'); return; }
+    const p=e.target.closest('[data-gplus]'); if(p){ setGuideNum(p.dataset.gplus, guideNum(p.dataset.gplus)+1); return; }
+    const m=e.target.closest('[data-gminus]'); if(m){ setGuideNum(m.dataset.gminus, guideNum(m.dataset.gminus)-1); return; }
   });
   $('guideGroups').addEventListener('change',e=>{
-    if(e.target.dataset.g!==undefined){
-      const r=e.target.dataset.g;
-      if(e.target.checked){ if(!S.guides.includes(r))S.guides.push(r); }
-      else S.guides=S.guides.filter(x=>x!==r);
-      renderGuideSelected(); recalc(); save();
-    }
+    if(e.target.dataset.gnum!==undefined){ setGuideNum(e.target.dataset.gnum, e.target.value); return; }
     if(e.target.dataset.rate!==undefined){
-      S.guideRates[e.target.dataset.rate]=+e.target.value||0; recalc(); save();
+      S.guideRates[e.target.dataset.rate]=+e.target.value||0; renderGuideGroups(); recalc(); save();
     }
   });
   $('guideSelected').onclick=e=>{
-    const x=e.target.closest('[data-gunsel]'); if(!x)return;
-    const r=x.dataset.gunsel; S.guides=S.guides.filter(g=>g!==r);
-    const cb=document.querySelector(`#guideGroups input[data-g="${r}"]`); if(cb)cb.checked=false;
-    renderGuideSelected(); recalc(); save();
+    const x=e.target.closest('[data-gclear]'); if(!x)return;
+    setGuideNum(x.dataset.gclear,0);
   };
 
   // profit
@@ -5086,7 +5044,7 @@ function wire(){
   $('itinCopy').onclick=copyItinerary;
   $('btnReset').onclick=()=>{
     if(!confirm('ล้างรายการทั้งหมดในใบเสนอราคานี้? (รายการรถ/โรงแรม/เรตไกด์ที่บันทึกไว้จะไม่ถูกลบ)'))return;
-    S.adm=[];S.res=[];S.guides=[];S.carSel=[];S.hotelSel=[];
+    S.adm=[];S.res=[];S.guideCount={};S.carSel=[];S.hotelSel=[];
     renderGuideGroups(); renderDayTabs(); renderAdmTable(); renderResDayTabs(); recalc(); save(); toast('ล้างแล้ว');
   };
 
@@ -5126,8 +5084,6 @@ function wire(){
   // card "add/manage" buttons open the DB manager on the right tab
   $('admAddNew').onclick=()=>openDb('adm');
   $('resAddNew').onclick=()=>openDb('res');
-  $('guideAddNew').onclick=()=>openDb('guide');
-  $('guideSearch').oninput=renderGuideGroups;
   $('carManage').onclick=()=>openDb('car');
   $('hotelManage').onclick=()=>openDb('hotel');
 

@@ -75,11 +75,10 @@ group('จับคู่คอลัมน์ · impAutoMap', function(){
     eq(m.price,5);
   });
 
-  test('Cars และ Guides ไม่เปลี่ยน', function(){
+  test('Cars ไม่เปลี่ยน · Guides ถูกถอดออกใน v25', function(){
     var c=mapHead('car',['ประเภทรถ','ที่นั่ง','ราคา','คิดแบบ']);
     eq(c.type,0); eq(c.seats,1); eq(c.price,2); eq(c.mode,3);
-    var g=mapHead('guide',['ประเภท','ชื่อ-นามสกุล','ชื่อเล่น','เบอร์โทร']);
-    eq(g.type,0); eq(g.name,1); eq(g.nick,2); eq(g.tel,3);
+    eq(typeof IMP_SCHEMA.guide, 'undefined', 'ไม่มีโครงคอลัมน์ไกด์แล้ว');
   });
 });
 

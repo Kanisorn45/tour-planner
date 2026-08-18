@@ -28,7 +28,7 @@ group('แอปยังทำงานครบ', function(){
   });
 
   test('เปิดหน้าฐานข้อมูลได้ทุกแท็บ', function(){
-    ['adm','res','guide','car','hotel'].forEach(function(t){
+    ['adm','res','car','hotel'].forEach(function(t){
       openDb(t); renderDbList();
     });
     document.getElementById('dbModal').classList.remove('open');

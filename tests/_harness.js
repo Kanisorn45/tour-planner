@@ -31,8 +31,8 @@ function reset(){
   Object.keys(S).forEach(function(k){ delete S[k]; });
   var clone=JSON.parse(__base);
   Object.keys(clone).forEach(function(k){ S[k]=clone[k]; });
-  S.adm=[]; S.res=[]; S.guides=[]; S.carSel=[]; S.hotelSel=[];
-  S.customAdm=[]; S.customRes=[]; S.customGuides=[];
+  S.adm=[]; S.res=[]; S.guideCount={}; S.carSel=[]; S.hotelSel=[];
+  S.customAdm=[]; S.customRes=[];
   S.hotels=[]; S.transferOff={in:true,out:true};
   S.ref={areas:[],routes:[],tiers:[]};
   S.dayStart={}; S.tlStart=480; S.tlOn=true; S.itinTime=false;

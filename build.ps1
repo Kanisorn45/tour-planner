@@ -62,7 +62,19 @@ Write-Host ("  พบข้อมูลจริง: สถานที่ {0} �
 $q = { param($a) ($a | ForEach-Object { '"' + ($_ -replace '\\','\\' -replace '"','\"') + '"' }) -join ',' }
 $aj = & $q @($db.admAreas)
 $rj = & $q @($db.resAreas)
-$emptyDb = '{"admissions":[],"restaurants":[],"guides":[],"admAreas":[' + $aj + '],"resAreas":[' + $rj + ']}'
+
+<#  ไกด์: เก็บเฉพาะ type ไว้ ไม่ใช่ข้อมูลส่วนบุคคล
+    จำเป็นต้องเก็บ เพราะใบเสนอราคาเก่าอ้างไกด์เป็นรายคน (ref 'd12')
+    ถ้าล้างทิ้ง ไฟล์ที่ deploy จะแปลงใบเก่าไม่ได้ ต้นทุนไกด์กลายเป็น 0
+    ถ้ามีฟิลด์อื่นนอกจาก type โผล่มาเมื่อไหร่ แปลว่ามีคนเอา PII กลับเข้ามา -> หยุดทันที #>
+$gbad = @($db.guides | Where-Object { (@($_.PSObject.Properties.Name) -join ',') -ne 'type' })
+if($gbad.Count){
+  Fail ("ไกด์ {0} รายการมีฟิลด์อื่นนอกจาก type — อาจมีชื่อหรือเบอร์กลับเข้ามา ตรวจไฟล์ต้นทางก่อน" -f $gbad.Count)
+}
+$gj = (@($db.guides) | ForEach-Object { '{"type":"' + ($_.type -replace '"','\"') + '"}' }) -join ','
+Write-Host ("  เก็บประเภทไกด์ไว้ {0} รายการ (ไม่มีชื่อ ไม่มีเบอร์)" -f @($db.guides).Count) -ForegroundColor Green
+
+$emptyDb = '{"admissions":[],"restaurants":[],"guides":[' + $gj + '],"admAreas":[' + $aj + '],"resAreas":[' + $rj + ']}'
 
 $s = $s.Remove($m.Index, $m.Length).Insert($m.Index, "const DB = $emptyDb;")
 Write-Host "  ถอดข้อมูลออกแล้ว เหลือรายชื่อจังหวัดไว้กันหน้าจอพัง" -ForegroundColor Green
@@ -90,8 +102,9 @@ else{
   $d2 = $m2.Groups[1].Value | ConvertFrom-Json
   if(@($d2.admissions).Count -ne 0){ $bad += "ยังมีสถานที่ค้างอยู่" }
   if(@($d2.restaurants).Count -ne 0){ $bad += "ยังมีร้านอาหารค้างอยู่" }
-  if(@($d2.guides).Count -ne 0){ $bad += "ยังมีไกด์ค้างอยู่" }
-  if($bad.Count -eq 0){ Write-Host "    [ok] ฐานข้อมูลว่างเปล่าแล้ว" -ForegroundColor Green }
+  $g2 = @($d2.guides | Where-Object { (@($_.PSObject.Properties.Name) -join ',') -ne 'type' })
+  if($g2.Count){ $bad += "ไกด์มีฟิลด์อื่นนอกจาก type" }
+  if($bad.Count -eq 0){ Write-Host "    [ok] ฐานข้อมูลว่างเปล่า · ไกด์เหลือแต่ประเภท" -ForegroundColor Green }
 }
 
 # เบอร์โทร — ยกเว้นเฉพาะเบอร์ตัวอย่างปลอมที่อยู่ในเทมเพลตนำเข้าของตัวโปรแกรมเอง
