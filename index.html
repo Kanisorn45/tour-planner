@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-18 10:50 จาก tour_pricing_app_v28.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-18 11:42 จาก tour_pricing_app_v29.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -736,6 +736,8 @@ body.dnd-active *{cursor:grabbing!important}
 .gs-step>div{flex:1;min-width:0}
 .gs-step label{display:block;font-size:11px;color:var(--ink-dim);margin-bottom:4px}
 .gs-step .gs-url{margin-bottom:0}
+.gs-why{font-size:10.5px;color:var(--orange);line-height:1.6;margin-top:5px;min-height:1px}
+
 .gs-status{
   display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px;
   font-size:11px;font-family:var(--mono);color:var(--ink-dim);
@@ -4774,6 +4776,26 @@ async function gsSync(){
    เชื่อมแล้ว   -> เห็นแค่ 2 ปุ่มที่ใช้จริง ที่เหลือพับไว้ใต้ ตั้งค่า        */
 let gsCfgOpen=false;
 
+/* v29 · ตรวจลิงก์ Web App แล้วบอกเหตุผลถ้าไม่ผ่าน
+   ของเดิมถ้าลิงก์ไม่ตรงรูปแบบจะเงียบไปเฉย ๆ ผู้ใช้วางแล้วหน้าจอนิ่ง
+   เหมือนแอปพัง ทั้งที่จริงคือวางลิงก์ผิดตัว (เจอบ่อยสุดคือลิงก์ /dev
+   ซึ่งเป็นลิงก์ทดสอบในหน้า Apps Script ไม่ใช่ลิงก์ที่ Deploy ออกมา) */
+function gsExecCheck(raw){
+  let u=String(raw==null?'':raw).trim().replace(/\s+/g,'');
+  if(!u) return {url:'', ok:false, msg:''};
+  u=u.replace(/\/+$/,'');                       /* ตัด / ท้ายที่ติดมาตอนคัดลอก */
+  if(/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) return {url:u, ok:true, msg:''};
+  if(/\/dev$/.test(u))
+    return {url:u, ok:false, msg:'นี่คือลิงก์ทดสอบ (ลงท้าย /dev) — ต้องใช้ลิงก์จากปุ่ม ทำให้ใช้งานได้ ที่ลงท้าย /exec'};
+  if(/googleusercontent\.com/.test(u))
+    return {url:u, ok:false, msg:'ลิงก์นี้ไม่ใช่ลิงก์ Web App — กลับไปคัดลอกจากหน้า การทำให้ใช้งานได้ ใหม่'};
+  if(/docs\.google\.com\/spreadsheets/.test(u))
+    return {url:u, ok:false, msg:'นี่คือลิงก์ชีต ไม่ใช่ลิงก์ Web App — เอาไปวางช่อง ① ด้านบนแทน'};
+  if(!/^https:\/\/script\.google\.com\//.test(u))
+    return {url:u, ok:false, msg:'ต้องเป็นลิงก์ที่ขึ้นต้นด้วย https://script.google.com/'};
+  return {url:u, ok:false, msg:'ลิงก์ยังไม่ครบ — ต้องลงท้ายด้วย /exec'};
+}
+
 function gsFieldsHtml(){
   return `<div class="gs-step"><b>1</b><div>`+
       `<label>วางลิงก์ Google Sheet</label>`+
@@ -4783,7 +4805,7 @@ function gsFieldsHtml(){
       `<button class="gs-b" id="gsConnBtn" type="button">📜 รับสคริปต์ + วิธีติดตั้ง</button></div></div>`+
     `<div class="gs-step"><b>3</b><div>`+
       `<label>วางลิงก์ Web App ที่ได้ (ลงท้าย /exec)</label>`+
-      `<input class="gs-url" id="gsExecInput" placeholder="https://script.google.com/.../exec" value="${esc(S.gsExec||'')}"></div></div>`;
+      `<input class="gs-url" id="gsExecInput" placeholder="https://script.google.com/.../exec" value="${esc(S.gsExec||'')}"><div class="gs-why" id="gsWhy"></div></div></div>`;
 }
 
 function renderGsBox(){
@@ -4845,9 +4867,14 @@ function renderGsBox(){
   const u=$('gsUrl'); if(u)u.oninput=e=>{ S.gsUrl=e.target.value.trim(); save(); };
   const x=$('gsExecInput'); if(x)x.oninput=e=>{
     const was=gsHasExec();
-    S.gsExec=e.target.value.trim(); save();
-    /* พอใส่ /exec ครบ หน้าตาต้องเปลี่ยนจากโหมดตั้งค่าเป็นโหมดใช้งานทันที */
-    if(gsHasExec()!==was){ gsCfgOpen=false; renderGsBox(); }
+    const r=gsExecCheck(e.target.value);
+    S.gsExec=r.url; save();
+    const why=$('gsWhy');
+    if(why)why.textContent=r.msg;
+    /* ลิงก์เพิ่งใช้ได้ -> สลับเป็นโหมดใช้งาน แล้วตรวจการเชื่อมต่อให้เลยครั้งเดียว
+       จะได้รู้ทันทีว่าตั้ง Deploy ถูกไหม ไม่ต้องเดาต่อ */
+    if(gsHasExec()&&!was){ gsCfgOpen=false; renderGsBox(); gsCheck(); }
+    else if(!gsHasExec()&&was){ renderGsBox(); }
   };
   gon('gsSyncBtn',gsSync); gon('gsPushBtn',gsPush); gon('gsCheckBtn',gsCheck);
   gon('gsConnBtn',gsConnScript); gon('gsSeedBtn',gsSeed);

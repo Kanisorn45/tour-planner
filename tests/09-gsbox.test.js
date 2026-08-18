@@ -96,3 +96,51 @@ group('เชื่อมแล้ว — เห็นแค่ 2 ปุ่ม�
     gsCfgOpen=false;
   });
 });
+
+group('ตรวจลิงก์ Web App แล้วบอกเหตุผล', function(){
+
+  test('ลิงก์ถูกต้อง ผ่าน', function(){
+    ok(gsExecCheck('https://script.google.com/macros/s/AKfycbX/exec').ok);
+    ok(gsExecCheck('https://script.google.com/a/macros/example.com/s/AKfycbY/exec').ok, 'บัญชีองค์กร');
+  });
+
+  test('ตัด / ท้ายและช่องว่างให้เอง', function(){
+    var r=gsExecCheck('  https://script.google.com/macros/s/AKfycbZ/exec/  ');
+    ok(r.ok, 'ต้องผ่าน ไม่ใช่ปฏิเสธเงียบ ๆ');
+    eq(r.url,'https://script.google.com/macros/s/AKfycbZ/exec');
+  });
+
+  test('ลิงก์ /dev บอกว่าเป็นลิงก์ทดสอบ', function(){
+    var r=gsExecCheck('https://script.google.com/macros/s/AKfycbW/dev');
+    no(r.ok);
+    ok(r.msg.indexOf('ทดสอบ')>=0);
+    ok(r.msg.indexOf('/exec')>=0, 'ต้องบอกด้วยว่าต้องใช้อันไหน');
+  });
+
+  test('เอาลิงก์ชีตมาวางผิดช่อง', function(){
+    var r=gsExecCheck('https://docs.google.com/spreadsheets/d/1NQdCPSQt37c1iiVGQYRrq9lly4hI5iiej03yNSrh2iQ/edit');
+    no(r.ok);
+    ok(r.msg.indexOf('ลิงก์ชีต')>=0);
+  });
+
+  test('ลิงก์อื่นที่ไม่ใช่ Web App', function(){
+    no(gsExecCheck('https://script.googleusercontent.com/macros/echo?x=1').ok);
+    no(gsExecCheck('https://example.com/exec').ok);
+    ok(gsExecCheck('https://example.com/exec').msg.indexOf('script.google.com')>=0);
+  });
+
+  test('ว่าง = ไม่ต้องบ่น', function(){
+    var r=gsExecCheck('');
+    no(r.ok); eq(r.msg,'');
+  });
+
+  test('วางลิงก์ผิดแล้วต้องเห็นเหตุผลบนหน้าจอ', function(){
+    reset(); S.gsUrl=''; S.gsExec=''; gsCfgOpen=false;
+    openDb('adm'); renderGsBox();
+    var el=document.getElementById('gsExecInput');
+    el.value='https://script.google.com/macros/s/AKfycbW/dev';
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    var why=document.getElementById('gsWhy');
+    ok(why && why.textContent.length>0, 'ต้องมีข้อความอธิบาย ไม่ใช่เงียบ');
+  });
+});
