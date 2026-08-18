@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build 2026-08-18 10:02 จาก tour_pricing_app_v26.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
+<!-- build 2026-08-18 10:34 จาก tour_pricing_app_v27.html · ตัวโปรแกรมเปล่า ไม่มีข้อมูลจริง -->
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -701,6 +701,10 @@ body.dnd-active *{cursor:grabbing!important}
 .gs-b[disabled]{opacity:.5}
 .gs-log{margin-top:9px;font-size:11px;line-height:1.75;font-family:var(--mono);color:var(--ink-faint);max-height:168px;overflow:auto}
 /* ---------- v26 · กล่องเชื่อม Google Sheet (แบบย่อ) ---------- */
+.flabel .fhint{color:var(--ink-faint);font-weight:400;font-size:10px;margin-left:4px}
+.tier-row{gap:6px}
+.tier-row .fcol{min-width:0}
+
 .gs-step{display:flex;gap:9px;align-items:flex-start;margin-bottom:10px}
 .gs-step>b{
   flex:0 0 20px;width:20px;height:20px;border-radius:50%;
@@ -3311,6 +3315,42 @@ function renderDbList(){
 function fld(label,id,val,attrs){ return `<div class="frow"><div class="fcol"><label class="flabel">${label}</label><input class="txt" id="${id}" value="${esc(val!=null?val:'')}" ${attrs||''}></div></div>`; }
 function selFld(label,id,opts,val){ return `<div class="frow"><div class="fcol"><label class="flabel">${label}</label><select id="${id}">`+opts.map(o=>`<option value="${esc(o)}" ${o===val?'selected':''}>${esc(o)}</option>`).join('')+`</select></div></div>`; }
 
+/* v27 · ช่องที่ใช้กับไทม์ไลน์และราคาตามช่วง PAX
+   เดิมมีแต่ในคอลัมน์ชีต แต่ฟอร์มในแอปกรอกไม่ได้ ทำให้เพิ่มจากแอปแล้วช่องพวกนี้ว่างเสมอ
+   ราคา T1-T4 โผล่เฉพาะตอนมีแท็บ Tiers เท่านั้น ไม่งั้นเป็นช่องว่างที่ไม่มีความหมาย */
+function dfExtraHtml(rec){
+  const t=Array.isArray(rec.tiers)?rec.tiers:[];
+  let h=`<div class="frow"><div class="fcol"><label class="flabel">โซน <small class="fhint">ใช้คิดเวลาเดินทาง · ว่าง = ใช้จังหวัด</small></label>
+      <input class="txt" id="dfZone" value="${esc(rec.zone||'')}" placeholder="เช่น ในเมือง"></div>
+    <div class="fcol" style="flex:0 0 120px"><label class="flabel">ใช้เวลา</label>
+      <input class="txt" id="dfDur" value="${rec.dur!=null?esc(fmtDur(rec.dur)):''}" placeholder="45 นาที"></div></div>`+
+    `<div class="frow"><div class="fcol" style="flex:0 0 110px"><label class="flabel">เปิด</label>
+      <input class="txt" id="dfOpen" value="${rec.open!=null?fmtClock(rec.open):''}" placeholder="08:00"></div>
+    <div class="fcol" style="flex:0 0 110px"><label class="flabel">ปิด</label>
+      <input class="txt" id="dfClose" value="${rec.close!=null?fmtClock(rec.close):''}" placeholder="17:00"></div>
+    <div class="fcol"></div></div>`;
+  if(tiersOn()){
+    h+=`<label class="flabel" style="margin-top:10px">ราคาตามขนาดกรุ๊ป <small class="fhint">เว้นว่าง = ใช้ราคาด้านบน</small></label><div class="frow tier-row">`+
+      REF.tiers.map((tr,i)=>{
+        const rng=(tr.max==null)?(tr.min+'+'):(tr.min+'–'+tr.max);
+        return `<div class="fcol"><label class="flabel">${esc(tr.code||'T'+(i+1))} <small class="fhint">${rng} คน</small></label>
+          <input class="txt" id="dfT${i}" type="number" min="0" value="${t[i]!=null?t[i]:''}" placeholder="—"></div>`;
+      }).join('')+`</div>`;
+  }
+  return h;
+}
+/* อ่านค่าจากช่องที่เพิ่มมา · ว่าง = ถอนค่าออก ไม่ใช่เก็บเป็น 0 */
+function dfExtraRead(){
+  const g=id=>{ const e=$(id); return e?e.value.trim():''; };
+  const out={ zone:g('dfZone')||null, dur:g('dfDur')?parseDur(g('dfDur')):null,
+              open:g('dfOpen')?parseClock(g('dfOpen')):null, close:g('dfClose')?parseClock(g('dfClose')):null };
+  if(tiersOn()){
+    const arr=REF.tiers.map((_,i)=>{ const raw=g('dfT'+i); return raw===''?null:(+raw||0); });
+    out.tiers=arr.some(v=>v!=null)?arr:null;
+  }
+  return out;
+}
+
 function showDbForm(ref){
   dbEditRef=ref||null;
   $('dbListView').style.display='none';
@@ -3333,6 +3373,7 @@ function showDbForm(ref){
       `<div class="frow"><div class="fcol"><label class="flabel">คิดราคาแบบ</label>
         <div class="seg" id="dfMode"><button data-md="person" class="${dbFormMode==='person'?'on':''}">ต่อคน (× PAX)</button><button data-md="unit" class="${dbFormMode==='unit'?'on':''}">ต่อหน่วย</button></div></div>
         <div class="fcol" id="dfUnitWrap" style="flex:0 0 100px;display:${dbFormMode==='unit'?'block':'none'}"><label class="flabel">หน่วย</label><input class="txt" id="dfUnit" value="${unitLabel}"></div></div>`+
+      dfExtraHtml(rec)+
       dowPickHtml(dbFormClosed);
     wireDowPick();
     (()=>{ $('dfMode').onclick=e=>{const b=e.target.closest('[data-md]');if(!b)return;dbFormMode=b.dataset.md;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));$('dfUnitWrap').style.display=dbFormMode==='unit'?'block':'none';}; })();
@@ -3348,6 +3389,7 @@ function showDbForm(ref){
       `<div class="frow"><div class="fcol"><label class="flabel">ชื่อ (ไทย)</label><input class="txt" id="dfNameTh" value="${(rec.th||'').replace(/"/g,'&quot;')}"></div>
         <div class="fcol"><label class="flabel">ชื่อ (อังกฤษ)</label><input class="txt" id="dfNameEn" value="${(rec.en||'').replace(/"/g,'&quot;')}"></div></div>`+
       `<div class="frow"><div class="fcol" style="flex:0 0 140px"><label class="flabel">ราคา (บาท/ท่าน)</label><input class="txt" id="dfPrice" type="number" min="0" value="${rec.price!=null?rec.price:''}"></div></div>`+
+      dfExtraHtml(rec)+
       dowPickHtml(dbFormClosed);
     wireDowPick();
     (()=>{ $('dfHalal').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;dbFormHalal=(b.dataset.h==='halal');[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));}; })();
@@ -3426,7 +3468,7 @@ function saveDbForm(){
     const th=v('dfNameTh'), en=v('dfNameEn'), price=n('dfPrice');
     if((!th&&!en)||isNaN(price)){toast('กรอกชื่อและราคา');return;}
     const unit=dbFormMode==='person'?'บาท/ท่าน':'บาท/'+(v('dfUnit')||'หน่วย');
-    const data={area:v('dfArea'),th:th||en,en:en||th,item:v('dfItem')||null,price,unit,closed:dbFormClosed.slice()};
+    const data={area:v('dfArea'),th:th||en,en:en||th,item:v('dfItem')||null,price,unit,closed:dbFormClosed.slice(),...dfExtraRead()};
     if(dbEditRef){ if(isCustom(dbEditRef)){Object.assign(admRec(dbEditRef),data);} else {S.admEdits[dbEditRef]={...S.admEdits[dbEditRef],...data};} }
     else S.customAdm.push({id:nid(),...data});
     renderAdmTable(); renderAdm(); renderDayTabs();
@@ -3434,7 +3476,7 @@ function saveDbForm(){
   else if(dbTab==='res'){
     const th=v('dfNameTh'), en=v('dfNameEn'), price=n('dfPrice');
     if((!th&&!en)||isNaN(price)){toast('กรอกชื่อและราคา');return;}
-    const data={area:v('dfArea'),halal:dbFormHalal,th:th||en,en:en||th,price,unit:'บาท/ท่าน',closed:dbFormClosed.slice()};
+    const data={area:v('dfArea'),halal:dbFormHalal,th:th||en,en:en||th,price,unit:'บาท/ท่าน',closed:dbFormClosed.slice(),...dfExtraRead()};
     if(dbEditRef){ if(isCustom(dbEditRef)){Object.assign(resRec(dbEditRef),data);} else {S.resEdits[dbEditRef]={...S.resEdits[dbEditRef],...data};} }
     else S.customRes.push({id:nid(),...data});
     fillResSelect(); renderRes();
