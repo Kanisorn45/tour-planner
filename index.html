@@ -1535,6 +1535,7 @@ img,table,pre{max-width:100%}
         <button class="btn-ghost" id="dbDupBtn" type="button">🔍 ตรวจรายการซ้ำ</button>
         <button class="btn-ghost" id="dbFixBtn" type="button">🩺 ข้อมูลไม่ครบ</button>
         <button class="btn-ghost" id="dbPriceBtn" type="button">💰 ปรับราคา</button>
+        <button class="btn-ghost" id="dbCapBtn" type="button" title="เพดานที่ใช้เตือนว่า &quot;ราคาสูงผิดปกติ&quot;">🚧 เพดานเตือนราคา</button>
       </div>
       <div class="db-filter" id="dbFilter"></div>
       <div class="db-count" id="dbCount"></div>
@@ -1650,21 +1651,66 @@ img,table,pre{max-width:100%}
 <div class="toast" id="toast"></div>
 
 <script>
-const DB = {"admissions": [{"area": "เชียงใหม่", "th": "บริษัท เอทีวี เชียงใหม่ ทัวร์ จำกัด", "en": "ATV Chiang Mai", "item": "ATV คนขับ", "price": 1000.0, "unit": "บาท/คน", "note": "ปกติ 1.30-2 ชม. สำหรับ GIT / FIT ราคาเดียวกันแต่เวลาสั้นลง"}, {"area": "เชียงใหม่", "th": "บริษัท เอทีวี เชียงใหม่ ทัวร์ จำกัด", "en": "ATV Chiang Mai", "item": "ATV คนซ้อน", "price": 700.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "รถตุ๊กๆ (เอทีวี เชียงใหม่)", "en": "Tuk Tuk", "item": "เหมาคัน", "price": 250.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงใหม่", "th": "Pong Yaeng Jungle Coaster & Zipline", "en": "Pong Yaeng Jungle Coaster & Zipline", "item": "ซิปไลน์ 12-14 สถานี", "price": 750.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "Pong Yaeng Jungle Coaster & Zipline", "en": "Pong Yaeng Jungle Coaster & Zipline", "item": "จังเกิ้ลคอสเตอร์ (1 รอบ)", "price": 150.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "พิพิธภัณฑ์ศิลปะ", "en": "CNX Art Museum", "item": "ค่าเข้า", "price": 60.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "พิพิธภัณฑ์สามมิติ", "en": "Art in Paradise", "item": "ค่าเข้า", "price": 150.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "พิพิธภัณฑ์ใหม่เอี่ยม", "en": "Maiiam Museum", "item": "ค่าเข้า", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "วัดเจดีย์หลวง", "en": "Chedi Luang Temple", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "วัดพระสิงห์", "en": "Pra Sing Temple", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "หอศิลป์", "en": "Art Gallery", "item": "ค่าเข้า (มีคนบรรยาย)", "price": 100.0, "unit": "บาท/ท่าน", "note": "มีคนบรรยาย"}, {"area": "เชียงใหม่", "th": "วัดสวนดอก", "en": "Suan Dok Temple", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "วัดศรีสุพรรณ", "en": "Sri Suphan Temple", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "วัดศรีสุพรรณ", "en": "Sri Suphan Temple", "item": "นักเรียนสิงคโปร์ (ครึ่งราคา)", "price": 25.0, "unit": "บาท/ท่าน", "note": "ราคาพิเศษนักเรียนสิงคโปร์"}, {"area": "เชียงใหม่", "th": "วัดศรีสุพรรณ", "en": "Sri Suphan Temple", "item": "กิจกรรม Silver Plate", "price": 250.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "ดอยสุเทพ + ลิฟท์", "en": "Doi Suthep + Cable Car", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "วัดโลกโมฬี", "en": "Wat Lok Molee", "item": "ค่าเข้า", "price": 0.0, "unit": "บาท/คน", "note": "ไม่มีค่าบัตร"}, {"area": "เชียงใหม่", "th": "กะเหรี่ยงคอยาว", "en": "Long Neck Village", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "บัตรต่างชาติ ผู้ใหญ่", "price": 150.0, "unit": "บาท/ท่าน", "note": "เปิด 09.00-16.00"}, {"area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "บัตรต่างชาติ เด็ก", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "ค่ายานพาหนะ", "price": 100.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "บัตรชมสวนอย่างเดียว", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "ค่านั่งรถราง", "price": 40.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "เอารถตู้เข้าไป (ไม่บังคับนั่งรถราง)", "price": 100.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงใหม่", "th": "ฟาร์มงูแม่ริม เชียงใหม่", "en": "Mae Rim Snake Farm", "item": "ค่าเข้า", "price": 70.0, "unit": "บาท/ท่าน", "note": "อยู่หน้า รร.ทุ่งโป่ง ใกล้ รร.ลิงเก่า / สวนบัวออร์คิด"}, {"area": "เชียงใหม่", "th": "โรงแรมลิง", "en": "Monkey Center", "item": "ค่าเข้า", "price": 80.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "Araksa Tea Farm", "en": "Araksa Tea Farm", "item": "โปรแกรมเก็บชา ผู้ใหญ่", "price": 650.0, "unit": "บาท/ท่าน", "note": "เริ่ม 09.00 น. หรือช่วงบ่าย"}, {"area": "เชียงใหม่", "th": "Araksa Tea Farm", "en": "Araksa Tea Farm", "item": "โปรแกรมเก็บชา เด็ก", "price": 325.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "Araksa Tea Farm", "en": "Araksa Tea Farm", "item": "โปรแกรมเก็บชา + อาหาร", "price": 1150.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถราง (20 คน)", "price": 500.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถม้า (2-3 คน)", "price": 300.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถราง 1-10 คน (เหมาคัน)", "price": 400.0, "unit": "บาท/คัน", "note": "1-10 คน เหมาคันออก"}, {"area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถราง 11-20 คน (เหมาคัน)", "price": 500.0, "unit": "บาท/คัน", "note": "11-20 คน เหมาคันออก"}, {"area": "เชียงใหม่", "th": "ผาช่อ (อุทยานแห่งชาติแม่วาง)", "en": "Pha Chor", "item": "ค่าเข้า (ต่างชาติผู้ใหญ่)", "price": 100.0, "unit": "บาท/ท่าน", "note": "คนไทย ผู้ใหญ่ 20/เด็ก 10 ; ต่างชาติ ผู้ใหญ่ 100/เด็ก 50 ; ปิด 16.00"}, {"area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "ค่าบัตรเข้าอุทยาน", "price": 300.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "ค่ารถตู้ขึ้นดอย", "price": 30.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "พระธาตุคู่", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "เดินป่ากิ่วแม่ปาน (ไกด์ท้องถิ่น)", "price": 200.0, "unit": "บาท/กลุ่ม", "note": "1 กลุ่มไม่เกิน 10 คน ; ติดต่อหน้าปากทาง"}, {"area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "สถานีเกษตรหลวง", "price": 20.0, "unit": "บาท/ท่าน", "note": "ถ้าทานอาหารไม่ต้องจ่าย"}, {"area": "เชียงใหม่", "th": "ผาดอกเสี้ยว/กิ่วแม่ปาน", "en": "Local Guide Trekking", "item": "ค่าไกด์ท้องถิ่น", "price": 200.0, "unit": "บาท/คน", "note": "ติดต่อลุงลือ"}, {"area": "เชียงใหม่", "th": "รถพยาบาล (คุณโอม) ชลธารวิว ดอยอินทนนท์", "en": "Ambulance", "item": "บริการรถ", "price": null, "unit": null, "note": "ใช้กรณีกรุ๊ปพักชลธารวิว"}, {"area": "เชียงใหม่", "th": "ไอเลิฟฟลาวเวอร์ฟาร์ม", "en": "I Love Flower Farm", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "ศูนย์การเรียนรู้เศรษฐกิจพอเพียงฯ ภาคเหนือ", "en": "Learning Center (Sufficiency Economy), Mae Rim", "item": "ดูงาน", "price": 0.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "โครงการหลวงหนองหอย", "en": "Nong Hoi Royal Project", "item": "ศึกษาดูงาน", "price": 0.0, "unit": "บาท/คน", "note": "ต้องทำจดหมายขอความอนุเคราะห์ล่วงหน้าอย่างน้อย 1 เดือน ระบุเวลาด้วย"}, {"area": "เชียงใหม่", "th": "แดนเทวดา", "en": "Dantewada", "item": "ค่าบัตรเข้า + กาแฟ 1 แก้ว", "price": 230.0, "unit": "บาท/ท่าน", "note": "บัตรเข้า 70 + กาแฟ 150 บาท/แก้ว | ⚠️ ข้อความระบุ 120 (ไฟล์ 230)"}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "แพ (4 คนขึ้นไป)", "price": 200.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "แพ 1 ลำ (1-3 คน)", "price": 800.0, "unit": "บาท/ลำ", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "กะเหรี่ยงคอยาว", "price": 100.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "นั่งช้าง 1 เชือก (2 คน)", "price": 600.0, "unit": "บาท/เชือก", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "โชว์ช้างอย่างเดียว", "price": 100.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "อาหารอย่างเดียว", "price": 200.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "โชว์ + นั่งช้าง + เกวียน + อาหาร", "price": 550.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "โชว์ + นั่งช้าง + เกวียน", "price": 500.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "มะพร้าวคว้าน", "price": 70.0, "unit": "บาท/ลูก", "note": "ทานเนื้อได้ ใส่แก้วพลาสติก"}, {"area": "เชียงใหม่", "th": "Siam Dragon Cabaret Chiangmai", "en": "Siam Dragon Cabaret", "item": "ที่นั่ง VIP", "price": 350.0, "unit": "บาท/คน", "note": "โชว์ 20:00 น. (70 นาที) 13 ชุดการแสดง"}, {"area": "เชียงใหม่", "th": "Siam Dragon Cabaret Chiangmai", "en": "Siam Dragon Cabaret", "item": "ที่นั่ง Normal", "price": 250.0, "unit": "บาท/คน", "note": null}, {"area": "เชียงราย", "th": "รถ 4 แถวขึ้น Aka Farm View เชียงราย", "en": "Akha Farm View (4-row truck)", "item": "เหมารถขึ้นอาข่าฟาร์ม", "price": 1500.0, "unit": "บาท/คัน", "note": null}, {"area": "เชียงราย", "th": "วัดร่องขุ่น (วัดขาว)", "en": "Wat Rong Khun (White Temple)", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "บ้านดำ", "en": "Black House", "item": "ค่าเข้า", "price": 80.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "วัดร่องเสือเต้น", "en": "Wat Rong Suea Ten (Blue Temple)", "item": "ค่าเข้า", "price": 0.0, "unit": "บาท/คน", "note": "ไม่มีค่าใช้จ่าย"}, {"area": "เชียงราย", "th": "ห้วยปลากั้ง", "en": "Wat Huay Pla Kang", "item": "ค่าลิฟท์", "price": 40.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "เรือลาว", "en": "Lao Boat", "item": "1-4 คน (เรือเล็ก)", "price": 600.0, "unit": "บาท/ลำ", "note": null}, {"area": "เชียงราย", "th": "เรือลาว", "en": "Lao Boat", "item": "5-8 คน (เรือกลาง)", "price": 800.0, "unit": "บาท/ลำ", "note": null}, {"area": "เชียงราย", "th": "เรือลาว", "en": "Lao Boat", "item": "9-38 คน (เรือใหญ่)", "price": 1200.0, "unit": "บาท/ลำ", "note": null}, {"area": "เชียงราย", "th": "ค่าขึ้นด่านลาว", "en": "Laos Border", "item": "ค่าขึ้นด่าน", "price": 30.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "หอฝิ่น", "en": "Hall of Opium", "item": "ค่าเข้า", "price": 200.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "บ้านฝิ่น", "en": "Opium House", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "วัดผาเงา", "en": "Wat Pha Ngao", "item": "ค่าบัตร + Sky Walk", "price": 70.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "ไร่ชาฉุยฟง", "en": "Choui Fong Tea Plantation", "item": "ค่าเข้า", "price": 0.0, "unit": "บาท/คน", "note": "ไม่มีค่าใช้จ่าย"}, {"area": "เชียงราย", "th": "สิงห์ปาร์ค เชียงราย", "en": "Singha Park", "item": "ค่ารถราง", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "พระตำหนักดอยตุง / สวนแม่ฟ้าหลวง / หอแห่งแรงบันดาลใจ", "en": "Doi Tung", "item": "บัตรรวมเข้าชม (หอแรงบันดาลใจ + สวนรุกขชาติ)", "price": 220.0, "unit": "บาท/ท่าน", "note": "หอแห่งแรงบันดาลใจ 90 + สวนรุกขชาติแม่ฟ้าหลวง 90"}, {"area": "เชียงราย", "th": "พระตำหนักดอยตุง / สวนแม่ฟ้าหลวง / หอแห่งแรงบันดาลใจ", "en": "Doi Tung", "item": "บัตร 2 ที่ (พระตำหนัก + สวน) ไม่เข้าหอฯ", "price": 180.0, "unit": "บาท/ท่าน", "note": "ค่าเข้าพระตำหนัก 90 + ชมสวนแม่ฟ้าหลวง 90 (ไม่เข้าหอแห่งแรงบันดาลใจ)"}, {"area": "ปาย-แม่ฮ่องสอน", "th": "อุทยานแห่งชาติห้วยน้ำดัง", "en": "Huai Nam Dang National Park", "item": "ค่าเข้า", "price": 300.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "อนุสรณ์สถานมิตรภาพไทย-ญี่ปุ่น ขุนยวม", "en": "Thai-Japan Friendship Memorial, Khun Yuam", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "กะเหรี่ยงคอยาวน้ำเพียงดิน แม่ฮ่องสอน", "en": "Long Neck Nam Phiang Din", "item": "ค่าเข้า + เรือล่องข้าม", "price": 300.0, "unit": "บาท/ท่าน", "note": "รวมเรือล่องข้ามไป"}, {"area": "ปาย-แม่ฮ่องสอน", "th": "กะเหรี่ยงคอยาวห้วยเสือเฒ่า แม่ฮ่องสอน", "en": "Long Neck Huai Suea Thao", "item": "ค่าเข้า", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "ปางอุ๋ง", "en": "Pang Ung", "item": "ค่าเข้า", "price": 30.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "โป่งน้ำร้อนท่าปาย (อุทยานห้วยน้ำดัง)", "en": "Tha Pai Hot Spring", "item": "ค่าเข้า", "price": 300.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "หยุนไหล ปาย", "en": "Yun Lai Viewpoint (pickup)", "item": "เหมารถรถกระบะขึ้น (10 คน)", "price": 300.0, "unit": "บาท/คัน", "note": "ดูพระอาทิตย์ตอนเช้ามืด"}, {"area": "ปาย-แม่ฮ่องสอน", "th": "หยุนไหล ปาย", "en": "Yun Lai Viewpoint", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "ถ้ำปลา + น้ำตกผาสื่อ", "en": "Fish Cave + Pha Suea Waterfall", "item": "ไปวันเดียวกัน (2 ที่)", "price": 100.0, "unit": "บาท/ท่าน", "note": "ถ้ำปลา + น้ำตกผาสื่อ ในวันเดียวกัน"}, {"area": "ปาย-แม่ฮ่องสอน", "th": "ถ้ำปลา + น้ำตกผาสื่อ", "en": "Fish Cave + Pha Suea Waterfall", "item": "ไปคนละวัน (จ่ายแยกที่ละ 100)", "price": 100.0, "unit": "บาท/ท่าน", "note": "ถ้ำปลา 100 / ผาสื่อ 100 (จ่ายเพิ่มอีก 100)"}, {"area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "พอกหน้า (เนต)", "price": 120.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "พอกหน้า (ทั่วไป)", "price": 140.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "สปาหน้า (เนต)", "price": 350.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "สปาหน้า (ทั่วไป)", "price": null, "unit": "บาท/ท่าน", "note": "ราคาเป็นช่วง 590-990"}, {"area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "สปาตัว (เนต)", "price": 700.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "น้ำพุร้อนไทรงาม อ.ปาย", "en": "Sai Ngam Hot Spring", "item": "ค่าเข้า ต่างชาติ", "price": 400.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "น้ำพุร้อนไทรงาม อ.ปาย", "en": "Sai Ngam Hot Spring", "item": "ค่าเข้า คนไทย", "price": 30.0, "unit": "บาท/ท่าน", "note": null}, {"area": "ปาย-แม่ฮ่องสอน", "th": "กะเหรี่ยงคอยาวบ้านน้ำเพียงดิน แม่ฮ่องสอน", "en": "Long Neck Ban Nam Phiang Din", "item": "ค่าเข้า (มีค่าเรือ)", "price": 350.0, "unit": "บาท/คน", "note": "มีค่าเรือเข้าไปด้วย"}, {"area": "เชียงใหม่", "th": "คลองแม่ข่า", "en": "Otaru", "item": null, "price": null, "unit": null, "note": null}, {"area": "เชียงราย", "th": "กะเหรี่ยงคอยาว", "en": "Long Neck Village", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงราย", "th": "สามเหลี่ยมทองคำ", "en": "Golden Triangle", "item": "with Boat Trip", "price": 800.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "อุทยานหลวงราชพฤกษ์ พืชสวนโลก", "en": "Royal Flora Garden - Tram Included", "item": "รวมค่ารถราง", "price": 140.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "ซิตี้ทัวร์ ตุ๊กๆ", "en": "City Tours", "item": "คันละคู่", "price": 250.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "ชุดไทย @ประตูท่าแพ", "en": "Dress up in that Costume @ Tha Pae Gate", "item": "เช่าชุดไทย", "price": 500.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "แกรนด์แคนยอน", "en": "Grand Canyon Chiang Mai", "item": "ค่าเข้า", "price": 200.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ"}, {"area": "เชียงใหม่", "th": "เอเลเฟ่น พูพูเปเปอร์ พาร์ค", "en": "Elephant POOPOOPAPER Park", "item": "ค่าเข้า", "price": 140.0, "unit": "บาท/ท่าน", "note": null}, {"area": "เชียงใหม่", "th": "ใบออคิดส์", "en": "Bai Orchid", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ"}, {"area": "เชียงใหม่", "th": "น้ำตกแม่สา", "en": "Mae Sa Waterfall", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ"}, {"area": "เชียงใหม่", "th": "น้ำตกแม่สา", "en": "Mae Sa Waterfall", "item": "ค่ารถ", "price": 30.0, "unit": "บาท/คัน", "note": "เพิ่มจากข้อความ"}, {"area": "เชียงราย", "th": "อาข่าฟาร์มวิว (ค่าเข้า)", "en": "Akha Farm View", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": "เพิ่มเติมจากค่าเหมารถ (แถว 59)"}, {"area": "เชียงใหม่", "th": "นำเข้าสนามบินเชียงใหม่", "en": "Pick-up from Chiang Mai Airport", "item": null, "price": 0.0, "unit": "บาท/คัน", "note": "รับคณะจากสนามบิน — ปกติรวมอยู่ในค่ารถแล้ว", "transfer": "in"}, {"area": "เชียงใหม่", "th": "ส่งออกสนามบินเชียงใหม่", "en": "Transfer to Chiang Mai Airport for departure", "item": null, "price": 0.0, "unit": "บาท/คัน", "note": "ส่งคณะขึ้นเครื่อง — ปกติรวมอยู่ในค่ารถแล้ว", "transfer": "out"}], "restaurants": [{"area": "เชียงใหม่", "th": "ลามูร์คาเฟ่ / Yellow House Cafe & Restaurant", "en": "Lamour Cafe / Yellow House", "item": "คาเฟ่", "price": null, "unit": null, "note": "Suthep, Mueang Chiang Mai 50200 ; เปิด 10:30", "halal": false}, {"area": "เชียงใหม่", "th": "วัลเล่ย์คอฟฟี่ + ชุดไทย", "en": "Valley Coffee with Thai Costume", "item": "ชุดกาแฟ + ชุดไทย", "price": 400.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"area": "เชียงใหม่", "th": "ชาบ่ายนาคาราจาแดง", "en": "Nakara Jadang Afternoon Tea", "item": "ชุดชาบ่าย (1 ชุด/4 ท่าน)", "price": 350.0, "unit": "บาท/ท่าน", "note": "1 ชุดทาน 4 ท่าน", "halal": false}, {"area": "เชียงใหม่", "th": "ชาบ่าย ณ นิรันทร์", "en": "Na Nirand Afternoon Tea", "item": "ชุดชาบ่าย (1 ชุด/4 ท่าน)", "price": 450.0, "unit": "บาท/ท่าน", "note": "1 ชุดทาน 4 ท่าน", "halal": false}, {"area": "เชียงใหม่", "th": "ไอติมจันดี สันกำแพง", "en": "Jandee Ice Cream", "item": "ไอศกรีมถัง", "price": 1500.0, "unit": "บาท/ถัง", "note": null, "halal": false}, {"area": "เชียงใหม่", "th": "ร้าน กลิ่น ขะ-หนม", "en": "Klin Kanom", "item": "ร้านขนม", "price": null, "unit": null, "note": null, "halal": false}, {"area": "เชียงราย", "th": "ร้านอาหารลานไม้หอม", "en": "LAN MAI Hom", "item": null, "price": 600.0, "unit": "บาท/คน", "note": null, "halal": false}, {"area": "เชียงราย", "th": "ลลิตา คาเฟ่ + ดริ๊ง", "en": "Lalita Cafe - with 01 Drink Included", "item": "ดริ๊ง", "price": 150.0, "unit": "บาท/คน", "note": null, "halal": false}, {"area": "เชียงใหม่", "th": "ขันโตก 12 ปันนา", "en": "Kan Toke", "item": "Northern Thai Set Dinner with Culture Shows", "price": 280.0, "unit": "บาท/ท่าน", "note": "มีเมนูฮาลาล (Halal menu available)", "halal": true}, {"area": "เชียงใหม่", "th": "ร้านข้าวเม้าข้าวฟ่าง", "en": "Kao mao Kao fang Michelin Guide", "item": null, "price": 600.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"area": "เชียงใหม่", "th": "ฮอลิเดย์ การ์เดน", "en": "Holiday Garden", "item": "Buffet", "price": 200.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"area": "เชียงใหม่", "th": "เลม่อนทรี", "en": "Lemon tree (Authentic Thai Set Lunch)", "item": null, "price": 250.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"area": "เชียงใหม่", "th": "รวมมิตร", "en": "Ruammit", "item": "เซ็ต/บุฟเฟ่", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ / มีเมนูฮาลาลด้วย", "halal": true}, {"area": "เชียงใหม่", "th": "อบาคิทเซ่น", "en": "ABA Kitchen", "item": "เซ็ต", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ / มีเมนูฮาลาลด้วย", "halal": true}, {"area": "เชียงใหม่", "th": "ลีลาวดี", "en": null, "item": null, "price": null, "unit": null, "note": "ไม่ระบุราคาในข้อความ", "halal": false}, {"area": "เชียงใหม่", "th": "ท่าจีนชมจันทร์", "en": "Tha Chee Chom Chan", "item": null, "price": null, "unit": null, "note": "ไม่ระบุราคาในข้อความ", "halal": false}, {"area": "เชียงใหม่", "th": "ใบออคิดส์ (ร้านอาหาร)", "en": "Bai Orchid Restaurant", "item": "เซ็ต", "price": 200.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"area": "เชียงใหม่", "th": "เศรษฐศิลป์", "en": "Settasilp Restaurant", "item": "เซ็ต", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"area": "เชียงใหม่", "th": "ชาบูสตาร์", "en": "Shabu Star", "item": null, "price": 220.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"area": "เชียงใหม่", "th": "บารองกัส", "en": "Barongus Halal Restaurant", "item": "Halal Set Lunch", "price": null, "unit": null, "note": "เมนูฮาลาล — ไม่ระบุราคา", "halal": true}, {"area": "เชียงใหม่", "th": "ทากาวา", "en": "Takawa Halal Restaurant", "item": "Halal Set Dinner", "price": null, "unit": null, "note": "เมนูฮาลาล — ไม่ระบุราคา", "halal": true}, {"area": "เชียงราย", "th": "มุมไม้", "en": "Mum Mai", "item": "Thai Set Dinner", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"area": "เชียงราย", "th": "เวียงอินทร์บุฟเฟ่", "en": "Wiang Inn Buffet", "item": "บุฟเฟ่", "price": 220.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"area": "เชียงราย", "th": "ลีลาวดี เชียงราย", "en": "Leelawadee Chiang Rai", "item": "Thai Set", "price": null, "unit": null, "note": "ไม่ระบุราคาในข้อความ", "halal": false}, {"area": "เชียงราย", "th": "ริมโขง", "en": "Rim Khong", "item": "เซ็ต", "price": 200.0, "unit": "บาท/ท่าน", "note": "ต่ำกว่า 7 ท่าน = 250 บาท/ท่าน", "halal": false}], "guides": [{"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "Biker"}, {"type": "Biker"}, {"type": "Japanese"}, {"type": "Japanese"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Driver"}], "admAreas": ["เชียงใหม่", "เชียงราย", "ปาย-แม่ฮ่องสอน"], "resAreas": ["เชียงใหม่", "เชียงราย"]};
+const DB = {"admissions": [{"uid": "a001", "area": "เชียงใหม่", "th": "บริษัท เอทีวี เชียงใหม่ ทัวร์ จำกัด", "en": "ATV Chiang Mai", "item": "ATV คนขับ", "price": 1000.0, "unit": "บาท/คน", "note": "ปกติ 1.30-2 ชม. สำหรับ GIT / FIT ราคาเดียวกันแต่เวลาสั้นลง"}, {"uid": "a002", "area": "เชียงใหม่", "th": "บริษัท เอทีวี เชียงใหม่ ทัวร์ จำกัด", "en": "ATV Chiang Mai", "item": "ATV คนซ้อน", "price": 700.0, "unit": "บาท/คน", "note": null}, {"uid": "a003", "area": "เชียงใหม่", "th": "รถตุ๊กๆ (เอทีวี เชียงใหม่)", "en": "Tuk Tuk", "item": "เหมาคัน", "price": 250.0, "unit": "บาท/คัน", "note": null}, {"uid": "a004", "area": "เชียงใหม่", "th": "Pong Yaeng Jungle Coaster & Zipline", "en": "Pong Yaeng Jungle Coaster & Zipline", "item": "ซิปไลน์ 12-14 สถานี", "price": 750.0, "unit": "บาท/คน", "note": null}, {"uid": "a005", "area": "เชียงใหม่", "th": "Pong Yaeng Jungle Coaster & Zipline", "en": "Pong Yaeng Jungle Coaster & Zipline", "item": "จังเกิ้ลคอสเตอร์ (1 รอบ)", "price": 150.0, "unit": "บาท/คน", "note": null}, {"uid": "a006", "area": "เชียงใหม่", "th": "พิพิธภัณฑ์ศิลปะ", "en": "CNX Art Museum", "item": "ค่าเข้า", "price": 60.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a007", "area": "เชียงใหม่", "th": "พิพิธภัณฑ์สามมิติ", "en": "Art in Paradise", "item": "ค่าเข้า", "price": 150.0, "unit": "บาท/คน", "note": null}, {"uid": "a008", "area": "เชียงใหม่", "th": "พิพิธภัณฑ์ใหม่เอี่ยม", "en": "Maiiam Museum", "item": "ค่าเข้า", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a009", "area": "เชียงใหม่", "th": "วัดเจดีย์หลวง", "en": "Chedi Luang Temple", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a010", "area": "เชียงใหม่", "th": "วัดพระสิงห์", "en": "Pra Sing Temple", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a011", "area": "เชียงใหม่", "th": "หอศิลป์", "en": "Art Gallery", "item": "ค่าเข้า (มีคนบรรยาย)", "price": 100.0, "unit": "บาท/ท่าน", "note": "มีคนบรรยาย"}, {"uid": "a012", "area": "เชียงใหม่", "th": "วัดสวนดอก", "en": "Suan Dok Temple", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a013", "area": "เชียงใหม่", "th": "วัดศรีสุพรรณ", "en": "Sri Suphan Temple", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a014", "area": "เชียงใหม่", "th": "วัดศรีสุพรรณ", "en": "Sri Suphan Temple", "item": "นักเรียนสิงคโปร์ (ครึ่งราคา)", "price": 25.0, "unit": "บาท/ท่าน", "note": "ราคาพิเศษนักเรียนสิงคโปร์"}, {"uid": "a015", "area": "เชียงใหม่", "th": "วัดศรีสุพรรณ", "en": "Sri Suphan Temple", "item": "กิจกรรม Silver Plate", "price": 250.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a016", "area": "เชียงใหม่", "th": "ดอยสุเทพ + ลิฟท์", "en": "Doi Suthep + Cable Car", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a017", "area": "เชียงใหม่", "th": "วัดโลกโมฬี", "en": "Wat Lok Molee", "item": "ค่าเข้า", "price": 0.0, "unit": "บาท/คน", "note": "ไม่มีค่าบัตร"}, {"uid": "a018", "area": "เชียงใหม่", "th": "กะเหรี่ยงคอยาว", "en": "Long Neck Village", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a019", "area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "บัตรต่างชาติ ผู้ใหญ่", "price": 150.0, "unit": "บาท/ท่าน", "note": "เปิด 09.00-16.00"}, {"uid": "a020", "area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "บัตรต่างชาติ เด็ก", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a021", "area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "ค่ายานพาหนะ", "price": 100.0, "unit": "บาท/คัน", "note": null}, {"uid": "a022", "area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "บัตรชมสวนอย่างเดียว", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a023", "area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "ค่านั่งรถราง", "price": 40.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a024", "area": "เชียงใหม่", "th": "สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์", "en": "Queen Sirikit Botanic Garden", "item": "เอารถตู้เข้าไป (ไม่บังคับนั่งรถราง)", "price": 100.0, "unit": "บาท/คัน", "note": null}, {"uid": "a025", "area": "เชียงใหม่", "th": "ฟาร์มงูแม่ริม เชียงใหม่", "en": "Mae Rim Snake Farm", "item": "ค่าเข้า", "price": 70.0, "unit": "บาท/ท่าน", "note": "อยู่หน้า รร.ทุ่งโป่ง ใกล้ รร.ลิงเก่า / สวนบัวออร์คิด"}, {"uid": "a026", "area": "เชียงใหม่", "th": "โรงแรมลิง", "en": "Monkey Center", "item": "ค่าเข้า", "price": 80.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a027", "area": "เชียงใหม่", "th": "Araksa Tea Farm", "en": "Araksa Tea Farm", "item": "โปรแกรมเก็บชา ผู้ใหญ่", "price": 650.0, "unit": "บาท/ท่าน", "note": "เริ่ม 09.00 น. หรือช่วงบ่าย"}, {"uid": "a028", "area": "เชียงใหม่", "th": "Araksa Tea Farm", "en": "Araksa Tea Farm", "item": "โปรแกรมเก็บชา เด็ก", "price": 325.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a029", "area": "เชียงใหม่", "th": "Araksa Tea Farm", "en": "Araksa Tea Farm", "item": "โปรแกรมเก็บชา + อาหาร", "price": 1150.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a030", "area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถราง (20 คน)", "price": 500.0, "unit": "บาท/คัน", "note": null}, {"uid": "a031", "area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถม้า (2-3 คน)", "price": 300.0, "unit": "บาท/คัน", "note": null}, {"uid": "a032", "area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถราง 1-10 คน (เหมาคัน)", "price": 400.0, "unit": "บาท/คัน", "note": "1-10 คน เหมาคันออก"}, {"uid": "a033", "area": "เชียงใหม่", "th": "รถรางเวียงกุมกาม", "en": "Wiang Kum Kam Tram", "item": "รถราง 11-20 คน (เหมาคัน)", "price": 500.0, "unit": "บาท/คัน", "note": "11-20 คน เหมาคันออก"}, {"uid": "a034", "area": "เชียงใหม่", "th": "ผาช่อ (อุทยานแห่งชาติแม่วาง)", "en": "Pha Chor", "item": "ค่าเข้า (ต่างชาติผู้ใหญ่)", "price": 100.0, "unit": "บาท/ท่าน", "note": "คนไทย ผู้ใหญ่ 20/เด็ก 10 ; ต่างชาติ ผู้ใหญ่ 100/เด็ก 50 ; ปิด 16.00"}, {"uid": "a035", "area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "ค่าบัตรเข้าอุทยาน", "price": 300.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a036", "area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "ค่ารถตู้ขึ้นดอย", "price": 30.0, "unit": "บาท/คัน", "note": null}, {"uid": "a037", "area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "พระธาตุคู่", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a038", "area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "เดินป่ากิ่วแม่ปาน (ไกด์ท้องถิ่น)", "price": 200.0, "unit": "บาท/กลุ่ม", "note": "1 กลุ่มไม่เกิน 10 คน ; ติดต่อหน้าปากทาง"}, {"uid": "a039", "area": "เชียงใหม่", "th": "อุทยานแห่งชาติดอยอินทนนท์", "en": "Doi Inthanon National Park", "item": "สถานีเกษตรหลวง", "price": 20.0, "unit": "บาท/ท่าน", "note": "ถ้าทานอาหารไม่ต้องจ่าย"}, {"uid": "a040", "area": "เชียงใหม่", "th": "ผาดอกเสี้ยว/กิ่วแม่ปาน", "en": "Local Guide Trekking", "item": "ค่าไกด์ท้องถิ่น", "price": 200.0, "unit": "บาท/คน", "note": "ติดต่อลุงลือ"}, {"uid": "a041", "area": "เชียงใหม่", "th": "รถพยาบาล (คุณโอม) ชลธารวิว ดอยอินทนนท์", "en": "Ambulance", "item": "บริการรถ", "price": null, "unit": null, "note": "ใช้กรณีกรุ๊ปพักชลธารวิว"}, {"uid": "a042", "area": "เชียงใหม่", "th": "ไอเลิฟฟลาวเวอร์ฟาร์ม", "en": "I Love Flower Farm", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a043", "area": "เชียงใหม่", "th": "ศูนย์การเรียนรู้เศรษฐกิจพอเพียงฯ ภาคเหนือ", "en": "Learning Center (Sufficiency Economy), Mae Rim", "item": "ดูงาน", "price": 0.0, "unit": "บาท/คน", "note": null}, {"uid": "a044", "area": "เชียงใหม่", "th": "โครงการหลวงหนองหอย", "en": "Nong Hoi Royal Project", "item": "ศึกษาดูงาน", "price": 0.0, "unit": "บาท/คน", "note": "ต้องทำจดหมายขอความอนุเคราะห์ล่วงหน้าอย่างน้อย 1 เดือน ระบุเวลาด้วย"}, {"uid": "a045", "area": "เชียงใหม่", "th": "แดนเทวดา", "en": "Dantewada", "item": "ค่าบัตรเข้า + กาแฟ 1 แก้ว", "price": 230.0, "unit": "บาท/ท่าน", "note": "บัตรเข้า 70 + กาแฟ 150 บาท/แก้ว | ⚠️ ข้อความระบุ 120 (ไฟล์ 230)"}, {"uid": "a046", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "แพ (4 คนขึ้นไป)", "price": 200.0, "unit": "บาท/คน", "note": null}, {"uid": "a047", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "แพ 1 ลำ (1-3 คน)", "price": 800.0, "unit": "บาท/ลำ", "note": null}, {"uid": "a048", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "กะเหรี่ยงคอยาว", "price": 100.0, "unit": "บาท/คน", "note": null}, {"uid": "a049", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "นั่งช้าง 1 เชือก (2 คน)", "price": 600.0, "unit": "บาท/เชือก", "note": null}, {"uid": "a050", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "โชว์ช้างอย่างเดียว", "price": 100.0, "unit": "บาท/คน", "note": null}, {"uid": "a051", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "อาหารอย่างเดียว", "price": 200.0, "unit": "บาท/คน", "note": null}, {"uid": "a052", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "โชว์ + นั่งช้าง + เกวียน + อาหาร", "price": 550.0, "unit": "บาท/คน", "note": null}, {"uid": "a053", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "โชว์ + นั่งช้าง + เกวียน", "price": 500.0, "unit": "บาท/คน", "note": null}, {"uid": "a054", "area": "เชียงใหม่", "th": "ปางช้างแม่แตง", "en": "Mae Taeng Elephant Camp", "item": "มะพร้าวคว้าน", "price": 70.0, "unit": "บาท/ลูก", "note": "ทานเนื้อได้ ใส่แก้วพลาสติก"}, {"uid": "a055", "area": "เชียงใหม่", "th": "Siam Dragon Cabaret Chiangmai", "en": "Siam Dragon Cabaret", "item": "ที่นั่ง VIP", "price": 350.0, "unit": "บาท/คน", "note": "โชว์ 20:00 น. (70 นาที) 13 ชุดการแสดง"}, {"uid": "a056", "area": "เชียงใหม่", "th": "Siam Dragon Cabaret Chiangmai", "en": "Siam Dragon Cabaret", "item": "ที่นั่ง Normal", "price": 250.0, "unit": "บาท/คน", "note": null}, {"uid": "a057", "area": "เชียงราย", "th": "รถ 4 แถวขึ้น Aka Farm View เชียงราย", "en": "Akha Farm View (4-row truck)", "item": "เหมารถขึ้นอาข่าฟาร์ม", "price": 1500.0, "unit": "บาท/คัน", "note": null}, {"uid": "a058", "area": "เชียงราย", "th": "วัดร่องขุ่น (วัดขาว)", "en": "Wat Rong Khun (White Temple)", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a059", "area": "เชียงราย", "th": "บ้านดำ", "en": "Black House", "item": "ค่าเข้า", "price": 80.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a060", "area": "เชียงราย", "th": "วัดร่องเสือเต้น", "en": "Wat Rong Suea Ten (Blue Temple)", "item": "ค่าเข้า", "price": 0.0, "unit": "บาท/คน", "note": "ไม่มีค่าใช้จ่าย"}, {"uid": "a061", "area": "เชียงราย", "th": "ห้วยปลากั้ง", "en": "Wat Huay Pla Kang", "item": "ค่าลิฟท์", "price": 40.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a062", "area": "เชียงราย", "th": "เรือลาว", "en": "Lao Boat", "item": "1-4 คน (เรือเล็ก)", "price": 600.0, "unit": "บาท/ลำ", "note": null}, {"uid": "a063", "area": "เชียงราย", "th": "เรือลาว", "en": "Lao Boat", "item": "5-8 คน (เรือกลาง)", "price": 800.0, "unit": "บาท/ลำ", "note": null}, {"uid": "a064", "area": "เชียงราย", "th": "เรือลาว", "en": "Lao Boat", "item": "9-38 คน (เรือใหญ่)", "price": 1200.0, "unit": "บาท/ลำ", "note": null}, {"uid": "a065", "area": "เชียงราย", "th": "ค่าขึ้นด่านลาว", "en": "Laos Border", "item": "ค่าขึ้นด่าน", "price": 30.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a066", "area": "เชียงราย", "th": "หอฝิ่น", "en": "Hall of Opium", "item": "ค่าเข้า", "price": 200.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a067", "area": "เชียงราย", "th": "บ้านฝิ่น", "en": "Opium House", "item": "ค่าเข้า", "price": 50.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a068", "area": "เชียงราย", "th": "วัดผาเงา", "en": "Wat Pha Ngao", "item": "ค่าบัตร + Sky Walk", "price": 70.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a069", "area": "เชียงราย", "th": "ไร่ชาฉุยฟง", "en": "Choui Fong Tea Plantation", "item": "ค่าเข้า", "price": 0.0, "unit": "บาท/คน", "note": "ไม่มีค่าใช้จ่าย"}, {"uid": "a070", "area": "เชียงราย", "th": "สิงห์ปาร์ค เชียงราย", "en": "Singha Park", "item": "ค่ารถราง", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a071", "area": "เชียงราย", "th": "พระตำหนักดอยตุง / สวนแม่ฟ้าหลวง / หอแห่งแรงบันดาลใจ", "en": "Doi Tung", "item": "บัตรรวมเข้าชม (หอแรงบันดาลใจ + สวนรุกขชาติ)", "price": 220.0, "unit": "บาท/ท่าน", "note": "หอแห่งแรงบันดาลใจ 90 + สวนรุกขชาติแม่ฟ้าหลวง 90"}, {"uid": "a072", "area": "เชียงราย", "th": "พระตำหนักดอยตุง / สวนแม่ฟ้าหลวง / หอแห่งแรงบันดาลใจ", "en": "Doi Tung", "item": "บัตร 2 ที่ (พระตำหนัก + สวน) ไม่เข้าหอฯ", "price": 180.0, "unit": "บาท/ท่าน", "note": "ค่าเข้าพระตำหนัก 90 + ชมสวนแม่ฟ้าหลวง 90 (ไม่เข้าหอแห่งแรงบันดาลใจ)"}, {"uid": "a073", "area": "ปาย-แม่ฮ่องสอน", "th": "อุทยานแห่งชาติห้วยน้ำดัง", "en": "Huai Nam Dang National Park", "item": "ค่าเข้า", "price": 300.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a074", "area": "ปาย-แม่ฮ่องสอน", "th": "อนุสรณ์สถานมิตรภาพไทย-ญี่ปุ่น ขุนยวม", "en": "Thai-Japan Friendship Memorial, Khun Yuam", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a075", "area": "ปาย-แม่ฮ่องสอน", "th": "กะเหรี่ยงคอยาวน้ำเพียงดิน แม่ฮ่องสอน", "en": "Long Neck Nam Phiang Din", "item": "ค่าเข้า + เรือล่องข้าม", "price": 300.0, "unit": "บาท/ท่าน", "note": "รวมเรือล่องข้ามไป"}, {"uid": "a076", "area": "ปาย-แม่ฮ่องสอน", "th": "กะเหรี่ยงคอยาวห้วยเสือเฒ่า แม่ฮ่องสอน", "en": "Long Neck Huai Suea Thao", "item": "ค่าเข้า", "price": 150.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a077", "area": "ปาย-แม่ฮ่องสอน", "th": "ปางอุ๋ง", "en": "Pang Ung", "item": "ค่าเข้า", "price": 30.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a078", "area": "ปาย-แม่ฮ่องสอน", "th": "โป่งน้ำร้อนท่าปาย (อุทยานห้วยน้ำดัง)", "en": "Tha Pai Hot Spring", "item": "ค่าเข้า", "price": 300.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a079", "area": "ปาย-แม่ฮ่องสอน", "th": "หยุนไหล ปาย", "en": "Yun Lai Viewpoint (pickup)", "item": "เหมารถรถกระบะขึ้น (10 คน)", "price": 300.0, "unit": "บาท/คัน", "note": "ดูพระอาทิตย์ตอนเช้ามืด"}, {"uid": "a080", "area": "ปาย-แม่ฮ่องสอน", "th": "หยุนไหล ปาย", "en": "Yun Lai Viewpoint", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a081", "area": "ปาย-แม่ฮ่องสอน", "th": "ถ้ำปลา + น้ำตกผาสื่อ", "en": "Fish Cave + Pha Suea Waterfall", "item": "ไปวันเดียวกัน (2 ที่)", "price": 100.0, "unit": "บาท/ท่าน", "note": "ถ้ำปลา + น้ำตกผาสื่อ ในวันเดียวกัน"}, {"uid": "a082", "area": "ปาย-แม่ฮ่องสอน", "th": "ถ้ำปลา + น้ำตกผาสื่อ", "en": "Fish Cave + Pha Suea Waterfall", "item": "ไปคนละวัน (จ่ายแยกที่ละ 100)", "price": 100.0, "unit": "บาท/ท่าน", "note": "ถ้ำปลา 100 / ผาสื่อ 100 (จ่ายเพิ่มอีก 100)"}, {"uid": "a083", "area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "พอกหน้า (เนต)", "price": 120.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a084", "area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "พอกหน้า (ทั่วไป)", "price": 140.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a085", "area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "สปาหน้า (เนต)", "price": 350.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a086", "area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "สปาหน้า (ทั่วไป)", "price": null, "unit": "บาท/ท่าน", "note": "ราคาเป็นช่วง 590-990"}, {"uid": "a087", "area": "ปาย-แม่ฮ่องสอน", "th": "มัดสปา แม่ฮ่องสอน", "en": "Mud Spa", "item": "สปาตัว (เนต)", "price": 700.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a088", "area": "ปาย-แม่ฮ่องสอน", "th": "น้ำพุร้อนไทรงาม อ.ปาย", "en": "Sai Ngam Hot Spring", "item": "ค่าเข้า ต่างชาติ", "price": 400.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a089", "area": "ปาย-แม่ฮ่องสอน", "th": "น้ำพุร้อนไทรงาม อ.ปาย", "en": "Sai Ngam Hot Spring", "item": "ค่าเข้า คนไทย", "price": 30.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a090", "area": "ปาย-แม่ฮ่องสอน", "th": "กะเหรี่ยงคอยาวบ้านน้ำเพียงดิน แม่ฮ่องสอน", "en": "Long Neck Ban Nam Phiang Din", "item": "ค่าเข้า (มีค่าเรือ)", "price": 350.0, "unit": "บาท/คน", "note": "มีค่าเรือเข้าไปด้วย"}, {"uid": "a091", "area": "เชียงใหม่", "th": "คลองแม่ข่า", "en": "Otaru", "item": null, "price": null, "unit": null, "note": null}, {"uid": "a092", "area": "เชียงราย", "th": "กะเหรี่ยงคอยาว", "en": "Long Neck Village", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a093", "area": "เชียงราย", "th": "สามเหลี่ยมทองคำ", "en": "Golden Triangle", "item": "with Boat Trip", "price": 800.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a094", "area": "เชียงใหม่", "th": "อุทยานหลวงราชพฤกษ์ พืชสวนโลก", "en": "Royal Flora Garden - Tram Included", "item": "รวมค่ารถราง", "price": 140.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a095", "area": "เชียงใหม่", "th": "ซิตี้ทัวร์ ตุ๊กๆ", "en": "City Tours", "item": "คันละคู่", "price": 250.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a096", "area": "เชียงใหม่", "th": "ชุดไทย @ประตูท่าแพ", "en": "Dress up in that Costume @ Tha Pae Gate", "item": "เช่าชุดไทย", "price": 500.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a097", "area": "เชียงใหม่", "th": "แกรนด์แคนยอน", "en": "Grand Canyon Chiang Mai", "item": "ค่าเข้า", "price": 200.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ"}, {"uid": "a098", "area": "เชียงใหม่", "th": "เอเลเฟ่น พูพูเปเปอร์ พาร์ค", "en": "Elephant POOPOOPAPER Park", "item": "ค่าเข้า", "price": 140.0, "unit": "บาท/ท่าน", "note": null}, {"uid": "a099", "area": "เชียงใหม่", "th": "ใบออคิดส์", "en": "Bai Orchid", "item": "ค่าเข้า", "price": 20.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ"}, {"uid": "a100", "area": "เชียงใหม่", "th": "น้ำตกแม่สา", "en": "Mae Sa Waterfall", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ"}, {"uid": "a101", "area": "เชียงใหม่", "th": "น้ำตกแม่สา", "en": "Mae Sa Waterfall", "item": "ค่ารถ", "price": 30.0, "unit": "บาท/คัน", "note": "เพิ่มจากข้อความ"}, {"uid": "a102", "area": "เชียงราย", "th": "อาข่าฟาร์มวิว (ค่าเข้า)", "en": "Akha Farm View", "item": "ค่าเข้า", "price": 100.0, "unit": "บาท/ท่าน", "note": "เพิ่มเติมจากค่าเหมารถ (แถว 59)"}, {"uid": "a103", "area": "เชียงใหม่", "th": "นำเข้าสนามบินเชียงใหม่", "en": "Pick-up from Chiang Mai Airport", "item": null, "price": 0.0, "unit": "บาท/คัน", "note": "รับคณะจากสนามบิน — ปกติรวมอยู่ในค่ารถแล้ว", "transfer": "in"}, {"uid": "a104", "area": "เชียงใหม่", "th": "ส่งออกสนามบินเชียงใหม่", "en": "Transfer to Chiang Mai Airport for departure", "item": null, "price": 0.0, "unit": "บาท/คัน", "note": "ส่งคณะขึ้นเครื่อง — ปกติรวมอยู่ในค่ารถแล้ว", "transfer": "out"}], "restaurants": [{"uid": "r001", "area": "เชียงใหม่", "th": "ลามูร์คาเฟ่ / Yellow House Cafe & Restaurant", "en": "Lamour Cafe / Yellow House", "item": "คาเฟ่", "price": null, "unit": null, "note": "Suthep, Mueang Chiang Mai 50200 ; เปิด 10:30", "halal": false}, {"uid": "r002", "area": "เชียงใหม่", "th": "วัลเล่ย์คอฟฟี่ + ชุดไทย", "en": "Valley Coffee with Thai Costume", "item": "ชุดกาแฟ + ชุดไทย", "price": 400.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"uid": "r003", "area": "เชียงใหม่", "th": "ชาบ่ายนาคาราจาแดง", "en": "Nakara Jadang Afternoon Tea", "item": "ชุดชาบ่าย (1 ชุด/4 ท่าน)", "price": 350.0, "unit": "บาท/ท่าน", "note": "1 ชุดทาน 4 ท่าน", "halal": false}, {"uid": "r004", "area": "เชียงใหม่", "th": "ชาบ่าย ณ นิรันทร์", "en": "Na Nirand Afternoon Tea", "item": "ชุดชาบ่าย (1 ชุด/4 ท่าน)", "price": 450.0, "unit": "บาท/ท่าน", "note": "1 ชุดทาน 4 ท่าน", "halal": false}, {"uid": "r005", "area": "เชียงใหม่", "th": "ไอติมจันดี สันกำแพง", "en": "Jandee Ice Cream", "item": "ไอศกรีมถัง", "price": 1500.0, "unit": "บาท/ถัง", "note": null, "halal": false}, {"uid": "r006", "area": "เชียงใหม่", "th": "ร้าน กลิ่น ขะ-หนม", "en": "Klin Kanom", "item": "ร้านขนม", "price": null, "unit": null, "note": null, "halal": false}, {"uid": "r007", "area": "เชียงราย", "th": "ร้านอาหารลานไม้หอม", "en": "LAN MAI Hom", "item": null, "price": 600.0, "unit": "บาท/คน", "note": null, "halal": false}, {"uid": "r008", "area": "เชียงราย", "th": "ลลิตา คาเฟ่ + ดริ๊ง", "en": "Lalita Cafe - with 01 Drink Included", "item": "ดริ๊ง", "price": 150.0, "unit": "บาท/คน", "note": null, "halal": false}, {"uid": "r009", "area": "เชียงใหม่", "th": "ขันโตก 12 ปันนา", "en": "Kan Toke", "item": "Northern Thai Set Dinner with Culture Shows", "price": 280.0, "unit": "บาท/ท่าน", "note": "มีเมนูฮาลาล (Halal menu available)", "halal": true}, {"uid": "r010", "area": "เชียงใหม่", "th": "ร้านข้าวเม้าข้าวฟ่าง", "en": "Kao mao Kao fang Michelin Guide", "item": null, "price": 600.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"uid": "r011", "area": "เชียงใหม่", "th": "ฮอลิเดย์ การ์เดน", "en": "Holiday Garden", "item": "Buffet", "price": 200.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"uid": "r012", "area": "เชียงใหม่", "th": "เลม่อนทรี", "en": "Lemon tree (Authentic Thai Set Lunch)", "item": null, "price": 250.0, "unit": "บาท/ท่าน", "note": null, "halal": false}, {"uid": "r013", "area": "เชียงใหม่", "th": "รวมมิตร", "en": "Ruammit", "item": "เซ็ต/บุฟเฟ่", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ / มีเมนูฮาลาลด้วย", "halal": true}, {"uid": "r014", "area": "เชียงใหม่", "th": "อบาคิทเซ่น", "en": "ABA Kitchen", "item": "เซ็ต", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ / มีเมนูฮาลาลด้วย", "halal": true}, {"uid": "r015", "area": "เชียงใหม่", "th": "ลีลาวดี", "en": null, "item": null, "price": null, "unit": null, "note": "ไม่ระบุราคาในข้อความ", "halal": false}, {"uid": "r016", "area": "เชียงใหม่", "th": "ท่าจีนชมจันทร์", "en": "Tha Chee Chom Chan", "item": null, "price": null, "unit": null, "note": "ไม่ระบุราคาในข้อความ", "halal": false}, {"uid": "r017", "area": "เชียงใหม่", "th": "ใบออคิดส์ (ร้านอาหาร)", "en": "Bai Orchid Restaurant", "item": "เซ็ต", "price": 200.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"uid": "r018", "area": "เชียงใหม่", "th": "เศรษฐศิลป์", "en": "Settasilp Restaurant", "item": "เซ็ต", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"uid": "r019", "area": "เชียงใหม่", "th": "ชาบูสตาร์", "en": "Shabu Star", "item": null, "price": 220.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"uid": "r020", "area": "เชียงใหม่", "th": "บารองกัส", "en": "Barongus Halal Restaurant", "item": "Halal Set Lunch", "price": null, "unit": null, "note": "เมนูฮาลาล — ไม่ระบุราคา", "halal": true}, {"uid": "r021", "area": "เชียงใหม่", "th": "ทากาวา", "en": "Takawa Halal Restaurant", "item": "Halal Set Dinner", "price": null, "unit": null, "note": "เมนูฮาลาล — ไม่ระบุราคา", "halal": true}, {"uid": "r022", "area": "เชียงราย", "th": "มุมไม้", "en": "Mum Mai", "item": "Thai Set Dinner", "price": 250.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"uid": "r023", "area": "เชียงราย", "th": "เวียงอินทร์บุฟเฟ่", "en": "Wiang Inn Buffet", "item": "บุฟเฟ่", "price": 220.0, "unit": "บาท/ท่าน", "note": "เพิ่มจากข้อความ", "halal": false}, {"uid": "r024", "area": "เชียงราย", "th": "ลีลาวดี เชียงราย", "en": "Leelawadee Chiang Rai", "item": "Thai Set", "price": null, "unit": null, "note": "ไม่ระบุราคาในข้อความ", "halal": false}, {"uid": "r025", "area": "เชียงราย", "th": "ริมโขง", "en": "Rim Khong", "item": "เซ็ต", "price": 200.0, "unit": "บาท/ท่าน", "note": "ต่ำกว่า 7 ท่าน = 250 บาท/ท่าน", "halal": false}], "guides": [{"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "Chinese"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "English"}, {"type": "Biker"}, {"type": "Biker"}, {"type": "Japanese"}, {"type": "Japanese"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Driver"}, {"type": "Indo"}, {"type": "Indo"}, {"type": "Driver"}], "admAreas": ["เชียงใหม่", "เชียงราย", "ปาย-แม่ฮ่องสอน"], "resAreas": ["เชียงใหม่", "เชียงราย"]};
 
 /* ============ STORAGE (persistent, with fallbacks) ============ */
+/* v47 · set() คืน true/false เสมอ
+   ของเดิมเป็น `catch(e){}` เปล่า ๆ — พอ localStorage เต็ม (เพดาน ~5MB) แอปยังทำงานปกติทุกอย่าง
+   แต่ไม่บันทึกอะไรอีกเลย ผู้ใช้รู้ตัวตอนรีเฟรชแล้วงานทั้งวันหาย
+   ตอนนี้ทุกจุดที่เขียนต้องดูผลลัพธ์ และขึ้นแถบแดงค้างไว้ถ้าเขียนไม่ได้ */
 const Store={
   async get(k){
     try{ if(window.storage){ const r=await window.storage.get(k); return r?JSON.parse(r.value):null; } }catch(e){}
     try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; }
   },
   async set(k,v){
-    const s=JSON.stringify(v);
-    try{ if(window.storage){ await window.storage.set(k,s); return; } }catch(e){}
-    try{ localStorage.setItem(k,s); }catch(e){}
+    let s;
+    try{ s=JSON.stringify(v); }catch(e){ markStoreResult(false); return false; }
+    try{ if(window.storage){ await window.storage.set(k,s); markStoreResult(true); return true; } }catch(e){}
+    try{ localStorage.setItem(k,s); markStoreResult(true); return true; }
+    catch(e){ markStoreResult(false); return false; }
   }
 };
 const KEY='tourPriceBuilder_v1';
+
+/* ============ v47 · แถบเตือน "บันทึกลงเครื่องไม่ได้" ============
+   ค้างไว้จนกว่าจะเขียนสำเร็จอีกครั้ง · กดแล้วดาวน์โหลดข้อมูลดิบออกมาได้ทันที
+   เป็นด่านสุดท้ายก่อนงานหาย จึงต้องเห็นทุกหน้า ไม่ผูกกับหน้าใดหน้าหนึ่ง */
+let storageFailed=false;
+function markStoreResult(ok){
+  const bad=!ok;
+  if(bad===storageFailed)return;
+  storageFailed=bad; renderStorageAlert();
+}
+function renderStorageAlert(){
+  let el=document.getElementById('storageAlert');
+  if(!storageFailed){ if(el)el.remove(); return; }
+  if(!el){
+    el=document.createElement('div'); el.id='storageAlert';
+    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:900;background:#e05b6b;color:#fff;'+
+      'padding:12px 14px;font-size:13px;line-height:1.5;box-shadow:0 -4px 20px rgba(0,0,0,.5)';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='⛔ <b>บันทึกลงเครื่องไม่ได้</b> — พื้นที่เก็บข้อมูลของเบราว์เซอร์เต็ม '+
+    'ทุกอย่างที่แก้ตั้งแต่นี้จะหายเมื่อปิดหน้าต่าง<br>'+
+    '<button id="storageAlertSave" style="margin-top:8px;background:#fff;color:#b0313f;border:none;'+
+    'border-radius:7px;padding:8px 14px;font-weight:700;font-family:var(--thai)">💾 ดาวน์โหลดข้อมูลดิบเก็บไว้เดี๋ยวนี้</button>';
+  const b=document.getElementById('storageAlertSave');
+  if(b)b.onclick=()=>{ try{ dumpRawState(); }catch(e){ alert('ดึงข้อมูลไม่ได้: '+e); } };
+}
+/* อ่านตรงจาก localStorage ไม่ผ่าน state ในหน่วยความจำ — ใช้ได้แม้ตอนแอปพังบางส่วน */
+function dumpRawState(){
+  const out={app:'tourPriceBuilder',kind:'rawdump',at:new Date().toISOString()};
+  try{ out.state=JSON.parse(localStorage.getItem('tourPriceBuilder_v1')||'null'); }
+  catch(e){ out.stateRaw=localStorage.getItem('tourPriceBuilder_v1'); }
+  try{ out.saved=JSON.parse(localStorage.getItem('tourPriceBuilder_saved_v1')||'null'); }
+  catch(e){ out.savedRaw=localStorage.getItem('tourPriceBuilder_saved_v1'); }
+  /* ของในหน่วยความจำด้วย — สำคัญ เพราะกรณีที่ต้องใช้ปุ่มนี้คือ "เขียนลงเครื่องไม่ได้" พอดี */
+  try{ out.live={state:S,saved:SAVED}; }catch(e){}
+  const txt=JSON.stringify(out,null,1);
+  const nm='tour-rescue-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.json';
+  if(!downloadFile(txt,nm,'application/json')) prompt('คัดลอกข้อมูลนี้เก็บไว้:',txt);
+}
 
 /* ============ STATE ============ */
 const DEFAULT_RATES={Chinese:1500,English:1500,Indo:1500,Japanese:2000,Biker:1500,Driver:0};
@@ -1791,14 +1837,102 @@ function admUnits(it,x){
   return Math.max(1,+((it&&it.units))||1);
 }
 
-/* resolvers: ref 'd<idx>' = from file, 'c<id>' = custom (user-added); edits overlay applied */
-function admRec(r){ if(r==null)return null; if(typeof r==='number')r='d'+r; let b=r[0]==='c'?(S.customAdm||[]).find(x=>x.id===r.slice(1)):DB.admissions[+r.slice(1)]; if(!b)return b; const o=(S.admEdits||{})[r]; return o?{...b,...o}:b; }
-function resRec(r){ if(r==null||r==='')return null; if(typeof r==='number')r='d'+r; let b=r[0]==='c'?(S.customRes||[]).find(x=>x.id===r.slice(1)):DB.restaurants[+r.slice(1)]; if(!b)return b; const o=(S.resEdits||{})[r]; return o?{...b,...o}:b; }
+/* ============================================================
+   v47 · ref เปลี่ยนจาก 'd<ลำดับ>' เป็น 'u<uid>'
+
+   ของเดิม 'd17' แปลว่า "รายการตำแหน่งที่ 17 ใน DB.admissions"
+   วันไหนแก้ฐานข้อมูลในไฟล์ (แทรก · ลบ · เรียงใหม่) ใบเก่าทุกใบจะชี้ผิดรายการเงียบ ๆ
+   ราคายังเป็นตัวเก่าที่ copy ไว้ตอนกดเพิ่ม แต่ชื่อ/จังหวัด/วันหยุดกลายเป็นของสถานที่อื่น
+   และถ้าลบรายการออก ลำดับจะเกินขอบ -> admRec คืน undefined -> ยอดเพี้ยน (ดูหมายเหตุ admAmount)
+
+   ตอนนี้ทุกแถวใน DB มี "uid" ประจำตัวที่ไม่ขยับตามตำแหน่ง
+   *** กติกาสำหรับคนที่จะอัปเดต DB ในไฟล์นี้ต่อไป ***
+   uid ของแถวเดิม ห้ามเปลี่ยนและห้ามเอาไปใช้ซ้ำ · แถวใหม่ให้ไล่เลขต่อจากตัวที่มากที่สุด
+   ============================================================ */
+const DB_UID_ADM=new Map(), DB_UID_RES=new Map();
+(function indexDbUid(){
+  const dup=[];
+  DB.admissions.forEach((x,i)=>{ if(!x.uid)x.uid='a?'+i; if(DB_UID_ADM.has(x.uid))dup.push(x.uid); DB_UID_ADM.set(x.uid,x); });
+  DB.restaurants.forEach((x,i)=>{ if(!x.uid)x.uid='r?'+i; if(DB_UID_RES.has(x.uid))dup.push(x.uid); DB_UID_RES.set(x.uid,x); });
+  if(dup.length)console.warn('DB มี uid ซ้ำ — รายการที่ซ้ำจะชี้ผิดตัว:',dup);
+})();
+/* resolvers: 'u<uid>' = จากไฟล์ · 'c<id>' = ที่ผู้ใช้เพิ่มเอง · 'd<idx>' = ของเก่าก่อน v47 (ยังอ่านได้)
+   edits overlay applied */
+const admBase=r=> r[0]==='c' ? (S.customAdm||[]).find(x=>x.id===r.slice(1))
+                : r[0]==='u' ? DB_UID_ADM.get(r.slice(1))
+                : DB.admissions[+r.slice(1)];
+const resBase=r=> r[0]==='c' ? (S.customRes||[]).find(x=>x.id===r.slice(1))
+                : r[0]==='u' ? DB_UID_RES.get(r.slice(1))
+                : DB.restaurants[+r.slice(1)];
+function admRec(r){ if(r==null)return null; if(typeof r==='number')r='d'+r; const b=admBase(r); if(!b)return b; const o=(S.admEdits||{})[r]; return o?{...b,...o}:b; }
+function resRec(r){ if(r==null||r==='')return null; if(typeof r==='number')r='d'+r; const b=resBase(r); if(!b)return b; const o=(S.resEdits||{})[r]; return o?{...b,...o}:b; }
 const isCustom=r=>String(r)[0]==='c';
 const isEdited=(r,tab)=>{ const m={adm:'admEdits',res:'resEdits'}[tab]; return !!(S[m]&&S[m][r]); };
 /* all-records helpers (file + custom), with hidden flag */
-function admAll(){ return DB.admissions.map((x,i)=>'d'+i).concat((S.customAdm||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:admRec(r),custom:isCustom(r),hidden:(S.admHidden||[]).includes(r)})); }
-function resAll(){ return DB.restaurants.map((x,i)=>'d'+i).concat((S.customRes||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:resRec(r),custom:isCustom(r),hidden:(S.resHidden||[]).includes(r)})); }
+function admAll(){ return DB.admissions.map(x=>'u'+x.uid).concat((S.customAdm||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:admRec(r),custom:isCustom(r),hidden:(S.admHidden||[]).includes(r)})); }
+function resAll(){ return DB.restaurants.map(x=>'u'+x.uid).concat((S.customRes||[]).map(x=>'c'+x.id)).map(r=>({ref:r,x:resRec(r),custom:isCustom(r),hidden:(S.resHidden||[]).includes(r)})); }
+
+/* ============================================================
+   v47 · แหล่งความจริงเดียวของ "รายการนี้คิดเงินเท่าไร"
+
+   ของเดิมหน้า Plan กับ Dashboard/CSV คิดเงินคนละที่ พอ record หายจากฐานข้อมูล
+   (โดนลบ · ref ชี้เลยขอบหลังแก้ DB · ใบที่เพื่อนส่งมาอ้างของที่เราไม่มี) ผลจะต่างกัน
+     · renderAdm / renderRes ทำ `if(!x)return''`  -> รายการหายไปจากจอ และไม่บวกยอด
+     · dashRows คิด isPerson(undefined) ได้ true  -> บวก ราคา×จำนวนคน เข้าไปเต็ม ๆ
+   ยอดหน้า 2 Plan กับ Dashboard/CSV/ใบเสนอราคาจึงไม่ตรงกันโดยไม่มีอะไรเตือนเลย
+   ตอนนี้ทุกหน้าเรียกฟังก์ชันนี้ตัวเดียว และ record ที่หายจะขึ้นเป็นแถวแดงให้เห็น ไม่ใช่หายเงียบ
+   ============================================================ */
+const inTrip=day=>!(day>Math.max(1,S.days));
+function admAmount(it){
+  if(!inTrip(it.day))return 0;                 /* นอกช่วงทริป ไม่คิดเงิน */
+  if(it.kind==='meal')return 0;                /* ค่าอาหารไปคิดที่หมวด 04 */
+  if(it.kind==='transfer')return +it.price||0;
+  const x=admRec(it.ref);
+  if(!x)return 0;                              /* หาไม่เจอ = ไม่คิดเงิน แต่ต้องโชว์แถวเตือน */
+  return isPerson(x.unit) ? (+it.price||0)*headTotal() : (+it.price||0)*admUnits(it,x);
+}
+function resAmount(it){
+  if(!inTrip(it.day))return 0;
+  const x=resRec(it.ref);
+  if(!x)return 0;
+  return isPerson(x.unit) ? (+it.price||0)*headTotal() : (+it.price||0);
+}
+/* แถวแดงสำหรับรายการที่อ้างของซึ่งไม่มีในฐานข้อมูลแล้ว */
+function missingRowHTML(it,kind){
+  return `<div class="item"><div class="info">
+      <div class="nm" style="color:var(--bad)">⚠️ รายการนี้ไม่มีในฐานข้อมูลแล้ว</div>
+      <div class="meta" style="color:var(--bad)">รหัสอ้างอิง <code>${esc(String(it.ref))}</code> — ไม่คิดเงิน ·
+        เพิ่มรายการนี้กลับเข้าฐานข้อมูล หรือลบแถวนี้ทิ้ง</div></div>
+    <div class="amt">฿0</div>
+    <button class="del" data-del="${kind}" data-id="${it.id}">×</button></div>`;
+}
+
+/* ---- แปลง ref เก่า 'd<idx>' -> 'u<uid>' · ทำครั้งเดียวตอนโหลด ----
+   แปลงทั้ง state ปัจจุบัน และทุกใบใน SAVED (ใบที่บันทึกไว้ก็เก็บ ref ไว้เหมือนกัน)
+   ต้องแปลง "ตอนนี้" ที่ลำดับใน DB ยังตรงกับตอนที่ข้อมูลถูกบันทึก ถ้าปล่อยไว้จนแก้ DB แล้วจะแปลงถูกไม่ได้อีก */
+const legacyRef=r=>typeof r==='number'||(typeof r==='string'&&r[0]==='d');
+function legacyToUid(r,arr){
+  const i=typeof r==='number'?r:+String(r).slice(1);
+  const x=arr[i];
+  return x&&x.uid?'u'+x.uid:String(typeof r==='number'?'d'+r:r);
+}
+function migrateRefsIn(o){
+  if(!o||typeof o!=='object')return;
+  const mapAdm=r=>legacyRef(r)?legacyToUid(r,DB.admissions):r;
+  const mapRes=r=>legacyRef(r)?legacyToUid(r,DB.restaurants):r;
+  (o.adm||[]).forEach(it=>{ if(it&&legacyRef(it.ref))it.ref=mapAdm(it.ref); });
+  (o.res||[]).forEach(it=>{ if(it&&legacyRef(it.ref))it.ref=mapRes(it.ref); });
+  const remapKeys=(obj,f)=>{ if(!obj||typeof obj!=='object')return obj;
+    const out={}; Object.keys(obj).forEach(k=>{ out[f(k)]=obj[k]; }); return out; };
+  if(o.admEdits)o.admEdits=remapKeys(o.admEdits,mapAdm);
+  if(o.resEdits)o.resEdits=remapKeys(o.resEdits,mapRes);
+  if(Array.isArray(o.admHidden))o.admHidden=[...new Set(o.admHidden.map(mapAdm))];
+  if(Array.isArray(o.resHidden))o.resHidden=[...new Set(o.resHidden.map(mapRes))];
+  /* dupOk เก็บเป็นคู่ "refA|refB" แต่ตัวคีย์ไม่ได้บอกว่ามาจากแท็บไหน
+     'd5' จึงแปลไม่ได้ว่าเป็นสถานที่ที่ 5 หรือร้านอาหารที่ 5 — เดาแล้วผิดจะไปปิดคำเตือนผิดคู่
+     ทิ้งคู่เก่าไปเลยปลอดภัยกว่า อย่างแย่ที่สุดคือคำเตือน "น่าจะซ้ำ" ที่เคยกดปิดโผล่มาให้กดปิดอีกรอบเดียว */
+  if(Array.isArray(o.dupOk))o.dupOk=o.dupOk.filter(k=>!String(k).split('|').some(legacyRef));
+}
 
 /* ============================================================
    v32 · ตัวจับ "ของสิ่งเดียวกันที่ถูกกรอกซ้ำคนละชื่อ"
@@ -1834,11 +1968,15 @@ function dupBigrams(s){
 let dupIdfCache={sig:'',df:new Map(),n:1};
 function dupIdf(tab){
   const pool=dupPool(tab);
-  const sig=tab+':'+pool.length+':'+((S.admHidden||[]).length+(S.resHidden||[]).length);
+  /* v47 · ลายเซ็นเดิมนับแค่ "จำนวนรายการ" — แก้ชื่อรายการโดยจำนวนเท่าเดิม แคชไม่ล้าง
+     ตัวจับซ้ำจึงคิดน้ำหนักจากชื่อชุดเก่าต่อไป แล้วฟ้องผิด/ไม่ฟ้องทั้งที่ควรฟ้อง
+     ใส่ความยาวรวมของชื่อเข้าไปด้วย เปลี่ยนชื่อเมื่อไหร่ลายเซ็นก็เปลี่ยน */
+  const faces=pool.map(o=>dupFace(tab,o.x));
+  const sig=tab+':'+pool.length+':'+faces.reduce((s,f)=>s+f.en.length+f.th.length+f.item.length,0)+
+            ':'+((S.admHidden||[]).length+(S.resHidden||[]).length);
   if(dupIdfCache.sig===sig)return dupIdfCache;
   const df=new Map();
-  pool.forEach(o=>{
-    const f=dupFace(tab,o.x);
+  faces.forEach(f=>{
     new Set([...dupBigrams(f.en),...dupBigrams(f.th)]).forEach(g=>df.set(g,(df.get(g)||0)+1));
   });
   dupIdfCache={sig,df,n:Math.max(1,pool.length)};
@@ -1919,16 +2057,51 @@ function findDupPairs(tab){
 
 /* ============ v32 · ราคาที่สูงจนน่าจะพิมพ์ผิด ============
    กัน "FFFFF ฿8,888,888,888" ที่หลุดจากตอนเทสต์เข้าไปปนกับของจริง */
-const PRICE_CAP={adm_person:50000, adm_unit:500000, res:20000, car:200000, hotel:200000};
+/* ============================================================
+   v47 · เพดานราคาปรับได้ ไม่ฝังตายในโค้ดแล้ว
+
+   ของเดิมตรึงไว้ที่ 50,000 / 500,000 / 20,000 / 200,000 ตายตัว
+   เงินเฟ้อขึ้นทุกปี และทริปพรีเมียม (วิลล่า เหมาลำ รถหรู) ทะลุเพดานเป็นเรื่องปกติ
+   คำเตือนที่เด้งทุกครั้งทั้งที่ราคาถูกต้อง จะกลายเป็นเสียงรบกวนที่คนกด OK ทิ้งโดยไม่อ่าน
+   แล้ววันที่พิมพ์ผิดจริง ๆ ก็จะถูกกดผ่านไปด้วยเหมือนกัน — เพดานที่ปรับไม่ได้จึงอันตรายกว่าไม่มีเพดาน
+   ตั้ง 0 = ปิดการเตือนของช่องนั้นไปเลย
+   ============================================================ */
+const PRICE_CAP_DEF={adm_person:50000, adm_unit:500000, res:20000, car:200000, hotel:200000};
+const PRICE_CAP_META=[
+  {k:'adm_person', label:'ค่าเข้าสถานที่ · คิดต่อคน', unit:'บาท/ท่าน'},
+  {k:'adm_unit',   label:'ค่าเข้าสถานที่ · คิดต่อหน่วย', unit:'บาท/หน่วย'},
+  {k:'res',        label:'ร้านอาหาร', unit:'บาท/ท่าน'},
+  {k:'car',        label:'รถ', unit:'บาท'},
+  {k:'hotel',      label:'โรงแรม', unit:'บาท/คืน'}
+];
+const priceCap=k=>{ const v=(S.priceCaps||{})[k]; return (v==null||isNaN(+v))?PRICE_CAP_DEF[k]:Math.max(0,+v); };
 function priceSuspect(tab,x){
-  if(tab==='adm'){ const cap=isPerson(x.unit)?PRICE_CAP.adm_person:PRICE_CAP.adm_unit;
-    return (x.price!=null&&+x.price>cap)?`สูงกว่า ${cap.toLocaleString()} ${x.unit||''}`:''; }
-  if(tab==='res')  return (x.price!=null&&+x.price>PRICE_CAP.res)?`สูงกว่า ${PRICE_CAP.res.toLocaleString()} บาท/ท่าน`:'';
-  if(tab==='car')  return (x.price!=null&&+x.price>PRICE_CAP.car)?`สูงกว่า ${PRICE_CAP.car.toLocaleString()} บาท`:'';
+  const over=(cap,val)=>cap>0&&val!=null&&+val>cap;    /* cap 0 = ปิดการเตือน */
+  if(tab==='adm'){ const k=isPerson(x.unit)?'adm_person':'adm_unit', cap=priceCap(k);
+    return over(cap,x.price)?`สูงกว่า ${cap.toLocaleString()} ${x.unit||''}`:''; }
+  if(tab==='res')  return over(priceCap('res'),x.price)?`สูงกว่า ${priceCap('res').toLocaleString()} บาท/ท่าน`:'';
+  if(tab==='car')  return over(priceCap('car'),x.price)?`สูงกว่า ${priceCap('car').toLocaleString()} บาท`:'';
   if(tab==='hotel'){ const hi=Math.max(0,...(x.roomTypes||[]).map(r=>+r.price||0));
-    return hi>PRICE_CAP.hotel?`มีห้องราคาสูงกว่า ${PRICE_CAP.hotel.toLocaleString()} บาท/คืน`:''; }
+    return over(priceCap('hotel'),hi)?`มีห้องราคาสูงกว่า ${priceCap('hotel').toLocaleString()} บาท/คืน`:''; }
   return '';
 }
+/* กล่องตั้งเพดาน — เปิดได้จากคำเตือนตอนบันทึก และจากปุ่มในหน้าฐานข้อมูล */
+function editPriceCaps(focusKey){
+  const cur=PRICE_CAP_META.map(m=>`${m.label} = ${priceCap(m.k).toLocaleString()} ${m.unit}`).join('\n');
+  const m=PRICE_CAP_META.find(x=>x.k===focusKey)||PRICE_CAP_META[0];
+  const v=prompt(
+    `เพดานเตือน "ราคาสูงผิดปกติ" ตอนนี้:\n${cur}\n\n`+
+    `แก้ของ: ${m.label} (${m.unit})\nใส่ 0 = ไม่ต้องเตือนช่องนี้เลย`,
+    String(priceCap(m.k)));
+  if(v==null)return false;
+  const n=Math.max(0,Math.round(+String(v).replace(/[,\s฿]/g,'')||0));
+  if(isNaN(n)){ toast('ใส่เป็นตัวเลข'); return false; }
+  S.priceCaps={...(S.priceCaps||{}),[m.k]:n};
+  save();
+  toast(n?`ตั้งเพดาน ${m.label} = ${n.toLocaleString()}`:`ปิดการเตือนของ ${m.label} แล้ว`);
+  return true;
+}
+const capKeyOf=(tab,x)=>tab==='adm'?(isPerson(x&&x.unit)?'adm_person':'adm_unit'):tab;
 
 /* ============================================================
    v39 · ทำตัวหนาในข้อความได้ — พิมพ์ **แบบนี้** ครอบคำที่อยากเน้น
@@ -1953,9 +2126,32 @@ function paxFormula(){
 const $=id=>document.getElementById(id);
 
 /* ============ SAVE / LOAD ============ */
-let saveT;
+let saveT=null;
 const BACKUP_NAG_AT=25;
-function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ S.sinceBackup=(S.sinceBackup||0)+1; Store.set(KEY,S); updateBackupNag(); },300); }
+/* v47 · ประทับเลขโครงสร้างข้อมูลไว้ในตัวข้อมูลเอง
+   ของเดิมการแปลงข้อมูลเก่าทั้งหมดใช้วิธี "เดาจากรูปร่าง" (เช่น typeof it.ref==='number')
+   ซึ่งพอมีรุ่นถัดไปจะแยกไม่ออกว่าแปลงไปแล้วหรือยัง แล้วจะแปลงซ้ำหรือข้าม */
+const SCHEMA=47;
+function saveNow(){
+  clearTimeout(saveT); saveT=null;
+  S.schema=SCHEMA; S.sinceBackup=(S.sinceBackup||0)+1;
+  Store.set(KEY,S); updateBackupNag();
+}
+function save(){ clearTimeout(saveT); saveT=setTimeout(saveNow,300); }
+/* v47 · ปิดแท็บทันทีหลังพิมพ์ ต้องไม่เสียการแก้ล่าสุดที่ยังค้างอยู่ในคิว 300 มิลลิวินาที */
+function flushSave(){ if(saveT!==null)saveNow(); }
+
+/* ============================================================
+   v47 · หน่วงงานวาดหนัก
+
+   recalc() วาดใหม่ทั้ง 5 หมวด + ไทม์ไลน์ + ใบเสนอราคา ในรอบเดียว
+   ช่องที่ผูกกับ oninput (จำนวนคน · ค่าน้ำมัน · กำไรต่อหัว) จึงสั่งงานชุดนั้นทุกตัวอักษรที่พิมพ์
+   ทริป 3 วัน 20 รายการยังไหว แต่ 15 วัน 150 รายการบนมือถือจะหน่วงจนพิมพ์ไม่ทัน
+   หน่วงไว้ 140 มิลลิวินาที = พิมพ์ลื่น แล้ววาดรอบเดียวตอนหยุดพิมพ์ (ตัวเลขสรุปยังอัปเดตทันทีอยู่)
+   ============================================================ */
+function debounced(fn,ms){ let t=null; return function(){ clearTimeout(t); t=setTimeout(()=>{t=null;fn.apply(null,arguments);},ms); }; }
+const recalcSoon=debounced(()=>recalc(),140);
+const reRenderSoon=debounced(()=>{ renderPaxButton(); reRenderAll(); },140);
 /* เตือนเมื่อแก้ไปหลายครั้งแล้วยังไม่ได้สำรองข้อมูล (ข้อมูลอยู่ในเบราว์เซอร์เครื่องเดียว) */
 /* v23 · ถ้าสำรองอัตโนมัติทำงานอยู่ ให้แสดงสถานะแบบสงบ ๆ แทนคำเตือน
    เตือนจริงเฉพาะตอนที่ยังไม่ได้ตั้งค่า หรือตั้งแล้วแต่ค้างจนน่ากังวล */
@@ -1994,6 +2190,8 @@ async function load(){
     S.customAdm=d.customAdm||[]; S.customRes=d.customRes||[];
     S.admEdits=d.admEdits||{}; S.admHidden=d.admHidden||[];
     S.resEdits=d.resEdits||{}; S.resHidden=d.resHidden||[];
+    /* v47 · แปลง ref เก่าเป็น uid ก่อนอย่างอื่นทั้งหมด — ที่เหลือจะได้ทำงานกับ ref แบบใหม่ล้วน */
+    migrateRefsIn(S);
     // migrate admission line items -> day/units + prefixed refs
     (S.adm||[]).forEach(it=>{
       if(typeof it.ref==='number')it.ref='d'+it.ref;
@@ -2720,10 +2918,9 @@ function renderAdm(){
     const dayItems=S.adm.filter(it=>it.day===d);
     let dsum=0;
     const rows=dayItems.map(it=>{
-      if(it.kind==='meal')return tlTravelRow(it)+admItemHTML(it,d);   // มื้ออาหารไม่บวกยอดที่นี่ (คิดที่หมวด 04)
-      if(it.kind==='transfer'){ const a=+it.price||0; dsum+=a; sum+=a; return tlTravelRow(it)+admItemHTML(it,d); }
-      const x=admRec(it.ref); if(!x)return''; const per=isPerson(x.unit);
-      const t=per?it.price*headTotal():it.price*admUnits(it,x); dsum+=t; sum+=t;
+      /* v47 · คิดเงินผ่าน admAmount ตัวเดียวกับ Dashboard/CSV — ยอดจะได้ไม่แตกกันอีก */
+      const t=admAmount(it); dsum+=t; sum+=t;
+      if(!it.kind && !admRec(it.ref)) return missingRowHTML(it,'adm');   /* หายจากฐานข้อมูล = โชว์แถวแดง ไม่ใช่หายเงียบ */
       return tlTravelRow(it)+admItemHTML(it,d);
     }).join('');
     const S_=TLDay[d];
@@ -2924,10 +3121,13 @@ const carUnitPrice=(c,sel)=>sel.price!=null?+sel.price:(+((c&&c.price))||0);
    ยังไม่เคยแตะ -> ถือว่า "ใช้ทั้งทริป" แล้วขยายตามวันเดินทางให้อัตโนมัติ
    (ของเดิมตรึงวันไว้ตอนกดเพิ่ม พอยืดทริปทีหลังรถไม่ตามไป และไม่มีปุ่มเพิ่มวันคืน)
    หมายเหตุ: ไม่เขียนผลที่ filter แล้วกลับลง sel.days เพื่อให้ย่นวันแล้วยืดกลับได้ */
+/* v47 · เลิกเขียน sel.days ทับจากในนี้
+   ของเดิมฟังก์ชัน "อ่านค่า" ตัวนี้แอบแก้ข้อมูลด้วย และถูกเรียกจากทั้ง render · dashRows · CSV
+   แปลว่าแค่เปิดหน้า Dashboard ก็ไปแก้ข้อมูลแล้ว โดยไม่ได้ save() ตาม — ผลไม่ตรงกันระหว่างรอบ
+   คนที่ต้องการเขียนจริง (ปุ่ม × เอารถออกจากวันเดียว) เขียน sel.days เองอยู่แล้ว */
 function carDaysOf(sel){
   const n=Math.max(1,S.days);
-  const all=Array.from({length:n},(_,k)=>k+1);
-  if(!sel.custom||!Array.isArray(sel.days)){ sel.days=all; return all; }
+  if(!sel.custom||!Array.isArray(sel.days)) return Array.from({length:n},(_,k)=>k+1);
   return sel.days.filter(d=>d>=1&&d<=n);
 }
 function carAmount(c,sel){
@@ -3152,8 +3352,10 @@ function renderRes(){
     const dayItems=S.res.filter(it=>it.day===d).sort((a,b)=>(a.meal==='Lunch'?0:1)-(b.meal==='Lunch'?0:1));
     let dsum=0;
     const rows=dayItems.map(it=>{
-      const x=resRec(it.ref); if(!x)return''; const per=isPerson(x.unit);
-      const t = per ? it.price*headTotal() : it.price; dsum+=t; sum+=t;
+      /* v47 · เหตุผลเดียวกับหมวด 01 — คิดเงินที่เดียว และของที่หายต้องเห็น */
+      const t=resAmount(it); dsum+=t; sum+=t;
+      const x=resRec(it.ref); if(!x)return missingRowHTML(it,'res');
+      const per=isPerson(x.unit);
       const pxIn = `฿<input class="px" type="number" min="0" data-px="res" data-id="${it.id}" value="${it.price}">`;
       const calc = per ? `${pxIn} × ${headTotal()} คน` : pxIn;
       const mealIcon = it.meal==='Lunch'?'🍽':'🌙';
@@ -3474,12 +3676,15 @@ function dashRows(cat){
               nm:(it.meal==='Lunch'?'🍽':'🌙')+' '+it.meal+' (มื้ออาหาร)',
               meta:dayMeta(it,'ค่าอาหารคิดที่หมวด 04')};
     const x=admRec(it.ref);
-    const per=isPerson(x&&x.unit);
+    /* v47 · ของที่หายจากฐานข้อมูล ต้องรายงานตรงกับหน้า Plan (ไม่คิดเงิน + บอกว่าหาย)
+       ของเดิม isPerson(undefined) ได้ true แล้วบวก ราคา×จำนวนคน เข้าไปทั้งที่หน้า Plan ไม่ได้บวก */
+    if(!x) return {i, amt:0, nm:'⚠️ ไม่มีในฐานข้อมูลแล้ว',
+                   meta:dayMeta(it,`รหัสอ้างอิง ${it.ref} — ไม่คิดเงิน`)};
+    const per=isPerson(x.unit);
     const u=admUnits(it,x);
-    const amt=per?it.price*headTotal():it.price*u;
     const capNote=(admCap(x)>0&&!it.unitsFixed)?` (${headTotal()}คน÷${admCap(x)})`:'';
-    return {i, amt:off?0:amt,
-            nm:(x?(x.en||x.th):'?')+(x&&x.item?' · '+x.item:''),
+    return {i, amt:admAmount(it),
+            nm:(x.en||x.th)+(x.item?' · '+x.item:''),
             meta:dayMeta(it, per?`฿${it.price}×${headTotal()}คน`:`฿${it.price}×${u}${capNote}`)};
   });
 
@@ -3500,10 +3705,11 @@ function dashRows(cat){
 
   if(cat==='res') return S.res.map((it,i)=>{
     const x=resRec(it.ref);
-    const per=isPerson(x&&x.unit);
-    const amt=per?it.price*headTotal():it.price;
-    return {i, amt:it.day>nDay?0:amt,
-            nm:`${it.meal==='Lunch'?'🍽':'🌙'} ${it.meal} · ${(x?(x.en||x.th):'?')}`,
+    if(!x) return {i, amt:0, nm:`${it.meal==='Lunch'?'🍽':'🌙'} ${it.meal} · ⚠️ ไม่มีในฐานข้อมูลแล้ว`,
+                   meta:dayMeta(it,`รหัสอ้างอิง ${it.ref} — ไม่คิดเงิน`)};
+    const per=isPerson(x.unit);
+    return {i, amt:resAmount(it),
+            nm:`${it.meal==='Lunch'?'🍽':'🌙'} ${it.meal} · ${(x.en||x.th)}`,
             meta:dayMeta(it, `฿${it.price}${per?'×'+headTotal()+'คน':''}`)};
   });
 
@@ -3522,7 +3728,10 @@ function dashRows(cat){
 
   return [];
 }
-function reRenderAll(){ renderAdm(); renderDayTabs(); renderResDayTabs(); renderRes(); renderCarItems(); renderHotelItems(); renderGuideGroups(); recalc(); }
+/* v47 · ของเดิมวาดทุกหมวดหนึ่งรอบ แล้วปิดท้ายด้วย recalc() ซึ่งวาดทั้ง 5 หมวดซ้ำอีกรอบ
+   ตัวที่ recalc ไม่ได้วาดมีแค่ 3 ตัวนี้ ที่เหลือปล่อยให้ recalc ทำรอบเดียวพอ
+   (จุดเดียวกันนี้ถูกเรียกทุกครั้งที่พิมพ์ในช่องจำนวนคน จึงเป็นตัวถ่วงที่หนักที่สุด) */
+function reRenderAll(){ renderDayTabs(); renderResDayTabs(); renderGuideGroups(); recalc(); }
 function renderDashboard(){
   const t=recalc();
   const dateLine=S.startDate?`${fmtD(parseISO(S.startDate))} – ${fmtD(tripDate(S.days))}`:'-';
@@ -4318,7 +4527,12 @@ function readQuoteEditor(){
 /* ============ HOME: คลังโปรแกรมที่บันทึกไว้ ============ */
 const SKEY='tourPriceBuilder_saved_v1';
 let SAVED=[];
-async function loadSaved(){ const v=await Store.get(SKEY); SAVED=Array.isArray(v)?v:[]; }
+async function loadSaved(){
+  const v=await Store.get(SKEY); SAVED=Array.isArray(v)?v:[];
+  /* v47 · ใบที่บันทึกไว้ก็เก็บ ref แบบเก่าเหมือนกัน ต้องแปลงพร้อมกัน
+     ถ้าปล่อยไว้ พอวันหนึ่งแก้ลำดับใน DB ใบเก่าจะชี้ผิดรายการโดยไม่มีอะไรบอก */
+  SAVED.forEach(r=>{ if(r&&r.data)migrateRefsIn(r.data); });
+}
 function persistSaved(){ Store.set(SKEY,SAVED); }
 function fmtSavedAt(iso){ if(!iso)return'-'; const d=new Date(iso); if(isNaN(d))return'-';
   return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
@@ -4532,10 +4746,32 @@ function printItinPdf(){
    ============================================================ */
 const DEVICE_KEYS=['userName','gsUrl','gsExec','gsKey','gsAt','hubName','lastSyncAt',
                    'autoBackup','sinceBackup','lastBackupAt','lastAutoBackupAt','ref','page','progId','dupOk','cfLight','company','docDefault'];
-const stripDeviceKeys=o=>{ DEVICE_KEYS.forEach(k=>delete o[k]); return o; };
+/* ============================================================
+   v47 · ฐานข้อมูลกลางก็ต้องไม่ติดไปกับใบ — เป็นคนละเรื่องกับ "ค่าของเครื่อง" แต่เจ็บกว่า
+
+   คีย์ชุดนี้คือ "ฐานข้อมูลที่ใช้ร่วมกันทั้งทีม" (ดูได้จาก HUB_ARR / HUB_MAP / HUB_LIST / HUB_OBJ
+   ที่ประกาศไว้ตรงกันเป๊ะในส่วนศูนย์กลางข้อมูล) แต่ v31-v46 ไม่ได้ตัดออกตอนบันทึกใบ ผลคือ
+
+     1. ทุกใบพกฐานข้อมูลทั้งก้อนไปด้วย -> localStorage บวมเร็วมาก และแต่ละใบชนเพดาน
+        50,000 ตัวอักษรต่อช่องของ Google Sheet จนสำรองไม่ได้ (ตัวนับ bkOversize มีไว้รับอาการนี้)
+     2. openProgram ทำ S={...S,...payload} -> เปิดใบเดือนที่แล้ว = ราคารถ ราคาห้อง
+        และรายการที่เพิ่มใหม่ทั้งหมด "ย้อนกลับ" ไปเป็นของเดือนที่แล้ว แล้ว save() เขียนทับของจริง
+     3. แล้ว hub sync ก็ส่งฐานข้อมูลที่ย้อนแล้วนั้นไปให้ทุกคนในทีมต่อ
+
+   ใบเก็บเฉพาะ "ทริปนี้ใช้อะไรบ้าง ราคาเท่าไร" ซึ่ง copy ราคาไว้ในตัวรายการอยู่แล้ว
+   ราคาในใบเก่าจึงไม่เปลี่ยนตามฐานข้อมูล — พฤติกรรมเดิมที่ต้องการยังอยู่ครบ
+
+   หมายเหตุ: guideRates ไม่อยู่ในชุดนี้ทั้งที่เป็นของกลาง เพราะมันเป็น "ตัวเลขที่ใช้คิดราคาใบนั้น"
+   โดยตรง (ไม่ได้ copy ลงตัวรายการเหมือนราคาอื่น) ถ้าตัดออก เปิดใบเก่ามาราคาไกด์จะเปลี่ยนตามค่าปัจจุบัน
+   = ราคาที่เคยเสนอลูกค้าไปแล้วเพี้ยน · ของแค่ 6 ตัวเลข ไม่ได้ทำให้ใบบวม จึงเก็บไว้ในใบ
+   ============================================================ */
+const DB_KEYS=['cars','hotels','customAdm','customRes','admEdits','resEdits',
+               'admHidden','resHidden','customAreas','resTags','bedLabels','tomb','priceCaps'];
+const NON_TOUR_KEYS=DEVICE_KEYS.concat(DB_KEYS);
+const stripDeviceKeys=o=>{ NON_TOUR_KEYS.forEach(k=>delete o[k]); return o; };
 /* ข้อมูลทัวร์ล้วน ๆ สำหรับเก็บลงใบ */
 const tourSnapshot=()=>stripDeviceKeys(JSON.parse(JSON.stringify(S)));
-/* ใบเก่าที่บันทึกไว้ก่อน v31 ยังมีค่าเครื่องติดอยู่ — กรองตอนเปิดอีกชั้น */
+/* ใบเก่าที่บันทึกไว้ก่อน v31/v47 ยังมีค่าเครื่องและฐานข้อมูลติดอยู่ — กรองตอนเปิดอีกชั้น */
 const tourPayload=data=>stripDeviceKeys(JSON.parse(JSON.stringify(data||{})));
 
 function saveTour(){
@@ -4598,6 +4834,9 @@ function renderHome(){
 function afterStateSwap(){
   migrateGuides();   /* v25 · ใบเก่าที่เก็บไกด์เป็นรายคน แปลงตอนเปิด */
   migrateHotels();
+  /* v47 · S.days มาจากช่วงวันที่เสมอ แต่ของเดิมตอนเปิด/ทำสำเนาใบไม่ได้คำนวณใหม่
+     ใบเก่าที่ days กับ startDate/endDate ไม่ตรงกัน จะค้างเพี้ยนต่อไปทั้งใบ */
+  recomputeDaysFromDates();
   ensureTransfers();
   admDaySel=new Set([1]); resDaySel=new Set(); hotelNightSel=new Set(); admEditId=null; resTagSel=new Set();
   admGrpOpen=new Set(); admGrpRefs={};
@@ -4658,7 +4897,7 @@ const HUB_OK=()=>typeof window.showOpenFilePicker==='function'&&typeof window.sh
 const HUB_ARR={customAdm:'adm',customRes:'res',cars:'car',hotels:'hotel'};
 const HUB_MAP=['admEdits','resEdits'];
 const HUB_LIST=['admHidden','resHidden','customAreas','resTags','dupOk'];
-const HUB_OBJ=['guideRates','bedLabels','company','docDefault'];
+const HUB_OBJ=['guideRates','bedLabels','company','docDefault','priceCaps'];   /* v47 · เพดานเตือนราคาใช้ร่วมกันทั้งทีม */
 
 /* --- เก็บ handle ของไฟล์กลางไว้ใน IndexedDB เพื่อจำข้ามการเปิดแอป --- */
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('tourHubDB',1);
@@ -4677,12 +4916,58 @@ function ensureUserName(){
   if(n&&n.trim()){ S.userName=n.trim(); save(); return true; }
   toast('ต้องตั้งชื่อผู้ใช้ก่อนถึงจะซิงค์ได้'); return false;
 }
+/* ============================================================
+   v47 · ทะเบียนของที่ถูกลบ (tombstone)
+
+   ของเดิมการรวมข้อมูลเป็น "union" ล้วน ๆ — ของที่ฝั่งไหนมี ก็ push เข้าไปเสมอ
+   ผลคือการลบไม่เคยส่งต่อถึงกัน:
+     · A ลบรถทิ้ง แต่ B ยังมี -> merge รอบหน้ารถกลับมาที่ A เอง
+     · admHidden / resHidden ใช้ new Set([...local,...remote]) จึงโตได้อย่างเดียว
+       กด "เลิกซ่อน" ไปแล้ว พอ sync รอบหน้ามันซ่อนกลับ และไม่มีทางเลิกซ่อนได้ถาวรเลย
+   ตอนนี้จำ "เวลาที่ลบ" ไว้ แล้วตอน merge จะเทียบกับเวลาที่ฝั่งโน้นอัปเดต ใครใหม่กว่าชนะ
+   ============================================================ */
+/* ============================================================
+   v47 · ตราเวลาบนตัวข้อมูล (updatedAt)
+
+   จำเป็นสำหรับการ "รวมรายแถว" กับชีต: ถ้าไม่รู้ว่าใครแก้ทีหลัง ก็ตัดสินไม่ได้ว่าแถวไหนชนะ
+   ของที่ยังไม่เคยถูกแก้หลัง v47 จะไม่มีค่านี้ ถือว่าเก่ากว่าทุกอย่าง — ของที่ส่งขึ้นไปจะชนะ
+   ซึ่งตรงกับพฤติกรรมเดิม ("ส่งขึ้นชีต = เอาของเครื่องนี้ทับ") แต่ทับเฉพาะแถวที่เรามีจริงเท่านั้น
+   ============================================================ */
+const stampNow=()=>new Date().toISOString();
+const withStamp=o=>Object.assign(o,{updatedAt:stampNow()});
+
+function tombSet(kind,id,undo){
+  S.tomb=S.tomb||{};
+  const k=kind+':'+id;
+  if(undo)delete S.tomb[k]; else S.tomb[k]=new Date().toISOString();
+}
+const tombAt=(kind,id)=>((S.tomb||{})[kind+':'+id])||'';
+/* ของฝั่งโน้นจะชนะได้ ก็ต่อเมื่อฝั่งโน้นอัปเดตหลังจากที่เราลบ */
+const tombBlocks=(kind,id,remoteAt)=>{ const t=tombAt(kind,id); return !!t && !(remoteAt && remoteAt>t); };
+
+/* v47 · id ถาวรของรถ/โรงแรม
+   ของเดิมจับคู่ตอน merge ด้วย "ชื่อ" — รถใช้แค่ type อย่างเดียว
+   รถตู้สองคันคนละราคาที่ตั้งชื่อว่า "รถตู้" เหมือนกัน จึงถูกยุบเป็นคันเดียว
+   และเปลี่ยนชื่อโรงแรมเมื่อไหร่ = ได้โรงแรมใหม่ซ้ำ ไม่ใช่การอัปเดตตัวเดิม
+   (นี่คือรากของปัญหาที่ทำให้ต้องมีเครื่องจับซ้ำ findDupPairs ทั้งชุด — แก้ที่ปลายเหตุ)
+   uid ใช้ id ที่มีอยู่แล้วในตัว record ซึ่งไม่เคยเปลี่ยนตลอดอายุของมัน */
 function recKey(kind,r){
+  if(r&&r.id)return kind+'#'+r.id;             /* v47 · id ถาวรมาก่อนเสมอ */
+  /* ไม่มี id (ข้อมูลเก่ามาก / แถวที่เพิ่งนำเข้า) ค่อยถอยไปเทียบด้วยชื่อแบบเดิม */
   if(kind==='adm')  return [(r.en||r.th||''),r.item||'',r.area||''].join('|').toLowerCase();
   if(kind==='res')  return [(r.en||r.th||''),r.area||''].join('|').toLowerCase();
   if(kind==='guide')return [(r.name||''),r.type||''].join('|').toLowerCase();
   if(kind==='car')  return String(r.type||'').toLowerCase();
   if(kind==='hotel')return [(r.nameEn||r.nameTh||''),r.area||''].join('|').toLowerCase();
+  return '';
+}
+/* คีย์รองแบบเดิม (ชื่อ) — ใช้จับคู่ของที่มาจากคนละเครื่องซึ่ง id ไม่มีทางตรงกัน
+   ต้องมีทั้งสองชั้น: id กันการยุบผิดตัว · ชื่อกันการได้ของซ้ำจากการซิงค์ครั้งแรก */
+function recAltKey(kind,r){
+  if(kind==='adm')  return 'n|'+[(r.en||r.th||''),r.item||'',r.area||''].join('|').toLowerCase();
+  if(kind==='res')  return 'n|'+[(r.en||r.th||''),r.area||''].join('|').toLowerCase();
+  if(kind==='car')  return 'n|'+[String(r.type||''),String(r.seats||''),String(r.price||'')].join('|').toLowerCase();
+  if(kind==='hotel')return 'n|'+[(r.nameEn||r.nameTh||''),r.area||''].join('|').toLowerCase();
   return '';
 }
 function buildHub(){
@@ -4691,22 +4976,48 @@ function buildHub(){
   HUB_MAP.forEach(k=>db[k]=S[k]||{});
   HUB_LIST.forEach(k=>db[k]=S[k]||[]);
   HUB_OBJ.forEach(k=>db[k]=S[k]||{});
-  return {app:'tourPriceBuilder',kind:'hub',schema:1,
+  return {app:'tourPriceBuilder',kind:'hub',schema:2,
     updatedAt:new Date().toISOString(), updatedBy:S.userName||'ไม่ระบุชื่อ',
+    tomb:S.tomb||{},          /* v47 · ทะเบียนของที่ถูกลบ ต้องเดินทางไปกับข้อมูลด้วย */
     db, programs:SAVED};
 }
 function mergeHub(hub){
-  const sum={dbAdd:0,dbUpd:0,progAdd:0,progUpd:0,progKeep:0,currentChanged:false};
+  const sum={dbAdd:0,dbUpd:0,progAdd:0,progUpd:0,progKeep:0,dbDel:0,currentChanged:false};
   const d=(hub&&hub.db)||{};
   const clone=x=>JSON.parse(JSON.stringify(x));
+  const hubAt=(hub&&hub.updatedAt)||'';
+  const rTomb=(hub&&hub.tomb)||{};
+
+  /* --- 1) ของที่ "ฝั่งโน้นลบไปแล้ว" ต้องหายจากฝั่งเราด้วย ถ้าเราไม่ได้แก้มันทีหลัง --- */
+  S.tomb=S.tomb||{};
+  Object.keys(rTomb).forEach(k=>{
+    const at=rTomb[k];
+    if(!S.tomb[k] || at>S.tomb[k]) S.tomb[k]=at;      /* รวมทะเบียน เอาเวลาที่ใหม่กว่า */
+  });
+  Object.entries(HUB_ARR).forEach(([key,kind])=>{
+    if(!Array.isArray(S[key]))return;
+    const before=S[key].length;
+    S[key]=S[key].filter(r=>!(r&&r.id&&rTomb[key+':'+r.id]));
+    sum.dbDel+=before-S[key].length;
+  });
+
+  /* --- 2) รวมรายการ: จับคู่ด้วย id ก่อน แล้วค่อยถอยไปเทียบด้วยชื่อ --- */
   Object.entries(HUB_ARR).forEach(([key,kind])=>{
     const remote=Array.isArray(d[key])?d[key]:[];
     if(!Array.isArray(S[key]))S[key]=[];
     const local=S[key];
-    const idx=new Map(local.map((r,i)=>[recKey(kind,r),i]));
+    const idx=new Map(), alt=new Map();
+    local.forEach((r,i)=>{ idx.set(recKey(kind,r),i); const a=recAltKey(kind,r); if(a)alt.set(a,i); });
     remote.forEach(r=>{
-      const k=recKey(kind,r), i=idx.get(k);
-      if(i===undefined){ local.push(clone(r)); idx.set(k,local.length-1); sum.dbAdd++; return; }
+      /* เราลบของชิ้นนี้ไปแล้ว และฝั่งโน้นไม่ได้แตะมันหลังจากนั้น -> อย่าเอากลับมา */
+      if(r&&r.id&&tombBlocks(key,r.id,hubAt))return;
+      const k=recKey(kind,r), a=recAltKey(kind,r);
+      let i=idx.get(k); if(i===undefined&&a)i=alt.get(a);
+      if(i===undefined){
+        local.push(clone(r)); const ni=local.length-1;
+        idx.set(recKey(kind,local[ni]),ni); if(a)alt.set(a,ni);
+        sum.dbAdd++; return;
+      }
       const keepId=local[i].id;
       if(kind==='hotel'){
         /* คงรหัสห้องเดิมไว้ ไม่งั้นรายการที่จองไว้จะชี้ผิดห้อง = ราคาเพี้ยน */
@@ -4721,7 +5032,15 @@ function mergeHub(hub){
     });
   });
   HUB_MAP.forEach(k=>{ if(d[k]&&typeof d[k]==='object')S[k]={...(S[k]||{}),...d[k]}; });
-  HUB_LIST.forEach(k=>{ if(Array.isArray(d[k]))S[k]=[...new Set([...(S[k]||[]),...d[k]])]; });
+  /* v47 · HUB_LIST เลิกใช้ union ล้วน
+     admHidden/resHidden ของเดิมโตได้อย่างเดียว กด "เลิกซ่อน" แล้ว sync รอบหน้าซ่อนกลับตลอดกาล
+     ตอนนี้ของที่มีทะเบียนว่า "เลิกซ่อนแล้ว" ใหม่กว่าฝั่งโน้น จะไม่ถูกใส่กลับ */
+  HUB_LIST.forEach(k=>{
+    if(!Array.isArray(d[k]))return;
+    const keep=(S[k]||[]);
+    const add=d[k].filter(v=>!tombBlocks(k,v,hubAt));
+    S[k]=[...new Set([...keep,...add])];
+  });
   HUB_OBJ.forEach(k=>{ if(d[k]&&typeof d[k]==='object')S[k]={...(S[k]||{}),...d[k]}; });
   (hub&&hub.programs||[]).forEach(rp=>{
     if(!rp||!rp.id)return;
@@ -4738,7 +5057,8 @@ function mergeHub(hub){
   return sum;
 }
 function hubSummaryText(sum){
-  return `ฐานข้อมูล +${sum.dbAdd} / อัปเดต ${sum.dbUpd} · โปรแกรม +${sum.progAdd} / อัปเดต ${sum.progUpd}`;
+  return `ฐานข้อมูล +${sum.dbAdd} / อัปเดต ${sum.dbUpd}`+(sum.dbDel?` / ลบตามทีม ${sum.dbDel}`:'')+
+         ` · โปรแกรม +${sum.progAdd} / อัปเดต ${sum.progUpd}`;
 }
 function afterMerge(sum,stamp){
   S.lastSyncAt=stamp||new Date().toISOString();
@@ -5144,8 +5464,23 @@ function showDbForm(ref,seed){
    คืน true = ไปต่อได้
    ============================================================ */
 function dbGuardBeforeSave(tab,data){
-  const warn=priceSuspect(tab,data);
-  if(warn && !confirm(`ราคาที่กรอกดูสูงผิดปกติ (${warn})\n\nพิมพ์เกินหรือเปล่า? กด OK ถ้ายืนยันว่าถูกต้อง`))return false;
+  let warn=priceSuspect(tab,data);
+  if(warn){
+    /* v47 · ให้ทางออกที่สามด้วย — ถ้าเพดานต่ำเกินจริง แก้เพดานได้จากตรงนี้เลย
+       ไม่ต้องกด OK ผ่านคำเตือนเดิมซ้ำ ๆ ทุกครั้งจนเลิกอ่านคำเตือน */
+    const cap=priceCap(capKeyOf(tab,data));
+    const ok=confirm(`ราคาที่กรอกดูสูงผิดปกติ (${warn})\n\n`+
+      `OK = ยืนยันว่าราคานี้ถูกต้อง บันทึกต่อ\n`+
+      `Cancel = กลับไปแก้ (ถ้าเพดาน ${cap.toLocaleString()} ต่ำเกินจริง จะให้ตั้งใหม่ในขั้นถัดไป)`);
+    if(!ok){
+      if(confirm('ต้องการตั้งเพดานเตือนใหม่เลยไหม?\n(กด Cancel ถ้าจะกลับไปแก้ราคา)')){
+        if(editPriceCaps(capKeyOf(tab,data))){
+          warn=priceSuspect(tab,data);
+          if(warn){ toast('ราคายังสูงกว่าเพดานใหม่ — กลับไปแก้ราคา'); return false; }
+        } else return false;
+      } else return false;
+    }
+  }
 
   const hits=findSimilar(tab,data,dbEditRef);
   if(!hits.length)return true;
@@ -5172,7 +5507,7 @@ function saveDbForm(){
     const unit=dbFormMode==='person'?'บาท/ท่าน':'บาท/'+(v('dfUnit')||'หน่วย');
     /* v36 · cap = คนต่อ 1 หน่วย · มีผลเฉพาะโหมด "ต่อหน่วย" */
     const cap=dbFormMode==='unit'?(Math.max(0,Math.floor(+v('dfCap')||0))||null):null;
-    const data={area:v('dfArea'),th:th||en,en:en||th,item:v('dfItem')||null,price,unit,cap,closed:dbFormClosed.slice(),...dfExtraRead()};
+    const data=withStamp({area:v('dfArea'),th:th||en,en:en||th,item:v('dfItem')||null,price,unit,cap,closed:dbFormClosed.slice(),...dfExtraRead()});
     if(!dbGuardBeforeSave('adm',data))return;
     if(dbEditRef){ if(isCustom(dbEditRef)){Object.assign(admRec(dbEditRef),data);} else {S.admEdits[dbEditRef]={...S.admEdits[dbEditRef],...data};} }
     else S.customAdm.push({id:nid(),...data});
@@ -5181,7 +5516,7 @@ function saveDbForm(){
   else if(dbTab==='res'){
     const th=v('dfNameTh'), en=v('dfNameEn'), price=n('dfPrice');
     if((!th&&!en)||isNaN(price)){toast('กรอกชื่อและราคา');return;}
-    const data={area:v('dfArea'),halal:dbFormHalal,th:th||en,en:en||th,price,unit:'บาท/ท่าน',closed:dbFormClosed.slice(),...dfExtraRead()};
+    const data=withStamp({area:v('dfArea'),halal:dbFormHalal,th:th||en,en:en||th,price,unit:'บาท/ท่าน',closed:dbFormClosed.slice(),...dfExtraRead()});
     if(!dbGuardBeforeSave('res',data))return;
     if(dbEditRef){ if(isCustom(dbEditRef)){Object.assign(resRec(dbEditRef),data);} else {S.resEdits[dbEditRef]={...S.resEdits[dbEditRef],...data};} }
     else S.customRes.push({id:nid(),...data});
@@ -5190,9 +5525,10 @@ function saveDbForm(){
   else if(dbTab==='car'){
     const type=v('dfType'),seats=n('dfSeats'),price=n('dfPrice');
     if(!type||!seats||isNaN(price)){toast('กรอกให้ครบ');return;}
-    if(!dbGuardBeforeSave('car',{type,seats,price,mode:dbFormCarMode}))return;
-    if(dbEditRef){ const c=(S.cars||[]).find(x=>'car:'+x.id===dbEditRef); if(c)Object.assign(c,{type,seats,price,mode:dbFormCarMode}); }
-    else S.cars.push({id:nid(),type,seats,price,mode:dbFormCarMode});
+    const data=withStamp({type,seats,price,mode:dbFormCarMode});
+    if(!dbGuardBeforeSave('car',data))return;
+    if(dbEditRef){ const c=(S.cars||[]).find(x=>'car:'+x.id===dbEditRef); if(c)Object.assign(c,data); }
+    else S.cars.push({id:nid(),...data});
     fillCarSelect(); renderCarItems();
   }
   else if(dbTab==='hotel'){
@@ -5202,8 +5538,8 @@ function saveDbForm(){
     const rts=dbRTs.filter(rt=>rt.price!=null&&!isNaN(rt.price))
                    .map(rt=>({id:rt.id||nid(),room:rt.room||'Standard',bedPrimary:rt.bedPrimary||null,bedExtra:!!rt.bedExtra,bed:null,price:+rt.price}));
     if(!rts.length){toast('ใส่ห้องพักอย่างน้อย 1 ห้อง พร้อมราคา');return;}
-    const data={nameTh:nameTh||nameEn, nameEn:nameEn||nameTh, name:nameTh||nameEn,
-      area:v('dfArea'), stars:dbFormStars||0, tel:v('dfTel')||null, abf:dbFormAbf, note:v('dfNote')||null, roomTypes:rts};
+    const data=withStamp({nameTh:nameTh||nameEn, nameEn:nameEn||nameTh, name:nameTh||nameEn,
+      area:v('dfArea'), stars:dbFormStars||0, tel:v('dfTel')||null, abf:dbFormAbf, note:v('dfNote')||null, roomTypes:rts});
     if(!dbGuardBeforeSave('hotel',data))return;
     if(dbEditRef){ const h=(S.hotels||[]).find(x=>'hotel:'+x.id===dbEditRef); if(h)Object.assign(h,data); }
     else S.hotels.push({id:nid(),...data});
@@ -5486,22 +5822,23 @@ function applyBulkPrice(){
   const label=bpMode==='pct'?`${bpValue>0?'+':''}${bpValue}%`:(bpMode==='baht'?`${bpValue>0?'+':''}${bpValue} บาท`:`ตั้งเป็น ${bpValue}`);
   if(!confirm(`ปรับราคา ${t.length} รายการ (${label})\n\nแนะนำให้กด 💾 สำรองข้อมูล ก่อน ถ้ายังไม่เคยสำรองวันนี้\n\nยืนยัน?`))return;
   let n=0;
+  const at=stampNow();          /* v47 · ปรับราคาทีเดียวทั้งชุด = เหตุการณ์เดียว ใช้เวลาเดียวกันทุกแถว */
   t.forEach(z=>{
     const np=bpNewPrice(z.old); if(np==null)return;
     const ref=z.r.ref;
     if(dbTab==='hotel'){
       const h=(S.hotels||[]).find(x=>'hotel:'+x.id===ref); if(!h)return;
       hotelRooms(h).forEach(rt=>{ if(rt.price!=null&&+rt.price>0)rt.price=bpNewPrice(+rt.price); });
-      n++;
+      h.updatedAt=at; n++;
     } else if(dbTab==='car'){
       const c=(S.cars||[]).find(x=>'car:'+x.id===ref); if(!c)return;
-      c.price=np; n++;
+      c.price=np; c.updatedAt=at; n++;
     } else if(dbTab==='adm'){
-      if(isCustom(ref)){ const o=(S.customAdm||[]).find(x=>'c'+x.id===ref); if(o){o.price=np;n++;} }
-      else { S.admEdits[ref]={...S.admEdits[ref],price:np}; n++; }
+      if(isCustom(ref)){ const o=(S.customAdm||[]).find(x=>'c'+x.id===ref); if(o){o.price=np;o.updatedAt=at;n++;} }
+      else { S.admEdits[ref]={...S.admEdits[ref],price:np,updatedAt:at}; n++; }
     } else if(dbTab==='res'){
-      if(isCustom(ref)){ const o=(S.customRes||[]).find(x=>'c'+x.id===ref); if(o){o.price=np;n++;} }
-      else { S.resEdits[ref]={...S.resEdits[ref],price:np}; n++; }
+      if(isCustom(ref)){ const o=(S.customRes||[]).find(x=>'c'+x.id===ref); if(o){o.price=np;o.updatedAt=at;n++;} }
+      else { S.resEdits[ref]={...S.resEdits[ref],price:np,updatedAt:at}; n++; }
     }
   });
   dbRefreshAll(); showDbList();
@@ -5509,15 +5846,21 @@ function applyBulkPrice(){
 }
 
 function dbDelete(ref){
-  if(dbTab==='adm'){ if(isCustom(ref)){S.customAdm=S.customAdm.filter(x=>'c'+x.id!==ref);S.adm=S.adm.filter(it=>it.ref!==ref);delete S.admEdits[ref];} else {if(!S.admHidden.includes(ref))S.admHidden.push(ref);} renderAdmTable(); renderAdm(); renderDayTabs(); }
-  else if(dbTab==='res'){ if(isCustom(ref)){S.customRes=S.customRes.filter(x=>'c'+x.id!==ref);S.res=S.res.filter(it=>it.ref!==ref);delete S.resEdits[ref];} else {if(!S.resHidden.includes(ref))S.resHidden.push(ref);} fillResSelect(); renderRes(); }
-  else if(dbTab==='car'){ const id=ref.slice(4); S.cars=S.cars.filter(c=>c.id!==id); S.carSel=S.carSel.filter(s=>S.cars.find(c=>c.id===s.carId)); fillCarSelect(); renderCarItems(); }
-  else if(dbTab==='hotel'){ const id=ref.slice(6); S.hotels=S.hotels.filter(h=>h.id!==id); S.hotelSel=S.hotelSel.filter(s=>S.hotels.find(h=>h.id===s.hotelId)); fillHotelSelect(); renderHotelItems(); }
+  /* v47 · หมายเหตุเรื่องทิศทางของ tombstone
+     รายการที่มากับไฟล์ลบจริงไม่ได้ "ลบ" = ใส่ชื่อลงรายการซ่อน (admHidden) ซึ่งเป็นการ "เพิ่ม"
+     ของที่ถูกลบจริงจึงเป็นตอน dbRestore (เลิกซ่อน = เอาออกจากรายการ) — ทะเบียนต้องไปอยู่ตรงนั้น
+     ส่วนรายการที่ผู้ใช้เพิ่มเอง (c...) ลบแล้วหายจริง จึงลงทะเบียนตรงนี้ */
+  if(dbTab==='adm'){ if(isCustom(ref)){S.customAdm=S.customAdm.filter(x=>'c'+x.id!==ref);S.adm=S.adm.filter(it=>it.ref!==ref);delete S.admEdits[ref];tombSet('customAdm',ref.slice(1));} else {if(!S.admHidden.includes(ref))S.admHidden.push(ref);tombSet('admHidden',ref,true);} renderAdmTable(); renderAdm(); renderDayTabs(); }
+  else if(dbTab==='res'){ if(isCustom(ref)){S.customRes=S.customRes.filter(x=>'c'+x.id!==ref);S.res=S.res.filter(it=>it.ref!==ref);delete S.resEdits[ref];tombSet('customRes',ref.slice(1));} else {if(!S.resHidden.includes(ref))S.resHidden.push(ref);tombSet('resHidden',ref,true);} fillResSelect(); renderRes(); }
+  else if(dbTab==='car'){ const id=ref.slice(4); S.cars=S.cars.filter(c=>c.id!==id); S.carSel=S.carSel.filter(s=>S.cars.find(c=>c.id===s.carId)); tombSet('cars',id); fillCarSelect(); renderCarItems(); }
+  else if(dbTab==='hotel'){ const id=ref.slice(6); S.hotels=S.hotels.filter(h=>h.id!==id); S.hotelSel=S.hotelSel.filter(s=>S.hotels.find(h=>h.id===s.hotelId)); tombSet('hotels',id); fillHotelSelect(); renderHotelItems(); }
   recalc(); save(); renderDbList();
 }
 function dbRestore(ref){
-  if(dbTab==='adm')S.admHidden=S.admHidden.filter(r=>r!==ref);
-  else if(dbTab==='res')S.resHidden=S.resHidden.filter(r=>r!==ref);
+  /* v47 · "เลิกซ่อน" = เอาชื่อออกจากรายการซ่อน จึงเป็นการลบที่ต้องลงทะเบียนไว้
+     ไม่งั้นการรวมข้อมูลรอบหน้าจะเอาชื่อนั้นใส่กลับ แล้วมันจะซ่อนอีก วนแบบนี้ตลอดไป */
+  if(dbTab==='adm'){ S.admHidden=S.admHidden.filter(r=>r!==ref); tombSet('admHidden',ref); }
+  else if(dbTab==='res'){ S.resHidden=S.resHidden.filter(r=>r!==ref); tombSet('resHidden',ref); }
   renderAdmTable(); fillResSelect(); renderGuideGroups(); recalc(); save(); renderDbList();
 }
 
@@ -5760,6 +6103,32 @@ function unregisteredZones(areas,usedZones){
   return out;
 }
 
+/* ============================================================
+   v47 · สองคอลัมน์ท้ายตารางที่ระบบใช้เอง (sys) — ต่อท้ายทุกแท็บอัตโนมัติ
+
+     รหัสอ้างอิง = ตัวระบุถาวรของแถวนั้น ใช้เป็นกุญแจตอนรวมข้อมูลกับชีต
+     แก้ล่าสุด   = ISO เวลาที่แก้ ใช้ตัดสินว่าใครใหม่กว่าเมื่อสองเครื่องแก้แถวเดียวกัน
+
+   ทำไมต้องมี: ⬆️ ส่งขึ้นชีต ของเดิมล้างทั้ง 4 แท็บแล้วเขียนใหม่ด้วยของเครื่องที่กด
+   อะไรที่เพื่อนเพิ่งเพิ่มในชีตแต่เครื่องเรายังไม่มี จะหายทันที (มี confirm เตือน แต่เตือนแล้วก็ยังหาย)
+   และการจับคู่ "แถวนี้คือแถวเดียวกันไหม" เดิมใช้ชื่อ พอแก้ชื่อก็กลายเป็นของใหม่ซ้ำขึ้นมาแทน
+
+   คนกรอกชีตไม่ต้องยุ่งกับสองคอลัมน์นี้ ปล่อยว่างได้ = ถือว่าเป็นแถวใหม่
+   ============================================================ */
+const SYS_FIELDS=[
+  {k:'ref', label:'รหัสอ้างอิง', req:false, sys:true, alias:['รหัสอ้างอิง','ref','รหัส','id','uid']},
+  {k:'upd', label:'แก้ล่าสุด',  req:false, sys:true, alias:['แก้ล่าสุด','อัปเดตล่าสุด','updatedat','updated','แก้ไขล่าสุด']}
+];
+/* รหัสอ้างอิงของ record หนึ่ง — ต้องคงที่ตลอดอายุของมัน ไม่ผูกกับชื่อหรือตำแหน่ง
+   รายการจากไฟล์ใช้ uid ที่ฝังไว้ใน DB · รายการที่เพิ่มเอง/รถ/โรงแรม ใช้ id ที่ออกตอนสร้าง */
+function recRef(tab,x){
+  if(!x)return '';
+  if(tab==='adm'||tab==='res') return x.uid?('u'+x.uid):(x.id?('c'+x.id):'');
+  if(tab==='car')   return x.id?('car:'+x.id):'';
+  if(tab==='hotel') return x.id?('hotel:'+x.id):'';
+  return '';
+}
+
 const IMP_SCHEMA={
   adm:{
     fields:[
@@ -5885,7 +6254,45 @@ const IMP_SCHEMA={
     sub:d=>`${d.area} · ฿${d._rt.price}/คืน${d.stars?' · '+starStr(d.stars):''}`
   }
 };
+/* ============================================================
+   v47 · ต่อคอลัมน์ระบบเข้าท้ายทุกแท็บในที่เดียว
+   ทำแบบห่อของเดิม ไม่ไปแก้ 4 สคีมาทีละตัว — เพิ่มแท็บใหม่วันหลังก็ได้ของสองคอลัมน์นี้ฟรี
+   ============================================================ */
+(function addSysColumns(){
+  Object.keys(IMP_SCHEMA).forEach(tab=>{
+    const sc=IMP_SCHEMA[tab];
+    sc.dataCols=sc.fields.length;                 /* จำนวนคอลัมน์ "ของจริง" ก่อนต่อท้าย */
+    sc.fields=sc.fields.concat(SYS_FIELDS.map(f=>({...f})));
+    sc.refCol=sc.dataCols+1;                      /* ตำแหน่งคอลัมน์ (นับจาก 1) สำหรับส่งให้ฝั่งชีต */
+    sc.updCol=sc.dataCols+2;
+
+    /* ตัวอย่างที่แถมไปตอนสร้างไฟล์เริ่มต้น ต้องยาวเท่าหัวตาราง ไม่งั้น setValues ฝั่งชีตพัง */
+    if(sc.samples)sc.samples=sc.samples.map(r=>r.concat(['','']));
+    if(sc.sample)sc.sample=sc.sample.concat(['','']);
+
+    const oldBuild=sc.build.bind(sc);
+    sc.build=g=>{
+      const r=oldBuild(g);
+      if(r&&r.data){ r.data._ref=String(g('ref')||'').trim(); r.data._upd=String(g('upd')||'').trim(); }
+      return r;
+    };
+    if(sc.toRows){
+      const old=sc.toRows;
+      /* โรงแรม 1 แถว = 1 ห้อง จึงต้องระบุถึงระดับห้อง ไม่งั้นสองแถวของโรงแรมเดียวกันจะกุญแจชนกัน */
+      sc.toRows=x=>old(x).map((row,i)=>{
+        const rt=hotelRooms(x)[i];
+        const base=recRef(tab,x);
+        return row.concat([ base?(base+'#'+((rt&&rt.id)||i)):'', x.updatedAt||'' ]);
+      });
+    }else{
+      const old=sc.toRow;
+      sc.toRow=x=>old(x).concat([recRef(tab,x), x.updatedAt||'']);
+    }
+  });
+})();
 const impSchema=()=>IMP_SCHEMA[dbTab];
+/* กุญแจระดับ record จากค่าในคอลัมน์รหัสอ้างอิง (ตัดส่วนห้องของโรงแรมออก) */
+const refHead=r=>String(r||'').split('#')[0];
 
 function showDbImport(){
   $('dbListView').style.display='none';
@@ -5958,17 +6365,35 @@ function impExistingMap(){
   else if(dbTab==='hotel')(S.hotels||[]).forEach(h=>m.set(impKey('hotel',h),'hotel:'+h.id));
   return m;
 }
+/* v47 · ชุดรหัสอ้างอิงที่เครื่องนี้มีอยู่จริง
+   จับคู่ด้วยรหัสได้ก่อนชื่อเสมอ — เปลี่ยนชื่อรายการในชีตแล้วนำเข้ากลับ ต้องเป็น "อัปเดตตัวเดิม"
+   ไม่ใช่ได้ของใหม่ซ้ำขึ้นมาอีกอัน (อาการนี้คือที่มาของรายการซ้ำที่ต้องมีตัวจับซ้ำมาไล่ตามทีหลัง) */
+function impExistingRefs(){
+  const s=new Set();
+  if(dbTab==='adm')  admAll().forEach(o=>{if(o.x)s.add(o.ref);});
+  else if(dbTab==='res')  resAll().forEach(o=>{if(o.x)s.add(o.ref);});
+  else if(dbTab==='car')  (S.cars||[]).forEach(c=>s.add('car:'+c.id));
+  else if(dbTab==='hotel')(S.hotels||[]).forEach(h=>s.add('hotel:'+h.id));
+  return s;
+}
+/* หา ref ที่ควรใช้กับแถวหนึ่ง: รหัสในชีตก่อน ถ้าไม่มี/ไม่รู้จัก ค่อยเทียบด้วยชื่อ */
+function impMatchRef(d,exist,refs){
+  const r=refHead(d&&d._ref);
+  if(r&&refs.has(r))return r;
+  return exist.get(impKey(dbTab,d));
+}
 function renderImpPreview(){
   const sc=impSchema(), head=impRows[0]||[];
   const opt=sel=>['<option value="-1">— ไม่ใช้ —</option>'].concat(
     head.map((h,i)=>`<option value="${i}" ${i===sel?'selected':''}>${esc(String(h).trim()||('คอลัมน์ '+(i+1)))}</option>`)).join('');
   const built=impBuild();
   const ok=built.filter(b=>!b.err), bad=built.filter(b=>b.err);
-  const exist=impExistingMap();
-  const dup=ok.filter(b=>exist.has(impKey(dbTab,b.data))).length;
+  const exist=impExistingMap(), refs=impExistingRefs();
+  const isDup=b=>!!impMatchRef(b.data,exist,refs);          /* v47 · เทียบด้วยรหัสอ้างอิงก่อนชื่อ */
+  const dup=ok.filter(isDup).length;
   const rowsHtml=built.slice(0,15).map(b=>b.err
     ? `<tr class="bad"><td>${b.row}</td><td colspan="3">⚠ ${esc(b.err)}</td></tr>`
-    : `<tr><td>${b.row}</td><td>${esc(sc.label(b.data))}</td><td>${esc(sc.sub(b.data))}</td><td>${exist.has(impKey(dbTab,b.data))?'<span class="imp-dup">ซ้ำ</span>':'<span class="imp-new">ใหม่</span>'}</td></tr>`).join('');
+    : `<tr><td>${b.row}</td><td>${esc(sc.label(b.data))}</td><td>${esc(sc.sub(b.data))}</td><td>${isDup(b)?'<span class="imp-dup">ซ้ำ</span>':'<span class="imp-new">ใหม่</span>'}</td></tr>`).join('');
   $('dbImpResult').innerHTML=
     `<div class="imp-step">ขั้นที่ 2 · จับคู่คอลัมน์</div>
      <label class="imp-chk"><input type="checkbox" id="impHeader" ${impHasHeader?'checked':''}> แถวแรกเป็นหัวตาราง (ไม่นำเข้า)</label>
@@ -5985,13 +6410,18 @@ function renderImpPreview(){
   $('dbImpCommit').disabled=ok.length===0;
   $('dbImpCommit').textContent=ok.length?`นำเข้า ${ok.length} รายการ`:'ไม่มีข้อมูลให้นำเข้า';
 }
+/* v47 · _ref / _upd เป็นค่าที่ระบบใช้จับคู่เท่านั้น ห้ามหลุดลงไปอยู่ในตัว record จริง
+   (ไม่งั้นจะไปโผล่เป็น field แปลก ๆ แล้วเดินทางต่อผ่านการซิงค์เรื่อย ๆ) */
+const impClean=d=>{ const o={...d}; delete o._ref; delete o._upd; return withStamp(o); };
 function impAddRec(d){
-  if(dbTab==='adm')S.customAdm.push({id:nid(),...d});
-  else if(dbTab==='res')S.customRes.push({id:nid(),...d});
-  else if(dbTab==='car')S.cars.push({id:nid(),...d});
-  else if(dbTab==='hotel')S.hotels.push({id:nid(),...d});
+  const c=impClean(d);
+  if(dbTab==='adm')S.customAdm.push({id:nid(),...c});
+  else if(dbTab==='res')S.customRes.push({id:nid(),...c});
+  else if(dbTab==='car')S.cars.push({id:nid(),...c});
+  else if(dbTab==='hotel')S.hotels.push({id:nid(),...c});
 }
-function impUpdateRec(ref,d){
+function impUpdateRec(ref,dRaw){
+  const d=impClean(dRaw);
   const raw=(arr,r)=>(arr||[]).find(x=>'c'+x.id===r);
   if(dbTab==='adm'){ if(isCustom(ref)){const o=raw(S.customAdm,ref); if(o)Object.assign(o,d);} else S.admEdits[ref]={...S.admEdits[ref],...d}; }
   else if(dbTab==='res'){ if(isCustom(ref)){const o=raw(S.customRes,ref); if(o)Object.assign(o,d);} else S.resEdits[ref]={...S.resEdits[ref],...d}; }
@@ -6000,21 +6430,22 @@ function impUpdateRec(ref,d){
 }
 /* ลงมือเพิ่ม/อัปเดตจริง — ไม่แตะ UI เลย เพื่อให้ซิงค์ Google Sheet เรียกซ้ำหลายแท็บรวดเดียวได้ */
 function impApply(){
-  const built=impBuild(), exist=impExistingMap();
+  const built=impBuild(), exist=impExistingMap(), refs=impExistingRefs();
   let added=0,updated=0,skipped=0,bad=0;
   if(dbTab==='hotel'){
-    /* รวมแถวที่ชื่อ+จังหวัดเดียวกันเป็นโรงแรมเดียว หลายห้อง */
+    /* รวมแถวที่ "รหัสอ้างอิงเดียวกัน" (หรือชื่อ+จังหวัดเดียวกัน ถ้าไม่มีรหัส) เป็นโรงแรมเดียว หลายห้อง */
     const groups=new Map();
     built.forEach(b=>{ if(b.err){bad++;return;}
-      const k=impKey('hotel',b.data);
-      if(!groups.has(k))groups.set(k,{head:b.data,rts:[]});
+      const rh=refHead(b.data._ref);
+      const k=(rh&&refs.has(rh))?rh:impKey('hotel',b.data);
+      if(!groups.has(k))groups.set(k,{head:b.data,rts:[],ref:(rh&&refs.has(rh))?rh:null});
       groups.get(k).rts.push(b.data._rt);
     });
     groups.forEach((g,k)=>{
-      const head={nameTh:g.head.nameTh,nameEn:g.head.nameEn,name:g.head.name,area:g.head.area,
-                  stars:g.head.stars,tel:g.head.tel,abf:g.head.abf,note:g.head.note};
+      const head=withStamp({nameTh:g.head.nameTh,nameEn:g.head.nameEn,name:g.head.name,area:g.head.area,
+                  stars:g.head.stars,tel:g.head.tel,abf:g.head.abf,note:g.head.note});
       const rts=g.rts.map(rt=>({id:nid(),...rt,bed:null}));
-      const ref=exist.get(k);
+      const ref=g.ref||exist.get(k);
       if(ref&&impDupMode==='skip'){skipped++;return;}
       if(ref&&impDupMode==='update'){ const h=(S.hotels||[]).find(x=>'hotel:'+x.id===ref);
         if(h){ /* คงรหัสห้องเดิมไว้ถ้าห้อง+เตียงตรงกัน — ไม่งั้นการจองที่เลือกไว้จะเด้งไปห้องอื่นราคาอื่น */
@@ -6031,7 +6462,7 @@ function impApply(){
   }
   built.forEach(b=>{
     if(b.err){bad++;return;}
-    const ref=exist.get(impKey(dbTab,b.data));
+    const ref=impMatchRef(b.data,exist,refs);
     if(ref&&impDupMode==='skip'){skipped++;return;}
     if(ref&&impDupMode==='update'){impUpdateRec(ref,b.data);updated++;return;}
     impAddRec(b.data);added++;
@@ -6129,7 +6560,12 @@ const placeAt=x=>({zone:(x&&x.zone)||'', prov:(x&&x.area)||''});
    Apps Script เดิมเขียนเฉพาะแท็บที่ส่งไป และลบเฉพาะแท็บที่ "ว่างเปล่า"
    จึงส่งแท็บเดียวได้อย่างปลอดภัย ไม่ต้อง Deploy สคริปต์ใหม่
    ============================================================ */
-const PROG_HEAD=['รหัส','ชื่อโปรแกรม','เริ่ม','จบ','PAX','ต้นทุนรวม','ราคาขาย','อัปเดตล่าสุด','ข้อมูล'];
+/* v47 · เพิ่มคอลัมน์ savedAt แบบ ISO
+   คอลัมน์ "อัปเดตล่าสุด" เดิมเป็นข้อความอ่านง่ายสำหรับคน เอามาเทียบว่าใครใหม่กว่าไม่ได้
+   ฝั่งชีตต้องมีตัวเลขเวลาที่เรียงได้ ถึงจะตัดสินได้ว่าแถวไหนชนะตอนสองเครื่องส่งชนกัน */
+const PROG_HEAD=['รหัส','ชื่อโปรแกรม','เริ่ม','จบ','PAX','ต้นทุนรวม','ราคาขาย','อัปเดตล่าสุด','savedAt','ข้อมูล'];
+const PROG_KEY_COL=1;    /* คอลัมน์ "รหัส" */
+const PROG_TS_COL=9;     /* คอลัมน์ "savedAt" */
 const CELL_MAX=50000;              /* เพดานตัวอักษรต่อ 1 ช่องของ Google Sheets */
 let bkTimer=null, bkBusy=false, bkOversize=0;
 
@@ -6142,7 +6578,7 @@ function progRows(){
     if(js.length>CELL_MAX){ bkOversize++; js='(ใหญ่เกิน 50,000 ตัวอักษร — สำรองในชีตไม่ได้ ใช้ไฟล์ .json แทน)'; }
     rows.push([ r.id||'', r.name||'', r.startDate||'', r.endDate||'',
                 r.paxBrk||String(r.pax||''), r.cost||0, r.sellTotal||0,
-                fmtSavedAt(r.savedAt), js ]);
+                fmtSavedAt(r.savedAt), r.savedAt||'', js ]);
   });
   return rows;
 }
@@ -6161,7 +6597,11 @@ async function runBackup(silent){
   const url=String(S.gsExec||'').trim();
   let ok=false, err='';
   try{
-    const payload=JSON.stringify({key:S.gsKey||'',data:{Programs:progRows()}});
+    /* v47 · merge = บอกฝั่งชีตให้ "รวมทีละแถว" ไม่ใช่ล้างทั้งแท็บแล้วเขียนใหม่
+       นี่คือจุดที่ทำให้ทีมลบงานกันเองมาตลอด: สำรองอัตโนมัติยิงเองภายใน 20 วิหลังกด 💾
+       ของเดิมทุกครั้งที่ยิง แท็บ Programs จะเหลือแค่รายการของ "เครื่องที่ยิงล่าสุด" เท่านั้น */
+    const payload=JSON.stringify({key:S.gsKey||'',data:{Programs:progRows()},
+      merge:{Programs:{key:PROG_KEY_COL,ts:PROG_TS_COL}}});
     if(gsCanFetch()){
       try{ const r=await gsDirectPost(url,payload); ok=!!(r&&r.ok); if(!ok&&r)err=r.error||''; }
       catch(e){ ok=false; }
@@ -6248,6 +6688,16 @@ function gsTabRows(t){
   return rows.map(r=>head.map((_,i)=>(r[i]==null?'':r[i])));
 }
 
+/* v47 · บอกฝั่งชีตว่าแท็บฐานข้อมูลก็ให้ "รวมรายแถว" เหมือนแท็บ Programs
+   กุญแจ = คอลัมน์รหัสอ้างอิง · ตัวตัดสิน = คอลัมน์แก้ล่าสุด
+   ผลที่ต่างจากเดิม: แถวที่มีอยู่ในชีตแต่เครื่องนี้ไม่มี จะไม่ถูกลบทิ้งอีกต่อไป
+   (เดิมล้างทั้งแท็บแล้วเขียนใหม่ ใครกด ⬆️ ทีหลังก็ลบของเพื่อนที่เพิ่งเพิ่มไปเมื่อกี้) */
+function gsMergeSpec(){
+  const m={};
+  GS_TABS.forEach(t=>{ const sc=IMP_SCHEMA[t.tab]; m[t.sheet]={key:sc.refCol, ts:sc.updCol}; });
+  return m;
+}
+
 function gsSeed(){
   const jobs=GS_TABS.map(t=>({name:t.sheet+'.csv',csv:impCsv(gsTabRows(t))}));
   /* ทยอยดาวน์โหลด เบราว์เซอร์บล็อกถ้ายิงรวดเดียวหลายไฟล์ */
@@ -6266,6 +6716,13 @@ function gsRandKey(){
   for(let i=0;i<24;i++)s+=c[Math.floor(Math.random()*c.length)];
   return s;
 }
+/* v47 · ลายนิ้วมือของรหัส — ต้องคำนวณแบบเดียวกับ keyFp_() ในสคริปต์ฝั่งชีตเป๊ะ ๆ
+   ใช้เทียบว่า "รหัสที่เครื่องนี้ถืออยู่ ตรงกับที่ติดตั้งในชีตไหม" โดยไม่ต้องส่งตัวรหัสมาเทียบ */
+function gsKeyFp(k){
+  const s='tourfp:'+String(k==null?'':k); let h=2166136261;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return ('0000000'+((h>>>0).toString(16))).slice(-8);
+}
 const GS_CONN=key=>[
 '/* ===== ตัวเชื่อม แอปทัวร์ ↔ ชีตนี้ =====',
 '   วางครั้งเดียวพอ ไม่ต้องกลับมาวางใหม่อีกแม้ข้อมูลในแอปจะเปลี่ยนไปแค่ไหน',
@@ -6283,7 +6740,18 @@ const GS_CONN=key=>[
 '   7) คัดลอก URL ที่ลงท้ายด้วย /exec เอาไปวางในแอป ช่อง "ลิงก์ Web App"',
 '',
 '   *** แก้โค้ดนี้ทีหลังเมื่อไหร่ ต้องกด Deploy ใหม่ทุกครั้ง ไม่งั้นตัวเก่าจะยังทำงานอยู่ ***',
-'   ความปลอดภัย: ใครรู้ URL นี้ก็ยิงเข้ามาได้ จึงมีรหัสลับ KEY กำกับ ถ้าไม่ตรงจะไม่ยอมเขียน */',
+'',
+'   ความปลอดภัย: URL /exec เปิดให้ "ทุกคน" ยิงเข้ามาได้ตามที่ Google บังคับ',
+'   รหัสลับ KEY ด้านล่างจึงเป็นสิ่งเดียวที่กั้นอยู่ — ตั้งแต่ VER 20 กั้นทั้งขาเขียน "และขาอ่าน"',
+'   (รุ่น 19 ลงไป ใครได้ URL ไปยิง ?mode=data ครั้งเดียว ได้ข้อมูลทุกแท็บทั้งไฟล์ไปเลย)',
+'',
+'   VER 21: การเขียนเป็นแบบ "รวมรายแถว" ทุกแท็บแล้ว ไม่ล้างแท็บทิ้งอีกต่อไป',
+'   แถวที่มีเฉพาะในชีต (เพื่อนเพิ่งเพิ่ม หรือคนพิมพ์เองยังไม่มีรหัสอ้างอิง) จะไม่ถูกลบ',
+'',
+'   *** KEY เป็นของ "ชีตนี้" ไม่ใช่ของเครื่องใครคนใดคนหนึ่ง ***',
+'   ติดตั้งคนเดียวพอ แล้วส่งรหัสด้านล่างให้เพื่อนร่วมทีมไปกรอกในแอป (ช่อง "รหัสลับของชีต")',
+'   ถ้าต่างคนต่างโหลดสคริปต์ไปวาง จะได้รหัสคนละตัว ใครวางทีหลังชนะ',
+'   แล้วคนที่เหลือจะเขียนขึ้นชีตไม่ได้ทันที */',
 '',
 'var KEY = '+JSON.stringify(key)+';',
 'var VER = "'+GS_VER+'";   /* แอปใช้เลขนี้ตรวจว่าสคริปต์ในชีตเป็นรุ่นเดียวกับแอปหรือยัง */',
@@ -6296,10 +6764,21 @@ const GS_CONN=key=>[
 '    if(String(body.key)!==KEY) return done_(cb,{ok:false,error:"รหัสลับไม่ตรง — กด 📜 โหลดสคริปต์ใหม่จากแอปแล้ววางทับ + Deploy ใหม่"});',
 '    var ss=SpreadsheetApp.getActiveSpreadsheet();',
 '    var data=body.data||{}, names=Object.keys(data), rows=0;',
+'    /* merge = {ชื่อแท็บ: {key: คอลัมน์รหัส, ts: คอลัมน์เวลาอัปเดต}}  (นับจาก 1)',
+'       แท็บที่อยู่ในนี้จะ "รวมทีละแถว" ไม่ล้างทั้งแท็บ',
+'       จำเป็นสำหรับแท็บ Programs: ของเดิม clear() ทั้งแท็บแล้วเขียนทับด้วยรายการของเครื่องที่ส่งมา',
+'       ทีมที่ทำงานพร้อมกันจึงลบโปรแกรมของกันเองทิ้งทุกครั้งที่กดบันทึก โดยไม่มีใครรู้',
+'       ตอนนี้แถวไหนไม่ได้ส่งมาจะอยู่เฉย ๆ ส่วนแถวที่ชนกันจะเทียบเวลา ใครใหม่กว่าชนะ */',
+'    var merge=body.merge||{};',
 '    names.forEach(function(name){',
 '      var v=data[name]; if(!v||!v.length) return;',
 '      var sh=ss.getSheetByName(name);',
-'      if(sh){ sh.clear(); } else { sh=ss.insertSheet(name); }',
+'      if(!sh) sh=ss.insertSheet(name);',
+'      var m=merge[name];',
+'      if(m && sh.getLastRow()>1){',
+'        v=mergeRows_(sh,v,Number(m.key)||1,Number(m.ts)||0);',
+'      }',
+'      sh.clear();',
 '      sh.getRange(1,1,v.length,v[0].length).setValues(v);',
 '      sh.setFrozenRows(1);',
 '      sh.getRange(1,1,1,v[0].length).setFontWeight("bold").setBackground("#0d1730").setFontColor("#ffffff");',
@@ -6316,6 +6795,33 @@ const GS_CONN=key=>[
 '  finally{ try{ lock.releaseLock(); }catch(err){} }',
 '}',
 '',
+'/* รวมแถวใหม่เข้ากับที่มีอยู่ในแท็บ แทนการล้างทิ้งแล้วเขียนใหม่',
+'     keyCol = คอลัมน์รหัสประจำแถว (ใช้จับคู่ว่าแถวไหนคือแถวเดียวกัน)',
+'     tsCol  = คอลัมน์เวลาอัปเดตล่าสุด (0 = ไม่เทียบ ให้ของใหม่ชนะเสมอ)',
+'   แถวเก่าที่ไม่มีในชุดใหม่ ถูกเก็บไว้ตามเดิม — นี่คือหัวใจที่ทำให้ทีมไม่ลบงานกันเอง */',
+'function mergeRows_(sh,v,keyCol,tsCol){',
+'  var head=v[0];',
+'  var old=sh.getDataRange().getValues();',
+'  var out=[head], seen={}, i, k;',
+'  for(i=1;i<v.length;i++){ k=String(v[i][keyCol-1]||""); if(k) seen[k]=out.length; out.push(v[i]); }',
+'  for(i=1;i<old.length;i++){',
+'    var row=old[i];',
+'    if(!row.join("").length) continue;',
+'    k=String(row[keyCol-1]||"");',
+'    /* แถวที่ยังไม่มีรหัสอ้างอิง = คนพิมพ์เองในชีต ยังไม่เคยผ่านแอป',
+'       ห้ามทิ้งเด็ดขาด เก็บไว้ให้เจ้าของกด "ดึงจากชีต" มารับเข้าระบบเอง',
+'       (การทิ้งแถวที่ไม่รู้จักคือพฤติกรรมเดิมที่เรากำลังแก้อยู่พอดี) */',
+'    if(!k){ out.push(padRow_(row,head.length)); continue; }',
+'    if(!(k in seen)){ out.push(padRow_(row,head.length)); continue; }',
+'    if(!tsCol) continue;',
+'    /* ชนกัน — เก็บตัวที่เวลาใหม่กว่า ถ้าอ่านเวลาไม่ออกให้ของที่ส่งมาชนะ */',
+'    var mine=String(out[seen[k]][tsCol-1]||""), theirs=String(row[tsCol-1]||"");',
+'    if(theirs>mine) out[seen[k]]=padRow_(row,head.length);',
+'  }',
+'  return out;',
+'}',
+'function padRow_(row,n){ var r=row.slice(0,n); while(r.length<n) r.push(""); return r; }',
+'',
 '/* รับได้ทั้งแบบส่งฟอร์ม (ช่อง payload) และแบบส่งเนื้อดิบมาตรงๆ */',
 'function doPost(e){',
 '  try{',
@@ -6327,6 +6833,17 @@ const GS_CONN=key=>[
 '  }catch(err){ return done_(null,{ok:false,error:String(err)}); }',
 '}',
 '',
+'/* ลายนิ้วมือของรหัสลับ — เอาไว้ให้แอปเทียบว่า "รหัสที่ฉันถืออยู่ตรงกับในชีตไหม"',
+'   โดยไม่ต้องส่งตัวรหัสจริงออกมา ถ้าไม่ตรงจะได้บอกได้ตั้งแต่ตอนกดตรวจ',
+'   ไม่ต้องรอไปพังตอนส่งข้อมูลจริงเหมือนเดิม (สมาชิกทีมแต่ละคนเคยสุ่มรหัสของตัวเอง',
+'   ใครวางสคริปต์ทีหลังชนะ คนที่เหลือเขียนไม่ได้ทันทีโดยไม่รู้สาเหตุ) */',
+'function keyFp_(){',
+'  var s="tourfp:"+KEY, h=2166136261;',
+'  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }',
+'  return ("0000000"+((h>>>0).toString(16))).slice(-8);',
+'}',
+'function okKey_(p){ return String(p.key||"")===KEY; }',
+'',
 'function doGet(e){',
 '  var p=(e&&e.parameter)||{};',
 '  var ss=SpreadsheetApp.getActiveSpreadsheet();',
@@ -6334,9 +6851,11 @@ const GS_CONN=key=>[
 '     แต่ GET แบบ JSONP ผ่านเสมอ จึงหั่นข้อมูลเป็นชิ้นๆ ส่งมาต่อกันที่นี่ */',
 '  /* ให้แอปลองยิงข้อมูลขนาดต่างๆ มาวัดว่าเครื่องผู้ใช้ส่งได้ยาวสุดเท่าไหร่ */',
 '  if(p.mode==="probe"){',
+'    if(!okKey_(p)) return json_(p.callback,{ok:false,error:"รหัสลับไม่ตรง"});',
 '    return json_(p.callback,{ok:true,ver:VER,len:String(p.d||"").length});',
 '  }',
 '  if(p.mode==="up"){',
+'    if(!okKey_(p)) return json_(p.callback,{ok:false,error:"รหัสลับไม่ตรง"});',
 '    var cache=CacheService.getScriptCache();',
 '    var n=Number(p.n)||0, i=Number(p.i)||0;',
 '    cache.put("ck_"+p.sid+"_"+i,String(p.d||""),900);',
@@ -6353,14 +6872,23 @@ const GS_CONN=key=>[
 '      : Utilities.newBlob(bytes).getDataAsString("UTF-8");',
 '    return write_(p.callback,JSON.parse(txt));',
 '  }',
+'  /* *** ช่องโหว่ที่ปิดใน VER 20 ***',
+'     ของเดิม mode=data ไม่ตรวจรหัสลับเลย และ Deploy บังคับให้ตั้ง "ผู้มีสิทธิ์เข้าถึง = ทุกคน"',
+'     ใครก็ตามที่ได้ URL /exec นี้ไป ยิง ?mode=data ครั้งเดียวได้ข้อมูลทุกแท็บทั้งไฟล์',
+'     ทั้งราคาต้นทุน กำไร และข้อมูลติดต่อ · KEY เดิมกันไว้แค่ขาเขียน ขาอ่านเปิดโล่ง */',
 '  if(p.mode==="data"){',
+'    if(!okKey_(p)) return json_(p.callback,{ok:false,error:"รหัสลับไม่ตรง — อ่านข้อมูลไม่ได้"});',
 '    var out={};',
 '    ss.getSheets().forEach(function(sh){ out[sh.getName()]=sh.getDataRange().getValues(); });',
 '    return json_(p.callback,{ok:true,id:ss.getId(),name:ss.getName(),data:out});',
 '  }',
+'  /* ping: ตอบได้โดยไม่ต้องมีรหัส แต่บอกแค่ว่า "มีตัวเชื่อมอยู่ รุ่นอะไร"',
+'     ชื่อไฟล์ · รหัสไฟล์ · รายชื่อแท็บ · ผลการเขียนล่าสุด ให้เฉพาะคนที่มีรหัสตรง */',
+'  if(!okKey_(p)) return json_(p.callback,{ok:true,ping:"tour-sheet-connector",ver:VER,',
+'                                          keyfp:keyFp_(),authed:false});',
 '  var tabs=ss.getSheets().map(function(s){ return s.getName(); });',
-'  return json_(p.callback,{ok:true,ping:"tour-sheet-connector",ver:VER,id:ss.getId(),',
-'                           name:ss.getName(),tabs:tabs,last:last_()});',
+'  return json_(p.callback,{ok:true,ping:"tour-sheet-connector",ver:VER,keyfp:keyFp_(),authed:true,',
+'                           id:ss.getId(),name:ss.getName(),tabs:tabs,last:last_()});',
 '}',
 '',
 '/* จำผลการเขียนครั้งล่าสุด ให้แอปมาถามได้ว่าที่ส่งไปเมื่อกี้สำเร็จหรือพังเพราะอะไร */',
@@ -6393,7 +6921,7 @@ const gsHasExec=()=>/^https:\/\/script\.google\.com\/.+\/exec$/.test(String(S.gs
 let gsLastUrlLen=0;
 /* ขยับเลขนี้ทุกครั้งที่แก้โค้ดฝั่งสคริปต์ แอปจะได้จับได้ว่าในชีตยังเป็นรุ่นเก่าอยู่
    (ลืม Deploy ใหม่คือสาเหตุที่เจอบ่อยที่สุด เพราะแก้โค้ดเฉยๆ ตัวเก่ายังทำงานอยู่) */
-const GS_VER='19';
+const GS_VER='21';
 const gsOldScript=v=>({t:'สคริปต์ในชีตเป็นรุ่นเก่า',cls:'er',
   msg:`ในชีตเป็นรุ่น ${v||'ก่อนหน้า'} แต่แอปเป็นรุ่น ${GS_VER} — กด 📜 โหลดตัวใหม่ วางทับ แล้วต้อง "ทำให้ใช้งานได้ > การทำให้ใช้งานได้ใหม่" ด้วย`});
 
@@ -6443,7 +6971,11 @@ function gsPing(params){
     window[cb]=o=>{ if(done)return; done=true; clean(); resolve(o||{}); };
     el.onerror=()=>{ if(done)return; done=true; clean();
       reject(new Error('เรียก Web App ไม่สำเร็จ — ลิงก์ /exec ถูกต้องหรือยัง')); };
-    let q='?callback='+cb+'&_='+Date.now();
+    /* v47 · ส่งรหัสลับไปทุกครั้ง — ตัวเชื่อมรุ่น 20 ตรวจรหัสทั้งขาอ่านและขาเขียนแล้ว
+       (ข้อแลกเปลี่ยนที่ต้องรู้: JSONP อ่านคำตอบได้ทางเดียวคือผ่าน GET รหัสจึงติดไปใน URL
+        และไปโผล่ใน log ของ Apps Script กับประวัติเบราว์เซอร์ · ยอมรับได้เพราะจำเป็นต่อการเปิดจาก file://
+        แต่แปลว่า "รหัสนี้กันคนนอกทั่วไป ไม่ใช่ความลับระดับรหัสผ่าน" ถ้าหลุดให้เปลี่ยนรหัสแล้ว Deploy ใหม่) */
+    let q='?callback='+cb+'&_='+Date.now()+'&key='+encodeURIComponent(S.gsKey||'');
     Object.keys(params||{}).forEach(k=>{ q+='&'+k+'='+encodeURIComponent(params[k]); });
     el.src=url+q; gsLastUrlLen=el.src.length;
     document.body.appendChild(el);
@@ -6480,10 +7012,17 @@ async function gsCheck(quiet){
     const i=await gsPing(), want=gsSheetId(S.gsUrl);
     const same=!want||i.id===want;
     const cur=i.ver===GS_VER;
+    /* v47 · ตรวจรหัสตั้งแต่ตอนนี้ ไม่ต้องรอไปพังตอนส่งข้อมูลจริง
+       i.keyfp มีเฉพาะตัวเชื่อมรุ่น 20 ขึ้นไป — รุ่นเก่าไม่มี ก็ข้ามไปไม่ต้องฟ้อง */
+    const keyOk = i.keyfp ? (i.authed===true || i.keyfp===gsKeyFp(S.gsKey)) : true;
     gsLog=[{t:'Web App',cls:'ok',msg:'ตอบกลับปกติ ✓'},
-           {t:'รุ่นสคริปต์',cls:cur?'ok':'er',msg:cur?`รุ่น ${i.ver} ตรงกับแอป ✓`:`ในชีตรุ่น ${i.ver||'เก่ากว่า 18'} · แอปรุ่น ${GS_VER}`},
-           {t:'สคริปต์อยู่ในชีต',cls:same?'ok':'er',msg:(i.name||'?')+(same?' ✓':' — ไม่ตรงกับช่องลิงก์ด้านบน')},
-           {t:'แท็บในชีตนั้น',cls:'',msg:(i.tabs||[]).join(' · ')||'(ไม่มี)'}];
+           {t:'รุ่นสคริปต์',cls:cur?'ok':'er',msg:cur?`รุ่น ${i.ver} ตรงกับแอป ✓`:`ในชีตรุ่น ${i.ver||'เก่ากว่า 18'} · แอปรุ่น ${GS_VER}`}];
+    if(i.keyfp) gsLog.push({t:'รหัสลับของชีต',cls:keyOk?'ok':'er',
+      msg:keyOk?'ตรงกัน ✓'
+               :'ไม่ตรง — เครื่องนี้จะอ่านและเขียนชีตไม่ได้เลย · ขอ "รหัสลับของชีต" จากคนที่ติดตั้งสคริปต์ มากรอกในช่องด้านล่าง (อย่าเพิ่งกด 📜 วางสคริปต์ใหม่ทับ เพราะจะไปเปลี่ยนรหัสของทั้งทีม)'});
+    if(!keyOk){ if(!quiet)gsBusy=false; renderGsBox(); return; }
+    gsLog.push({t:'สคริปต์อยู่ในชีต',cls:same?'ok':'er',msg:(i.name||'?')+(same?' ✓':' — ไม่ตรงกับช่องลิงก์ด้านบน')},
+               {t:'แท็บในชีตนั้น',cls:'',msg:(i.tabs||[]).join(' · ')||'(ไม่มี)'});
     if(!cur) gsLog.push(gsOldScript(i.ver));
     if(i.last) gsLog.push({t:'ส่งขึ้นชีตล่าสุด',cls:i.last.ok?'ok':'er',
       msg:(i.last.ok?`สำเร็จ ${i.last.rows} แถว`:'ล้มเหลว — '+(i.last.error||'?'))+
@@ -6520,14 +7059,20 @@ async function gsPushRun(){
            {t:'วิธีแก้',cls:'er',msg:'เอาลิงก์ของชีต "'+(info.name||'?')+'" มาวางในช่องแรก แล้วกด ⬆️ ใหม่'}];
     gsBusy=false; renderGsBox(); return;
   }
-  if(!confirm('จะเขียนทับข้อมูลในชีต "'+(info.name||'')+'" ทั้ง '+GS_TABS.length+' แท็บ ด้วยข้อมูลในเครื่องนี้\n\nอะไรที่แก้ไว้ในชีตแต่ไม่มีในเครื่องนี้จะหายไป\n\nยืนยันส่งขึ้นชีต?')){
+  /* v47 · ข้อความเปลี่ยนตามพฤติกรรมจริงที่เปลี่ยนไป — ไม่ใช่การเขียนทับทั้งแท็บอีกแล้ว */
+  if(!confirm('ส่งข้อมูลของเครื่องนี้ขึ้นชีต "'+(info.name||'')+'" ทั้ง '+GS_TABS.length+' แท็บ\n\n'+
+              '· แถวที่ตรงกัน = อัปเดตด้วยของที่แก้ล่าสุด\n'+
+              '· แถวที่มีเฉพาะในชีต (เพื่อนเพิ่งเพิ่ม) = เก็บไว้ ไม่ลบ\n'+
+              '· แถวที่มีเฉพาะในเครื่องนี้ = เพิ่มเข้าไป\n\n'+
+              'ยืนยันส่งขึ้นชีต?')){
     gsBusy=false; gsLog=[]; renderGsBox(); return; }
 
   const data={}; GS_TABS.forEach(t=>{ data[t.sheet]=gsTabRows(t); });
+  const merge=gsMergeSpec();
   /* หั่นเป็นชิ้นแล้วส่งผ่าน JSONP ทีละชิ้น — ไม่ใช้ POST เพราะบางเครื่องยิง POST ข้ามโดเมนไม่ถึง
      ทาง JSONP ตอบกลับได้ทุกชิ้น จึงรู้ผลจริงทุกขั้นตอน ไม่ต้องเดา
      base64 ก่อนเพื่อให้เป็น ASCII ล้วน ภาษาไทยใน URL จะบวมเป็น 9 เท่าถ้าไม่แปลง */
-  const payload=JSON.stringify({key:S.gsKey||'',data});
+  const payload=JSON.stringify({key:S.gsKey||'',data,merge});
   const before=(info.last&&info.last.at)||'';
 
   let res=null, via='';
@@ -6563,10 +7108,20 @@ async function gsPushRun(){
   let bad=0;
   try{
     const got=await gsReadAll();
+    /* v47 · เลิกนับจำนวนแถวเทียบกันตรง ๆ — ตอนนี้เป็นการรวม ชีตจึงมีแถวได้มากกว่าที่เราส่งเป็นเรื่องปกติ
+       สิ่งที่ต้องยืนยันคือ "ทุกแถวที่เราส่งไป ไปถึงจริงไหม" จึงไล่ดูทีละรหัสอ้างอิงแทน */
     GS_TABS.forEach(t=>{
-      const w=data[t.sheet].length-1, g=((got.data[t.sheet]||[]).length)-1;
-      if(g===w) out.push({t:t.label,cls:'ok',msg:`ยืนยันในชีต ${g} แถว`});
-      else { bad++; out.push({t:t.label,cls:'er',msg:`ส่งไป ${w} แถว แต่อ่านได้ ${g}`}); }
+      const sc=IMP_SCHEMA[t.tab], ci=sc.refCol-1;
+      const sent=data[t.sheet].slice(1).map(r=>String(r[ci]||'')).filter(Boolean);
+      const there=new Set((got.data[t.sheet]||[]).slice(1).map(r=>String(r[ci]||'')));
+      const miss=sent.filter(r=>!there.has(r));
+      const total=Math.max(0,((got.data[t.sheet]||[]).length)-1);
+      if(!miss.length) out.push({t:t.label,cls:'ok',msg:`ส่งครบ ${sent.length} แถว · ในชีตมีทั้งหมด ${total} แถว`});
+      else { bad++; out.push({t:t.label,cls:'er',msg:`ส่งไป ${sent.length} แถว แต่หาไม่เจอในชีต ${miss.length} แถว`}); }
+      /* แถวที่คนพิมพ์เองในชีตยังไม่มีรหัส — เก็บไว้ให้แล้ว แต่ต้องบอกว่าต้องทำอะไรต่อ
+         ไม่งั้นพอกด ⬇️ ดึงจากชีต ทีหลังจะได้ของซ้ำ (แถวเดิมไม่มีรหัส + แถวใหม่มีรหัส) */
+      const orphan=(got.data[t.sheet]||[]).slice(1).filter(r=>r.join('').trim()&&!String(r[ci]||'').trim()).length;
+      if(orphan) out.push({t:t.label,cls:'',msg:`มี ${orphan} แถวที่พิมพ์เองในชีต (ยังไม่มีรหัสอ้างอิง) — เก็บไว้ให้แล้ว · กด ⬇️ ดึงจากชีต เพื่อรับเข้าระบบ แล้วลบแถวเดิมในชีตทิ้ง`});
     });
   }catch(e){ out.push({t:'อ่านยืนยันไม่ได้',cls:'er',msg:(e&&e.message)||String(e)}); }
   gsLog=out; S.gsAt=new Date().toISOString(); gsBusy=false; save(); renderGsBox();
@@ -6748,7 +7303,16 @@ function gsFieldsHtml(){
       `<button class="gs-b" id="gsConnBtn" type="button">📜 รับสคริปต์ + วิธีติดตั้ง</button></div></div>`+
     `<div class="gs-step"><b>3</b><div>`+
       `<label>วางลิงก์ Web App ที่ได้ (ลงท้าย /exec)</label>`+
-      `<input class="gs-url" id="gsExecInput" placeholder="https://script.google.com/.../exec" value="${esc(S.gsExec||'')}"><div class="gs-why" id="gsWhy"></div></div></div>`;
+      `<input class="gs-url" id="gsExecInput" placeholder="https://script.google.com/.../exec" value="${esc(S.gsExec||'')}"><div class="gs-why" id="gsWhy"></div></div></div>`+
+    /* v47 · รหัสลับเป็นของ "ชีต" ไม่ใช่ของเครื่อง
+       ของเดิมแอปสุ่มรหัสให้ทุกเครื่องที่กด 📜 ใครวางสคริปต์ทีหลังชนะ
+       คนที่เหลือเขียนขึ้นชีตไม่ได้ทันที พร้อมข้อความ "รหัสลับไม่ตรง" ที่ไม่ได้บอกว่าต้องทำยังไงต่อ
+       ตอนนี้กรอกรหัสของทีมทับได้ตรงนี้ โดยไม่ต้องไปยุ่งกับสคริปต์ในชีตเลย */
+    `<div class="gs-step"><b>4</b><div>`+
+      `<label>รหัสลับของชีต — ทุกคนในทีมต้องใช้ตัวเดียวกัน</label>`+
+      `<input class="gs-url" id="gsKeyInput" placeholder="คนที่ติดตั้งสคริปต์เป็นคนแจกรหัสนี้" value="${esc(S.gsKey||'')}">`+
+      `<div class="gs-why" id="gsKeyWhy">${S.gsKey?'คนแรกที่ติดตั้ง: ส่งรหัสนี้ให้เพื่อนร่วมทีมไปกรอกช่องนี้ · คนอื่น: กรอกรหัสที่ได้รับมา แล้วกด 🔎 ตรวจการเชื่อมต่อ':'ยังไม่มีรหัส — กด 📜 เพื่อสร้างและติดตั้ง หรือกรอกรหัสที่เพื่อนร่วมทีมส่งมา'}</div>`+
+    `</div></div>`;
 }
 
 function renderGsBox(){
@@ -6819,6 +7383,10 @@ function renderGsBox(){
     if(gsHasExec()&&!was){ gsCfgOpen=false; renderGsBox(); gsCheck(true); }
     else if(!gsHasExec()&&was){ renderGsBox(); }
   };
+  const kk=$('gsKeyInput'); if(kk)kk.oninput=e=>{
+    S.gsKey=e.target.value.trim(); save();
+    const w=$('gsKeyWhy'); if(w)w.textContent=S.gsKey?'กด 🔎 ตรวจการเชื่อมต่อ เพื่อดูว่ารหัสตรงกับในชีตหรือยัง':'ยังไม่ได้กรอกรหัส';
+  };
   gon('gsSyncBtn',gsSync); gon('gsPushBtn',gsPush); gon('gsCheckBtn',()=>gsCheck());
   gon('gsConnBtn',gsConnScript); gon('gsSeedBtn',gsSeed);
   gon('gsBkNow',()=>runBackup(false));
@@ -6861,7 +7429,7 @@ function wire(){
     else if(f==='code')t.code=e.target.value.toUpperCase();
     else if(f==='label')t.label=e.target.value;
     $('paxSummary').innerHTML=`รวมทั้งหมด <b>${headTotal()}</b> คน · คนที่จ่าย (หารหัว) <b>${headPay()}</b> คน`;
-    renderPaxButton(); reRenderAll(); save();
+    reRenderSoon(); save();   /* v47 · ตัวเลขสรุปขึ้นทันที ส่วนการวาดใหม่ทั้งแอปรอหยุดพิมพ์ก่อน */
   });
   $('paxList').addEventListener('change',e=>{
     if(e.target.dataset.pf==='pay'){
@@ -6914,7 +7482,8 @@ function wire(){
   });
 
   $('carAdd').onclick=addCar;
-  $('carFuel').oninput=e=>{S.carFuel=Math.max(0,+e.target.value||0); renderCarItems(); recalc(); save();};
+  /* v47 · recalc() วาด renderCarItems ให้อยู่แล้ว ไม่ต้องวาดซ้ำก่อน · และหน่วงไว้ให้พิมพ์ลื่น */
+  $('carFuel').oninput=e=>{S.carFuel=Math.max(0,+e.target.value||0); recalcSoon(); save();};
 
   $('resTags').onclick=e=>{
     if(e.target.closest('#resTagAdd')){ const t=prompt('เพิ่มแท็กใหม่ (เช่น Buffet, Vegan):'); if(t&&t.trim()){ const v=t.trim(); if(!S.resTags)S.resTags=[]; if(!S.resTags.includes(v)&&!resAreaList().includes(v)&&v!=='Halal'){S.resTags.push(v); resTagSel.add(v);} renderResTags(); fillResSelect(); save(); } return; }
@@ -7008,7 +7577,7 @@ function wire(){
   };
 
   // profit
-  $('profitVal').oninput=e=>{S.profitVal=+e.target.value||0; recalc(); save();};
+  $('profitVal').oninput=e=>{S.profitVal=+e.target.value||0; recalcSoon(); save();};
 
   // delete line items
   document.body.addEventListener('click',e=>{
@@ -7179,6 +7748,15 @@ function wire(){
   };
   /* v43 · ปรับราคาหลายรายการ */
   $('dbPriceBtn').onclick=showDbPrice;
+  /* v47 · เลือกช่องที่จะแก้ก่อน แล้วค่อยใส่ตัวเลข — 5 ช่องเลยไม่เหมาะกับ prompt ต่อกันรวด */
+  $('dbCapBtn').onclick=()=>{
+    const list=PRICE_CAP_META.map((m,i)=>`${i+1}. ${m.label} = ${priceCap(m.k).toLocaleString()} ${m.unit}`).join('\n');
+    const pick=prompt(`เพดานเตือน "ราคาสูงผิดปกติ"\n\n${list}\n\nจะแก้ข้อไหน? (ใส่เลข 1-${PRICE_CAP_META.length})`,'1');
+    if(pick==null)return;
+    const i=Math.round(+pick)-1;
+    if(!(i>=0&&i<PRICE_CAP_META.length)){ toast('ใส่เลข 1-'+PRICE_CAP_META.length); return; }
+    if(editPriceCaps(PRICE_CAP_META[i].k))renderDbList();
+  };
   $('dbPriceCancel').onclick=showDbList;
   $('dbPriceApply').onclick=applyBulkPrice;
   $('dbPriceBody').onclick=e=>{
@@ -7200,8 +7778,40 @@ function wire(){
   });
 }
 
+/* ============================================================
+   v47 · จอกู้ภัย — แทนที่จะขาวทั้งหน้า
+
+   ของเดิม init() ไม่มี try/catch เลย ข้อมูลใน localStorage เพี้ยนนิดเดียว
+   (ชนิดของ field เปลี่ยน · ใบที่ merge มาจากรุ่นอื่น · JSON ขาดกลางทาง)
+   = throw ตั้งแต่บรรทัดแรก ๆ แล้วไม่มีอะไรถูกวาดเลย ผู้ใช้เห็นจอเปล่า
+   ทางออกเดียวที่เหลือคือล้าง storage ซึ่งเท่ากับลบงานทิ้งทั้งหมด
+   ตอนนี้อย่างน้อยต้องดึงข้อมูลดิบออกมาเก็บก่อนได้เสมอ
+   ============================================================ */
+function showCrashScreen(err){
+  const msg=(err&&(err.stack||err.message))||String(err);
+  const box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;z-index:9999;background:#0a0e1a;color:#eaf1fb;'+
+    'padding:24px 18px;overflow:auto;font-family:var(--thai),sans-serif;font-size:14px;line-height:1.6';
+  box.innerHTML=
+    '<div style="font-size:20px;font-weight:700;color:#e05b6b;margin-bottom:10px">แอปเปิดไม่ขึ้น</div>'+
+    '<div style="margin-bottom:16px">ข้อมูลที่เก็บไว้ในเครื่องน่าจะมีบางอย่างผิดรูป <b>ข้อมูลยังอยู่ครบ</b> '+
+    'กดปุ่มแรกเพื่อดึงออกมาเก็บเป็นไฟล์ก่อน แล้วค่อยส่งไฟล์นั้นให้คนดูแลระบบ</div>'+
+    '<button id="crashDump" style="background:#3f8fe0;color:#fff;border:none;border-radius:9px;'+
+    'padding:12px 16px;font-weight:700;font-size:14px;margin:0 8px 10px 0;font-family:inherit">💾 ดึงข้อมูลดิบออกมาเก็บ</button>'+
+    '<button id="crashReload" style="background:#1a2438;color:#eaf1fb;border:1px solid #2a3550;border-radius:9px;'+
+    'padding:12px 16px;font-size:14px;margin:0 0 10px 0;font-family:inherit">↻ ลองเปิดใหม่</button>'+
+    '<div style="margin-top:18px;font-size:11px;color:#8ea0bd">รายละเอียดทางเทคนิค (ส่งให้คนดูแลระบบ)</div>'+
+    '<pre style="white-space:pre-wrap;word-break:break-word;background:#131a2b;border:1px solid #2a3550;'+
+    'border-radius:9px;padding:12px;font-size:11px;margin-top:6px">'+esc(msg)+'</pre>';
+  document.body.appendChild(box);
+  const d=document.getElementById('crashDump');
+  if(d)d.onclick=()=>{ try{ dumpRawState(); }catch(e){ alert('ดึงข้อมูลไม่ได้: '+e); } };
+  const r=document.getElementById('crashReload');
+  if(r)r.onclick=()=>location.reload();
+}
+
 /* ============ INIT ============ */
-async function init(){
+async function initRun(){
   await load();
   await loadSaved();
   /* v23 · สร้างดัชนีพื้นที่/เวลาเดินทางจากค่าที่เก็บไว้ในเครื่อง — ทำงานออฟไลน์ได้ทันที
@@ -7236,6 +7846,13 @@ async function init(){
   hubRestore();
   renderHome();
   showPage(S.page||'home');
+  /* v47 · กันการแก้ล่าสุดที่ยังค้างอยู่ในคิว save() หายตอนปิดแท็บ */
+  window.addEventListener('beforeunload',flushSave);
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')flushSave(); });
+}
+async function init(){
+  try{ await initRun(); }
+  catch(e){ console.error('init failed',e); showCrashScreen(e); }
 }
 init();
 </script>
