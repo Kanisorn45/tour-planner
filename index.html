@@ -1073,6 +1073,118 @@ input.px:focus{outline:none;border-color:var(--gold)}
 .item.item-slot{border-left-color:var(--orange);border-style:dashed;cursor:pointer}
 .item.item-slot .nm{color:var(--orange)}
 .item.item-slot:hover{background:#241a10}
+
+/* ============================================================
+   v46 · จัดหน้าจอสำหรับมือถือ
+   วางไว้ท้ายสุดเพื่อให้ทับกฎก่อนหน้าได้โดยไม่ต้องใส่ !important เกินจำเป็น
+
+   6 สาเหตุที่ทำให้หน้าจอมือถือพัง แก้ทีละกลุ่มด้านล่าง
+     1. ตารางคอลัมน์ตายตัว (ใบเสนอราคา · ตารางราคาช่วงกรุ๊ป)  -> ล้นขอบจอ
+     2. ตัวอักษรในช่องกรอกเล็กกว่า 16px                        -> iOS ซูมหน้าเองตอนแตะ
+     3. ปุ่มเล็กกว่านิ้ว (บางปุ่มสูงแค่ 18-26px)                -> กดพลาด
+     4. หลายช่องยัดแถวเดียว                                    -> บีบจนอ่านไม่ออก
+     5. ข้อความยาวไม่มีที่ตัดคำ (ชื่อยาว ๆ อีเมล ลิงก์)         -> ดันหน้าจอกว้างเกิน
+     6. เอกสาร A4 ใช้ระยะขอบแบบกระดาษบนจอแคบ                   -> เหลือที่ให้เนื้อหาน้อย
+   ============================================================ */
+
+/* ---------- (5) กันหน้าจอถูกดันกว้างเกิน ---------- */
+img,table,pre{max-width:100%}
+.dbr-nm,.dbr-meta,.irow-txt,.fx-nm,.bl-nm,.hc-nm,.q-co-meta,.gs-log,.dup-side{overflow-wrap:anywhere}
+.q-tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+@media (max-width:640px){
+  /* ---------- (1) ตารางในใบเสนอราคา ---------- */
+  .q-tbl{font-size:11.5px}
+  .q-tbl th,.q-tbl td{padding:6px 7px}
+  .q-tblwrap .q-tbl{min-width:420px}          /* ให้เลื่อนแนวนอนแทนการบีบจนอ่านไม่ออก */
+
+  /* ---------- (6) เอกสาร A4 บนจอแคบ ---------- */
+  .qdoc .qpage{padding:16px 14px}
+  .q-lh{flex-direction:column;gap:8px}
+  .q-meta-box{text-align:left}
+  .q-h1{font-size:15px}
+  .q-h2{font-size:12px;padding:5px 10px;margin:16px 0 8px}
+  .q-ul,.q-terms{font-size:12px}
+  #printBox{padding:0}
+
+  /* ---------- (4) หลายช่องยัดแถวเดียว ---------- */
+  .qe-tierhead{display:none}                  /* หัวคอลัมน์ไม่มีที่พอ ใช้ placeholder แทน */
+  .qe-tier{grid-template-columns:1fr 1fr;gap:5px;padding:8px;margin-bottom:8px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:9px}
+  .qe-tier input:first-child{grid-column:1/-1}
+  .qe-tier .tdel{grid-column:1/-1;height:34px}
+  .bp-modes button{flex:1 1 100%;min-width:0}
+  .db-controls{flex-wrap:wrap}
+  .db-controls .txt{flex:1 1 100%}
+  .db-controls .btn-add{width:100%!important}
+  .db-io{gap:6px}
+  .db-io .btn-ghost{flex:1 1 calc(50% - 3px);font-size:11.5px;padding:9px 6px}
+  .gs-btns .gs-b,.hub-btns .hub-b{flex:1 1 calc(50% - 3px)}
+
+  /* ---------- ปุ่มหน้า Confirm — ตัวอักษรยาว อย่าให้ตกบรรทัด ---------- */
+  .cf-btn{padding:13px 8px;font-size:13.5px}
+  .cf-actions{gap:8px}
+
+  /* ---------- ใบโปรแกรม (Overview / Confirm) ---------- */
+  .idoc-head{padding:12px 12px 10px}
+  .idoc-title{font-size:19px}
+  .iday-h{padding:8px 10px;gap:8px}
+  .iday-body{padding:4px 10px 10px}
+  .irow-act button,.irow-act .drag-grip{padding:5px 3px;font-size:13px}
+  .adm-subrow{padding-left:26px}
+  .adm-grp-h .ar-nm{white-space:normal}
+  .grp-badge{margin-left:0;display:inline-block}
+}
+
+@media (max-width:430px){
+  /* ---------- (4) ต่อ — จอเล็กมาก ---------- */
+  .adm-thead{display:none}                    /* หัวตารางกินที่ ทั้งที่แต่ละแถวอ่านออกอยู่แล้ว */
+  .adm-row{grid-template-columns:22px 1fr 66px;gap:6px}
+  .adm-row .ar-area{display:none}             /* จังหวัดซ้ำกับชิปที่กรองอยู่ด้านบน */
+  .adm-subrow{padding-left:22px}
+  .db-row .dbr-act{flex-wrap:wrap;justify-content:flex-end;max-width:112px}
+  .dash-row{flex-wrap:wrap}
+  .dash-row .dr-amt{margin-left:auto}
+  .cf-btn{font-size:12.5px;padding:12px 6px}
+  .modal-head .mt{font-size:16px}
+  .fix-row{flex-wrap:wrap}
+  .fix-row button{width:100%}
+  .bp-line{font-size:11.5px;gap:6px}
+  .qdoc .qpage{padding:14px 11px}
+  .irow{grid-template-columns:58px 1fr auto;gap:6px}
+  .irow-t{font-size:9.5px}
+  .irow-txt{font-size:12.5px}
+  .ichip{font-size:9.5px;padding:2px 7px}
+}
+
+/* ============================================================
+   (2) และ (3) — เฉพาะอุปกรณ์ที่ใช้นิ้ว ไม่ใช่เมาส์
+   แยกด้วย pointer:coarse เพื่อไม่ให้จอคอมที่ย่อหน้าต่างแคบ ๆ โดนไปด้วย
+   ============================================================ */
+@media (pointer:coarse){
+  /* (2) iOS Safari จะซูมหน้าเองทุกครั้งที่แตะช่องที่ตัวอักษรเล็กกว่า 16px
+         แล้วไม่ซูมกลับ ผู้ใช้ต้องถ่างนิ้วออกเองทุกครั้ง — แก้ด้วยการตั้ง 16px */
+  select,.txt,input[type=text],input[type=number],input[type=tel],textarea,
+  .gs-url,.qedit input,.qedit textarea,.trip-input{font-size:16px!important}
+  select,.txt{height:44px}
+  textarea.txt,.qedit textarea,.imp-ta{height:auto}
+  .rt-row input,.rt-row select,.qe-tier input,.db-filter select{height:42px}
+
+  /* (3) เป้าการกดต้องใหญ่พอสำหรับนิ้ว (~44px) */
+  .db-row .dbr-act button{padding:9px 10px;font-size:12.5px}
+  .dash-move button{width:34px;height:26px;font-size:11px}
+  .item .del,.item .ed-btn{min-width:44px;padding:12px 9px}
+  .irow-act button,.irow-act .drag-grip{padding:9px 7px;font-size:15px}
+  .modal-head .mx{padding:6px 12px;font-size:26px}
+  .dbf,.fix-pill{height:38px}
+  .chip,.rtag{padding:10px 14px}
+  .daytab{padding:10px 16px}
+  .dp-cell{font-size:15px}
+  .seg button{font-size:13px}
+  .tl-t.tl-edit{padding:3px 8px}          /* ป้ายเวลาที่กดแก้ได้ ต้องแตะโดนง่าย */
+  .gsel-chip .gx{width:24px;height:24px}
+  .ptr-del{padding:8px 10px;font-size:20px}
+}
 </style>
 </head>
 <body>
@@ -3980,7 +4092,7 @@ function quoteDocHtml(){
   /* ---- ตารางราคา ---- */
   const tiers=(D.tiers||[]).filter(x=>String(x.label||'').trim());
   const priceTable = tiers.length
-    ? `<table class="q-tbl"><thead><tr>
+    ? `<div class="q-tblwrap"><table class="q-tbl"><thead><tr>
         <th>${L('จำนวนผู้เดินทาง','Group size')}</th>
         <th style="text-align:right">${L('ผู้ใหญ่ (พักคู่)','Adult (twin sharing)')}</th>
         <th style="text-align:right">${L('เด็ก','Child')}</th>
@@ -3990,11 +4102,11 @@ function quoteDocHtml(){
         <td class="num">${x.adult?money(x.adult)+' '+cur:'—'}</td>
         <td class="num">${x.child?money(x.child)+' '+cur:'—'}</td>
         <td class="num">${x.single?money(x.single)+' '+cur:'—'}</td></tr>`).join('')+
-      `</tbody></table>`
-    : `<table class="q-tbl"><thead><tr><th>${L('รายการ','Item')}</th><th style="text-align:right">${L('ราคา','Price')}</th></tr></thead><tbody>
+      `</tbody></table></div>`
+    : `<div class="q-tblwrap"><table class="q-tbl"><thead><tr><th>${L('รายการ','Item')}</th><th style="text-align:right">${L('ราคา','Price')}</th></tr></thead><tbody>
         <tr class="hot"><td>${L('ราคาต่อท่าน (พักคู่)','Price per person (twin sharing)')} · ${esc(paxFormula())}</td><td class="num">${money(t.sellHead)} ${cur}</td></tr>
         <tr><td>${L('ราคารวมทั้งคณะ','Total for the group')}</td><td class="num">${money(t.sellTotal)} ${cur}</td></tr>
-      </tbody></table>`;
+      </tbody></table></div>`;
 
   /* ---- โรงแรมที่ใช้ ---- */
   const hotelRows=[];
@@ -4005,10 +4117,10 @@ function quoteDocHtml(){
     hotelRows.push({h,from:d,to:d});
   }
   const hotelBlock=hotelRows.length
-    ? `<table class="q-tbl"><thead><tr><th>${L('คืน','Nights')}</th><th>${L('โรงแรม','Hotel')}</th><th>${L('พื้นที่','Area')}</th></tr></thead><tbody>`+
+    ? `<div class="q-tblwrap"><table class="q-tbl"><thead><tr><th>${L('คืน','Nights')}</th><th>${L('โรงแรม','Hotel')}</th><th>${L('พื้นที่','Area')}</th></tr></thead><tbody>`+
       hotelRows.map(r=>`<tr><td>${r.from===r.to?L('คืน ','Night ')+r.from:L('คืน ','Nights ')+r.from+'–'+r.to}</td>
         <td><b>${esc(hotelName(r.h))}</b>${r.h.stars?' <span style="color:#c9942b">'+starStr(r.h.stars)+'</span>':''}${r.h.abf?' · 🍳 ABF':''}</td>
-        <td>${esc(r.h.area||'')}</td></tr>`).join('')+`</tbody></table>`
+        <td>${esc(r.h.area||'')}</td></tr>`).join('')+`</tbody></table></div>`
     : `<div class="q-sub">${L('ยังไม่ได้เลือกโรงแรม','Hotels to be confirmed')}</div>`;
 
   const slot=lbl=>D.imgSlots?`<div class="q-imgslot">🖼 ${esc(lbl)}</div>`:'';
