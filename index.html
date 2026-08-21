@@ -2,11 +2,28 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v48 · viewport-fit=cover — ถ้าไม่มีตัวนี้ env(safe-area-inset-*) จะคืน 0 เสมอบน iOS
+     แถบสรุปด้านล่างที่ตั้ง padding-bottom:env(safe-area-inset-bottom) ไว้จึงไม่เคยมีผลเลย -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tour Price">
+<!-- v48 · manifest แบบ data: URI — เพิ่มลงจอโฮมแล้วได้ไอคอนและเปิดแบบเต็มจอเหมือนแอป
+     ต้องฝังมาในไฟล์เดียวแบบนี้ เพราะแอปนี้ออกแบบให้เปิดจากไฟล์ในเครื่องได้ด้วย
+     หมายเหตุ: "ใช้งานออฟไลน์" ต้องมี service worker ซึ่งเป็นไฟล์แยกและต้องเสิร์ฟผ่าน https
+     จึงยังไม่ใส่มา เพราะจะทำให้ไฟล์เดียวจบใช้ไม่ได้อีกต่อไป -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Tour Price Builder","short_name":"Tour Price","start_url":".","display":"standalone","background_color":"%230a0e1a","theme_color":"%230a0e1a","icons":[{"src":"data:image/svg%2Bxml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect width=%27192%27 height=%27192%27 rx=%2736%27 fill=%27%230a0e1a%27/%3E%3Ctext x=%2796%27 y=%27124%27 font-size=%27104%27 text-anchor=%27middle%27 fill=%27%23f07a2e%27%3E%E2%98%85%3C/text%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml","purpose":"any"}]}'>
 <title>Tour Price Builder — ระบบคำนวณราคาทัวร์</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- v48 · ฟอนต์ต้องไม่บล็อกการวาดหน้าแรก
+     <link rel=stylesheet> ปกติเป็น render-blocking — เน็ตมือถือช้าแล้วหน้าจะขาวรอจนกว่าจะได้ CSS
+     media="print" ทำให้เบราว์เซอร์โหลดแบบไม่บล็อก แล้ว onload ค่อยสลับมาใช้จริง
+     ระหว่างรอจะเห็นฟอนต์ระบบก่อน ซึ่งอ่านภาษาไทยได้ตามปกติอยู่แล้ว -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{
   --bg:#0a0e1a; --panel:#131a2b; --panel2:#1a2438; --line:#2a3550;
@@ -23,8 +40,12 @@ html{-webkit-text-size-adjust:100%}
 body{
   background:var(--bg);color:var(--ink);
   font-family:var(--thai);font-size:15px;line-height:1.5;
-  padding-bottom:180px;
+  /* v48 · เว้นที่ให้แถบสรุปเฉพาะหน้าที่มีแถบสรุปจริง (Plan / Overview)
+     ของเดิมเว้น 180px ทุกหน้า — หน้า Home / Input / Confirm จึงมีที่ว่างเปล่า
+     เกือบหนึ่งในสามของจอมือถือ showPage() เป็นคนสลับคลาสนี้ */
+  padding-bottom:calc(28px + env(safe-area-inset-bottom));
 }
+body.has-summary{ padding-bottom:calc(180px + env(safe-area-inset-bottom)); }
 ::selection{background:var(--orange);color:#fff}
 h1,h2,h3{font-weight:600;line-height:1.15}
 button{font-family:var(--thai);cursor:pointer;border:none;color:inherit}
@@ -35,7 +56,10 @@ input,select{font-family:var(--thai)}
 header{
   background:linear-gradient(180deg,#16224a 0%,#0a0e1a 100%);
   border-bottom:2px solid var(--gold);
-  padding:16px 18px 12px;position:sticky;top:0;z-index:40;
+  /* v48 · viewport-fit=cover ทำให้หน้าเว็บกินพื้นที่ใต้รอยบากแล้ว
+     หัวเว็บที่ sticky top:0 จึงต้องเผื่อความสูงของแถบสถานะเอง ไม่งั้นชื่อแบรนด์จะไปอยู่ใต้รอยบาก */
+  padding:calc(16px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 12px calc(18px + env(safe-area-inset-left));
+  position:sticky;top:0;z-index:40;
 }
 .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .brand .mark{
@@ -119,7 +143,8 @@ header{
 .days-badge b{font-size:17px;display:block}
 
 /* ---------- LAYOUT ---------- */
-.wrap{max-width:760px;margin:0 auto;padding:16px 14px 40px}
+/* v48 · เผื่อขอบซ้าย-ขวาตอนตะแคงจอบนเครื่องที่มีรอยบาก (viewport-fit=cover) */
+.wrap{max-width:760px;margin:0 auto;padding:16px calc(14px + env(safe-area-inset-right)) 40px calc(14px + env(safe-area-inset-left))}
 .card{
   background:var(--panel);border:1px solid var(--line);border-radius:14px;
   margin-bottom:16px;overflow:hidden;
@@ -304,6 +329,10 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .bp-note b{color:var(--gold)}
 .night-tag{background:var(--panel2);border:1px solid var(--gold);border-radius:8px;padding:9px 14px;font-family:var(--mono);font-weight:700;color:var(--gold);text-align:center;white-space:nowrap}
 .night-tag b{font-size:16px}
+/* v49 · บรรทัดบอกที่มาของจำนวนห้อง และราคาต่อหัวของห้องแต่ละแบบ */
+.rooms-hint{font-size:11.5px;color:var(--gold);font-family:var(--mono);margin:-4px 0 10px;min-height:14px}
+.item .meta.hotel-perhead{color:var(--gold-bright)}
+.item .meta.hotel-perhead b{color:var(--gold-bright)}
 .stars{color:var(--gold-bright);letter-spacing:1px;font-size:12px}
 .stars.dim{color:var(--ink-faint)}
 .guide-selected{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
@@ -501,8 +530,9 @@ body.dnd-active *{cursor:grabbing!important}
   border-top:2px solid var(--gold);
   box-shadow:0 -8px 30px rgba(0,0,0,.6);
   padding-bottom:env(safe-area-inset-bottom);   /* กันแถบล่างไปอยู่ใต้ขีดโฮมของ iPhone */
+  --sumpad:16px;                                /* v48 · ดู .sum-detail-inner */
 }
-.sum-collapsed{padding:12px 16px;display:flex;align-items:center;gap:14px;max-width:760px;margin:0 auto}
+.sum-collapsed{padding:12px calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));display:flex;align-items:center;gap:14px;max-width:760px;margin:0 auto}
 .sum-collapsed .price-block{flex:1}
 .sum-collapsed .label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);font-weight:600}
 .sum-collapsed .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--gold-bright);line-height:1.1}
@@ -516,8 +546,16 @@ body.dnd-active *{cursor:grabbing!important}
   max-height:0;overflow:hidden;transition:max-height .3s ease;
   max-width:760px;margin:0 auto;
 }
-.sum-detail.open{max-height:70vh;max-height:70dvh;overflow:auto;overscroll-behavior:contain}
-.sum-detail-inner{padding:4px 16px 16px}
+/* v48 · overflow-x:hidden — แถว "ราคาขายรวม" กับ "ราคาขาย/หัว" ใช้ margin ติดลบเพื่อให้พื้นหลัง
+   ชนขอบกล่อง ซึ่งล้นออกไปราว 4px ทำให้แถบสรุปเลื่อนซ้าย-ขวาได้บนจอ 360px
+   ล็อกแกนนอนไว้ ส่วนแกนตั้งยังเลื่อนดูรายละเอียดได้เหมือนเดิม */
+.sum-detail.open{max-height:70vh;max-height:70dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+/* v48 · --sumpad = ระยะขอบของกล่องสรุป ผูกไว้ที่เดียว
+   แถว "ราคาขายรวม" กับ "ราคาขาย/หัว" ใช้ margin ติดลบเพื่อให้พื้นหลังชนขอบกล่องพอดี
+   ของเดิมกล่องเป็น padding 16px แต่กฎมือถือทับเป็น 12px ขณะที่ margin ยังเป็น -16px
+   เหลื่อมกันข้างละ 4px แถบสรุปเลยเลื่อนซ้าย-ขวาได้บนจอ 360-375px
+   ผูกทั้งคู่เข้ากับตัวแปรเดียว จะได้ขยับตามกันเสมอ ไม่ว่าจอไหนหรือมีรอยบากหรือไม่ */
+.sum-detail-inner{padding:4px calc(var(--sumpad) + env(safe-area-inset-right)) 16px calc(var(--sumpad) + env(safe-area-inset-left))}
 .brk{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
 .brk .bl{color:var(--ink-dim)}
 .brk .bv{font-family:var(--mono);font-weight:700}
@@ -526,10 +564,10 @@ body.dnd-active *{cursor:grabbing!important}
 .brk.total .bl{color:var(--ink);font-weight:600}
 .brk.total .bv{color:var(--gold)}
 .brk.profit .bv{color:var(--good)}
-.brk.sell{background:var(--orange-soft);margin:8px -16px 0;padding:12px 16px;border:none;border-radius:10px}
+.brk.sell{background:var(--orange-soft);margin:8px calc((var(--sumpad) + env(safe-area-inset-right)) * -1) 0 calc((var(--sumpad) + env(safe-area-inset-left)) * -1);padding:12px 16px;border:none;border-radius:10px}
 .brk.sell .bl{color:var(--orange);font-family:var(--disp);font-size:16px;letter-spacing:.5px}
 .brk.sell .bv{color:var(--orange);font-size:20px}
-.brk.grand{background:linear-gradient(90deg,#16243f,#16243f);margin:10px -16px 0;padding:14px 16px;border:1px solid var(--gold);border-radius:10px}
+.brk.grand{background:linear-gradient(90deg,#16243f,#16243f);margin:10px calc((var(--sumpad) + env(safe-area-inset-right)) * -1) 0 calc((var(--sumpad) + env(safe-area-inset-left)) * -1);padding:14px 16px;border:1px solid var(--gold);border-radius:10px}
 .brk.grand .bl{color:var(--gold);font-family:var(--disp);font-size:18px;letter-spacing:.5px}
 .brk.grand .bv{color:var(--gold-bright);font-size:26px}
 .sell-formula{font-size:11px;color:var(--ink-dim);font-family:var(--mono);text-align:right;padding:6px 2px 2px;line-height:1.5}
@@ -674,7 +712,7 @@ body.dnd-active *{cursor:grabbing!important}
 
 /* ===== 4-PAGE SYSTEM ===== */
 .lang-toggle{margin-left:auto;background:var(--panel2);border:1px solid var(--gold);color:var(--gold);width:40px;height:32px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--mono);flex:0 0 auto}
-.pagetabs{position:sticky;top:0;z-index:35;display:flex;gap:6px;background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+.pagetabs{position:sticky;top:0;z-index:35;display:flex;gap:6px;background:var(--bg);padding:10px calc(14px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));border-bottom:1px solid var(--line);overflow-x:auto}
 .pagetabs .ptab{flex:1;min-width:76px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 6px;color:var(--ink-dim);cursor:pointer;transition:all .15s}
 .pagetabs .ptab b{font-family:var(--disp);font-size:16px;color:var(--ink-faint);line-height:1}
 .pagetabs .ptab span{font-size:11px;font-weight:600;letter-spacing:.5px}
@@ -774,6 +812,15 @@ body.dnd-active *{cursor:grabbing!important}
 .ichip.c-time{background:var(--d-chip-a-bg);color:var(--d-chip-a-ink)}
 .ichip.c-meal{background:var(--d-chip-b-bg);color:var(--d-chip-b-ink)}
 .ichip.c-hotel{background:var(--d-chip-c-bg);color:var(--d-chip-c-ink)}
+/* v47 · ป้ายเตือนในหน้า Overview — ยาวได้หลายบรรทัด ไม่ใช่ป้ายสั้น ๆ เหมือนอันอื่น */
+.ichip.c-warn{background:#e05b6b1f;color:#e05b6b;white-space:normal;max-width:100%}
+/* v48 · ปุ่มเลือกวันที่ไกด์ทำงาน — หน้าตาเดียวกับปุ่มวันของหมวดอื่น จะได้ไม่ต้องเรียนรู้ใหม่ */
+.gday-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.gday{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+  color:var(--ink-faint);font-size:12px;font-weight:600;line-height:1.25;text-align:center;font-family:var(--thai)}
+.gday .n{display:block;font-size:9.5px;font-weight:400;opacity:.85;font-family:var(--mono)}
+.gday.on{background:#16243f;border-color:var(--gold);color:var(--gold-bright)}
+.gday:hover{border-color:var(--gold)}
 .irow-act{display:flex;align-items:center;gap:1px;flex:0 0 auto}
 .irow-act button,.irow-act .drag-grip{
   background:none;border:none;color:var(--ink-faint);font-size:14px;line-height:1;
@@ -835,13 +882,136 @@ body.dnd-active *{cursor:grabbing!important}
 .qedit textarea{min-height:92px;line-height:1.65;resize:vertical}
 .qedit .qe-hint{font-size:11px;color:var(--ink-faint);margin-top:3px}
 .qe-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.qe-tier,.qe-tierhead{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 32px;gap:6px;align-items:center}
+.qe-tier,.qe-tierhead{display:grid;grid-template-columns:1.2fr 1.4fr 1fr 1fr 1fr 32px;gap:6px;align-items:center}
+
+/* ===== v48 · ตัวเลือกเสริม · ช่วงห้ามจอง · ปุ่มหมายเหตุสำเร็จรูป ===== */
+.qe-opt{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px;margin-bottom:8px}
+.qe-optline{display:grid;grid-template-columns:1fr 92px 130px 32px;gap:6px;align-items:center}
+.qe-optline input,.qe-optline select{padding:8px;font-size:12.5px;background:var(--panel);border:1px solid var(--line);
+  border-radius:7px;color:var(--ink);font-family:var(--thai);width:100%}
+.qe-optline .tdel{background:none;border:1px solid var(--line);color:var(--ink-faint);border-radius:7px;height:34px;cursor:pointer}
+.qe-optline .tdel:hover{border-color:var(--bad);color:var(--bad)}
+.qe-optres{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:7px}
+.qo-res{display:inline-flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);
+  border-radius:20px;padding:4px 6px 4px 11px;font-size:11.5px;color:var(--ink-dim);cursor:pointer}
+.qo-res:hover{border-color:var(--gold)}
+.qo-res.rec{border-color:var(--gold);color:var(--gold-bright);background:#16243f}
+.qo-x{color:var(--ink-faint);font-size:14px;padding:0 3px}
+.qo-x:hover{color:var(--bad)}
+.qo-add{background:none;border:1px dashed var(--line);color:var(--gold);border-radius:20px;
+  padding:5px 12px;font-size:11.5px;cursor:pointer;font-family:var(--thai)}
+.qo-add:hover{border-color:var(--gold)}
+.qe-presets{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.qe-preset{background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);border-radius:7px;
+  padding:7px 11px;font-size:11.5px;cursor:pointer;font-family:var(--thai)}
+.qe-preset:hover{border-color:var(--gold);color:var(--gold)}
+.qe-black{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;margin-bottom:5px;cursor:pointer;font-size:12.5px}
+.qe-black.on{border-color:var(--gold);background:#16243f}
+.qe-black input{width:17px;height:17px;accent-color:var(--gold);flex:0 0 auto}
+.qe-black .qb-nm{flex:1;color:var(--ink)}
+.qe-black .qb-dt{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+.qe-black .qb-x{color:var(--ink-faint);font-size:15px;padding:0 3px}
+.qe-black .qb-x:hover{color:var(--bad)}
+.qe-warn{margin-top:6px;font-size:11.5px;color:var(--bad);background:#e05b6b14;border-radius:7px;padding:8px 10px;line-height:1.6}
+/* v49 · ฟอร์มเพิ่มช่วงห้ามจอง — แทนกล่อง prompt สามชั้นของเดิม */
+.qe-blackform{margin-top:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.qbf-grid{display:grid;grid-template-columns:1fr 132px 132px;gap:8px}
+.qbf-grid .txt{margin:0}
+.qbf-foot{display:flex;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap}
+.qbf-foot .qe-hint{flex:1;min-width:120px;margin:0;font-family:var(--mono);color:var(--gold)}
+.qbf-foot .btn-add{width:auto;flex:0 0 auto;padding:10px 16px;margin:0}
+@media (max-width:560px){ .qbf-grid{grid-template-columns:1fr;gap:7px} }
+/* ตัวเลือกร้าน */
+.rp-hint{padding:8px 14px;font-size:11.5px;color:var(--ink-dim)}
+.rp-body{max-height:52vh;overflow:auto;padding:0 14px}
+.rp-row{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:2px 0}
+.rp-row.on{background:#16243f}
+.rp-main{flex:1;display:flex;align-items:center;gap:9px;padding:9px 4px;cursor:pointer;min-width:0}
+.rp-main input{width:17px;height:17px;accent-color:var(--gold);flex:0 0 auto}
+.rp-nm{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rp-meta{font-size:11px;color:var(--ink-faint);margin-left:auto;white-space:nowrap;font-family:var(--mono)}
+.rp-star{background:none;border:1px solid var(--line);border-radius:7px;color:var(--ink-faint);
+  width:34px;height:32px;font-size:14px;cursor:pointer;flex:0 0 auto}
+.rp-star.on{border-color:var(--gold);color:var(--gold);background:#16243f}
+.rp-star:disabled{opacity:.3;cursor:not-allowed}
+.rp-foot{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.rp-foot span{flex:1;font-size:12px;color:var(--ink-dim)}
+.rp-foot .btn-add{width:auto;padding:10px 22px}
+/* ในเอกสาร */
+.q-rec{color:#b8860b;font-weight:700;white-space:nowrap}
+.q-optnote{font-size:11px;color:#5b6b84;margin-top:2px}
+.q-optres{font-size:11px;color:#22303f;margin-top:3px;line-height:1.7}
+.q-optunit{font-size:10px;color:#5b6b84;font-weight:400}
+
+/* ---------- v49 · ใบเสนอราคาแบบใหม่ ---------- */
+.q-h3{font-size:11.5px;font-weight:700;color:#2b3f77;letter-spacing:.3px;margin:14px 0 6px}
+/* บรรทัดเปิดใบ — บอกว่าเสนออะไร ให้คณะขนาดไหน และช่วงไหนใช้ไม่ได้ */
+.q-offer{background:#f2f5fa;border-left:3px solid #2b3f77;border-radius:0 7px 7px 0;
+  padding:10px 13px;font-size:12.5px;line-height:1.75;color:#22303f;margin-bottom:6px}
+.q-offer b{color:#16305f}
+.q-offer-blk{margin-top:5px;font-size:11.5px;color:#a8321f}
+.q-offer-blk b{color:#a8321f}
+/* รายการเดินทางย่อ บรรทัดเดียวต่อวัน */
+.q-brief{border:1px solid #dfe5ee;border-radius:8px;overflow:hidden}
+.q-dline{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid #eef2f7;font-size:12.5px;line-height:1.7}
+.q-dline:last-child{border-bottom:none}
+.q-dline:nth-child(even){background:#f7f9fc}
+.q-dtag{flex:0 0 30px;font-weight:800;color:#2b3f77;font-size:12px}
+.q-dtxt{flex:1;min-width:0;color:#22303f}
+.q-dtxt i{color:#8a97a8}
+.q-ddate{display:block;font-size:10.5px;color:#8a97a8;margin-top:1px}
+/* ชุดโรงแรม — แต่ละชุดมีตารางราคาของตัวเอง */
+.q-hopt{border:1px solid #dfe5ee;border-radius:9px;padding:11px 12px;margin-bottom:11px;background:#fbfcfe}
+.q-hopt:last-child{margin-bottom:0}
+.q-hopt-h{display:flex;align-items:baseline;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+.q-hopt-n{flex:0 0 auto;background:#2b3f77;color:#fff;font-size:10px;font-weight:700;
+  letter-spacing:.4px;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.q-hopt-nm{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:#16305f;line-height:1.6}
+.q-hopt-note{font-size:11px;color:#5b6b84;margin-top:7px;line-height:1.7}
+/* ตัวเลือกเสริม — ต้องเด่นที่สุดในใบ ลูกค้าจะได้เห็นและซื้อเพิ่ม */
+.q-upgrade{margin-top:20px;border:2px solid #e07a2e;border-radius:11px;overflow:hidden;background:#fffaf5}
+.q-upgrade-h{background:#e07a2e;color:#fff;font-size:13px;font-weight:800;letter-spacing:.4px;padding:8px 13px}
+.q-upgrade-sub{font-size:11px;color:#8a5a2b;padding:8px 13px 0}
+.q-optlist{padding:6px 13px 12px}
+.q-optrow{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed #f0d6bd}
+.q-optrow:last-child{border-bottom:none}
+.q-optmain{flex:1;min-width:0}
+.q-optnm{font-size:12.5px;font-weight:700;color:#22303f;line-height:1.6}
+.q-optbullet{color:#e07a2e;font-weight:700;margin-right:5px}
+.q-optprice{flex:0 0 auto;text-align:right;font-size:14px;font-weight:800;color:#c25c14;
+  font-family:var(--mono);white-space:nowrap;line-height:1.35}
+.q-optprice .q-optunit{display:block;font-family:var(--thai);font-size:10px;color:#8a5a2b;font-weight:500}
+@media (max-width:430px){
+  .q-optrow{flex-direction:column;gap:3px}
+  .q-optprice{text-align:left}
+  .q-optprice .q-optunit{display:inline;margin-left:6px}
+}
+@media (max-width:560px){
+  .qe-optline{grid-template-columns:1fr 1fr;gap:5px}
+  .qe-optline input:first-child{grid-column:1/-1}
+  .qe-optline .tdel{grid-column:1/-1;height:32px}
+}
 .qe-tier{margin-bottom:6px}
 .qe-tier input{padding:8px;font-size:12.5px}
 .qe-tier .tdel{background:none;border:1px solid var(--line);color:var(--ink-faint);border-radius:7px;height:34px;cursor:pointer}
 .qe-tier .tdel:hover{border-color:var(--bad);color:var(--bad)}
 .qe-tierhead{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint);padding:2px}
 @media (max-width:560px){ .qe-grid{grid-template-columns:1fr} }
+
+/* v49 · การ์ดชุดโรงแรมในตัวแก้ไขใบเสนอราคา */
+.qe-hopt{border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:11px;background:var(--panel2)}
+.qe-hopt-h{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.qe-hopt-n{flex:0 0 auto;background:var(--gold);color:#0a0e1a;font-size:9.5px;font-weight:700;
+  letter-spacing:.6px;text-transform:uppercase;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.qe-hopt-h input{flex:1;min-width:0;padding:9px;font-size:12.5px}
+.qe-hopt-h .tdel{flex:0 0 auto;width:34px;background:none;border:1px solid var(--line);
+  color:var(--ink-faint);border-radius:7px;height:34px;cursor:pointer}
+.qe-hopt-h .tdel:hover{border-color:var(--bad);color:var(--bad)}
+.qe-hopt-btns{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.qe-hopt-btns button{flex:1;min-width:112px;width:auto;margin:0;padding:9px 8px;font-size:11.5px}
+.qe-hopt-note{width:100%;margin-top:9px;padding:9px;font-size:12px}
+@media (max-width:560px){ .qe-hopt-btns button{flex:1 1 100%} }
 
 /* v44 · กล่องพิมพ์โปรแกรมทัวร์ — ซ่อนตลอดเวลา ยกเว้นตอนสั่งพิมพ์ */
 #printBox{display:none}
@@ -880,7 +1050,12 @@ body.dnd-active *{cursor:grabbing!important}
   .qdoc .qpage:last-child{break-after:auto}
   .qdoc .qpage+.qpage{border-top:none}
   #printBox .itin-doc{border:none;border-radius:0}
-  .iday,.q-term,.q-tbl tr,.pb-price{break-inside:avoid}
+  /* v49 · บล็อกใหม่ต้องไม่ถูกผ่ากลางตอนพิมพ์
+     ชุดโรงแรมที่หัวข้ออยู่หน้าหนึ่งแต่ราคาไปอีกหน้า = ลูกค้าอ่านผิดชุด
+     กล่องตัวเลือกเสริมก็เหมือนกัน ชื่อรายการต้องอยู่หน้าเดียวกับราคาเสมอ */
+  .iday,.q-term,.q-tbl tr,.pb-price,.q-hopt,.q-optrow,.q-dline{break-inside:avoid}
+  .q-upgrade{break-inside:avoid}
+  .q-h2,.q-h3{break-after:avoid}
   @page{size:A4;margin:14mm 12mm}
 }
 
@@ -913,6 +1088,12 @@ body.dnd-active *{cursor:grabbing!important}
   .irow-t{font-size:10.5px}
   .iday-title{flex:1 1 100%;text-align:left;font-size:14px}
 }
+/* v47 · ช่วงเวลา (10:00-12:00 · เช็คอิน 14:00-22:00) ยาวกว่าเวลาเดี่ยวเกือบเท่าตัว
+   บนจอแคบให้ตัดขึ้นบรรทัดใหม่ได้ ตัวตัดคือ zero-width space ที่ใส่ไว้หลังขีดตอนสร้างข้อความ
+   จะได้ตัดตรง "10:00-" / "12:00" ไม่ใช่ตัดกลางตัวเลข */
+@media (max-width:640px){
+  .irow-t{white-space:normal}
+}
 
 .cf-actions{display:flex;gap:10px;margin-top:16px}
 .cf-btn{flex:1;border:none;border-radius:10px;padding:15px;font-weight:800;font-size:15px;cursor:pointer;font-family:var(--thai)}
@@ -927,9 +1108,14 @@ body.dnd-active *{cursor:grabbing!important}
   header,.tripbar,.card-body,.summary .sum-collapsed,.sum-actions,.btn-add,.btn-ghost{display:none}
 }
 @media (max-width:560px){
-  header{padding:12px 12px 10px}
+  /* v48 · กฎมือถือทับกฎหลัก จึงต้องใส่ safe-area ซ้ำตรงนี้ด้วย
+     ไม่งั้นบน iPhone (จอ ≤430px) หัวเว็บจะไปอยู่ใต้รอยบาก เพราะกฎบนโดนทับหมด */
+  header{padding:calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px calc(12px + env(safe-area-inset-left))}
   .brand .mark{font-size:26px}
-  .wrap{padding:12px 10px 220px}
+  /* v48 · เว้นที่ให้แถบสรุปเฉพาะหน้าที่มีแถบสรุป — ของเดิมเว้น 220px ทุกหน้า
+     ซึ่งบนมือถือคือช่องว่างเปล่าเกือบครึ่งจอในหน้า Home / Input / Confirm */
+  .wrap{padding:12px calc(10px + env(safe-area-inset-right)) 24px calc(10px + env(safe-area-inset-left))}
+  body.has-summary .wrap{padding-bottom:220px}
   .card-num{font-size:30px}
   .card-title .en{font-size:16px}
   .tripbar{flex-wrap:wrap;gap:8px}
@@ -941,7 +1127,7 @@ body.dnd-active *{cursor:grabbing!important}
   .modal{width:100%;max-width:100%;border-radius:14px;max-height:88vh;max-height:88dvh}
   .adm-thead,.adm-row{grid-template-columns:22px 1fr 74px 62px;gap:6px;font-size:12px}
   .adm-row .ar-area{font-size:10px}
-  .sum-detail-inner{padding:12px}
+  .summary{--sumpad:12px}   /* v48 · ขยับตัวแปรเดียว แถวที่ชนขอบจะตามเอง */
   .brk.grand .bv{font-size:22px}
   .sum-collapsed .big{font-size:26px}
   .itin-sub-line{flex-wrap:wrap}
@@ -1309,10 +1495,7 @@ img,table,pre{max-width:100%}
       </div>
       <button class="btn-add" id="carAdd" style="margin-bottom:8px">+ เพิ่มรถเข้ารายการ</button>
       <button class="btn-ghost" id="carManage">🗄 ดู/แก้/เพิ่ม ฐานข้อมูลรถ</button>
-      <div class="frow" style="align-items:flex-end;margin-top:10px">
-        <div class="fcol"><label class="flabel">⛽ ค่าน้ำมัน (บวกเข้าค่ารถ)</label>
-          <input class="txt qty" id="carFuel" style="width:100%;text-align:right" type="number" min="0" step="100" value="4000" inputmode="numeric"></div>
-      </div>
+      <div class="note" style="margin-top:10px">⛽ ค่าน้ำมันแก้ได้ที่แต่ละคันในรายการด้านล่าง · ค่าเริ่มต้นของรถแต่ละแบบตั้งไว้ที่ 🗄 ฐานข้อมูลรถ</div>
       <div class="items" id="carItems"></div>
       <div class="calc-formula" id="carCalc"></div>
     </div>
@@ -1329,6 +1512,7 @@ img,table,pre{max-width:100%}
     <div class="card-body">
       <div id="guideSelected" class="guide-selected"></div>
       <div id="guideGroups"></div>
+      <div id="guideDays"></div>
       <div class="calc-formula" id="guideCalc"></div>
       <div class="note">เรตค่าตัว/วัน แก้ได้ในช่องขวาของแต่ละประเภท (เก็บค่าถาวร) · ต้นทุนไกด์รวม = เรตไกด์ที่เลือก × จำนวนวัน · ต่อหัว = ÷ จำนวนลูกทัวร์<br><b>คนขับรถ / Driver</b> ตั้งเรตไว้ ฿0 เพราะปกติค่าคนขับรวมอยู่ในค่ารถแล้ว — เลือกไว้เพื่อเก็บเบอร์ติดต่อ ถ้าจ่ายแยกให้ใส่เรตเอง</div>
     </div>
@@ -1400,6 +1584,8 @@ img,table,pre{max-width:100%}
         <div class="fcol" style="flex:0 0 70px"><label class="flabel">ห้อง</label>
           <input class="txt qty" id="hotelRooms" style="width:100%" type="number" min="1" value="1" inputmode="numeric"></div>
       </div>
+      <!-- v49 · บอกที่มาของจำนวนห้องที่ระบบเติมให้ -->
+      <div class="rooms-hint" id="hotelRoomsHint"></div>
       <label class="flabel">🌙 เลือกคืนที่นอน (กดได้หลายคืน · <span id="hotelNightsTotal">2</span> คืนตามทริป = วัน−1)</label>
       <div class="daytabs" id="hotelNightPicker"></div>
       <button class="btn-add" id="hotelAdd" style="margin-bottom:8px">+ เพิ่มโรงแรม (คืนที่เลือก)</button>
@@ -1452,17 +1638,26 @@ img,table,pre{max-width:100%}
       <div class="cf-price-sub"><span id="cfSellHeadLbl">ราคาขาย/หัว</span> <b id="cfSellHead">฿0</b> · <span id="cfPaxLbl">จำนวน</span> <b id="cfPax">0</b></div>
     </div>
     <div class="cf-program" id="confirmBody"></div>
-    <div class="cf-actions">
-      <button class="cf-btn cf-copy" id="cfCopy">📋 คัดลอกโปรแกรม</button>
-      <button class="cf-btn cf-save" id="cfSave">💾 บันทึกโปรแกรม</button>
-    </div>
+    <!-- v49 · จัดปุ่มใหม่ตามที่ใช้จริง
+         เอา "คัดลอกโปรแกรม" กับ "โปรแกรมทัวร์รายวัน" ออก — ซ้ำกับใบเสนอราคาและรูป/PDF ที่ส่งลูกค้าอยู่แล้ว
+         "บันทึกโปรแกรม" ย้ายลงไปอยู่แถวเดียวกับปุ่มย้อนกลับ เพราะเป็นงานปิดท้าย ไม่ใช่ของที่ส่งลูกค้า -->
     <div class="cf-actions">
       <button class="cf-btn cf-img" id="cfImg">📸 บันทึกเป็นรูป</button>
       <button class="cf-btn cf-pdf" id="cfPdf">🧾 ทำเป็น PDF</button>
     </div>
     <label class="cf-imgopt"><input type="checkbox" id="cfImgPrice" checked> ใส่ราคาขายในรูป / PDF ด้วย</label>
     <label class="cf-imgopt"><input type="checkbox" id="cfTime"> ใส่เวลาในโปรแกรม (ไทม์ไลน์)</label>
-    <div class="cf-back"><button class="btn-back" data-goto="overview">← กลับ Overview</button></div>
+    <div class="cf-actions" style="margin-top:14px">
+      <button class="cf-btn act-export" id="btnQuote">🧾 ใบเสนอราคา</button>
+    </div>
+    <div class="cf-actions">
+      <button class="cf-btn act-dash" id="btnDash">📊 Dashboard</button>
+      <button class="cf-btn act-reset" id="btnReset">↺ ล้าง</button>
+    </div>
+    <div class="cf-back">
+      <button class="btn-back" data-goto="overview">← กลับ Overview</button>
+      <button class="cf-btn cf-save" id="cfSave" style="margin-left:auto;flex:0 0 auto;padding-left:20px;padding-right:20px">💾 บันทึกโปรแกรม</button>
+    </div>
   </div>
 
 </div><!-- /wrap -->
@@ -1486,14 +1681,9 @@ img,table,pre{max-width:100%}
       <div class="brk grand"><span class="bl">💰 ราคาขายรวม (ปัดขึ้นพัน)</span><span class="bv" id="dSellTotal">฿0</span></div>
       <div class="sell-formula" id="dSellFormula"></div>
       <div class="brk sell"><span class="bl">ราคาขาย / หัว</span><span class="bv" id="dSellHead">฿0</span></div>
-      <div class="sum-actions">
-        <button class="act-copy" id="btnItin" style="flex:2">📋 โปรแกรมทัวร์รายวัน</button>
-        <button class="act-export" id="btnQuote">🧾 ใบเสนอราคา</button>
-      </div>
-      <div class="sum-actions">
-        <button class="act-dash" id="btnDash" style="flex:2">📊 Dashboard</button>
-        <button class="act-reset" id="btnReset">↺ ล้าง</button>
-      </div>
+      <!-- v48 · 4 ปุ่มนี้ (โปรแกรมรายวัน · ใบเสนอราคา · Dashboard · ล้าง) ย้ายไปหน้า 4 Confirm แล้ว
+           เหตุผล: ทั้งสี่เป็นงาน "ตอนจบ" — ดูผล ส่งลูกค้า หรือเริ่มใหม่
+           แถบสรุปนี้ควรเหลือแค่ตัวเลขต้นทุน/ราคาขายที่ต้องเห็นระหว่างจัดโปรแกรม -->
       <div class="backup-nag" id="backupNag" style="display:none"></div>
       <div class="sum-actions">
         <button class="act-export" id="btnBackup">💾 สำรองข้อมูล</button>
@@ -1636,6 +1826,17 @@ img,table,pre{max-width:100%}
   </div>
 </div>
 
+<!-- MODAL: เลือกร้านสำหรับตัวเลือกเสริม (v48) -->
+<div class="modal-bg" id="resPickModal">
+  <div class="modal dbmodal">
+    <div class="modal-head"><div class="mt">🍽 เลือกร้านสำหรับตัวเลือกเสริม</div><button class="mx" data-close>×</button></div>
+    <div style="padding:12px 14px 0"><input class="txt" id="resPickSearch" placeholder="🔍 ค้นหาชื่อร้าน / จังหวัด"></div>
+    <div class="rp-hint">ติ๊กเพื่อเลือกร้าน · กด ★ เพื่อติดป้าย <b>Recommended</b> ในใบเสนอราคา</div>
+    <div class="rp-body" id="resPickBody"></div>
+    <div class="rp-foot"><span id="resPickCount"></span><button class="btn-add" id="resPickDone">เสร็จ</button></div>
+  </div>
+</div>
+
 <!-- MODAL: Dashboard -->
 <div class="modal-bg" id="dashModal">
   <div class="modal dbmodal">
@@ -1709,7 +1910,12 @@ function dumpRawState(){
   try{ out.live={state:S,saved:SAVED}; }catch(e){}
   const txt=JSON.stringify(out,null,1);
   const nm='tour-rescue-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.json';
-  if(!downloadFile(txt,nm,'application/json')) prompt('คัดลอกข้อมูลนี้เก็บไว้:',txt);
+  /* v48 · ปุ่มนี้คือด่านสุดท้ายก่อนงานหาย ต้องพยายามให้สุดและถอยให้ครบทุกทาง
+     saveOut ประกาศทีหลังในไฟล์ แต่เป็น function declaration จึงเรียกได้ (hoisted) */
+  saveOut(new Blob([txt],{type:'application/json;charset=utf-8'}),nm,{title:'ข้อมูลสำรองฉุกเฉิน'})
+    .then(r=>{ if(r==='fail'||r==='cancel') prompt('คัดลอกข้อมูลนี้เก็บไว้:',txt);
+               else if(r==='download') toast('ดาวน์โหลดแล้ว — '+DL_UNSURE); })
+    .catch(()=>prompt('คัดลอกข้อมูลนี้เก็บไว้:',txt));
 }
 
 /* ============ STATE ============ */
@@ -1717,13 +1923,17 @@ const DEFAULT_RATES={Chinese:1500,English:1500,Indo:1500,Japanese:2000,Biker:150
 let S={
   pax:2, paxTypes:[{id:'pt1',code:'S',label:'ลูกทัวร์',count:2,pay:true}], days:3, quoteName:'', startDate:'', endDate:'',
   adm:[], res:[], guideCount:{}, guideRates:{...DEFAULT_RATES},
-  cars:[], carSel:[], hotels:[], hotelSel:[], carFuel:4000,
+  /* v48 · carFuel เป็นซากของรุ่นก่อนที่ค่าน้ำมันยังเป็นช่องเดียวทั้งทริป
+     ตั้งเป็น 0 เพราะ 4000 เดิมทำให้ตัวย้ายข้อมูลใน load() แยกไม่ออกว่า
+     "ผู้ใช้ตั้งเอง" หรือ "ค่าเริ่มต้นที่ไม่เคยแตะ" แล้วไปเขียนทับค่าน้ำมันจริง
+     ค่าน้ำมันของจริงอยู่ที่ cars[].fuel (ค่ามาตรฐาน) และ carSel[].fuel (พิมพ์ทับรายคัน) */
+  cars:[], carSel:[], hotels:[], hotelSel:[], carFuel:0,
   customAdm:[], customRes:[],
   admEdits:{}, admHidden:[], resEdits:{}, resHidden:[],
   profitVal:500, hideCost:false, page:'home', lang:'th', progId:null, collapsed:{}, transferOff:{}, dayTitle:{}, cfLight:true,
   userName:'', lastSyncAt:null, hubName:'',
   gsUrl:'https://docs.google.com/spreadsheets/d/1NQdCPSQt37c1iiVGQYRrq9lly4hI5iiej03yNSrh2iQ/edit', gsAt:null, gsExec:'', gsKey:'',
-  bedLabels:{STG:'เตียงเดี่ยว',TWN:'เตียงคู่',TRI:'เตียงสาม',Extra:'เตียงเสริม'}, customAreas:[], resTags:['Buffet']
+  bedLabels:{SGL:'เตียงเดี่ยว',TWN:'เตียงคู่',TRI:'เตียงสาม',Extra:'เตียงเสริม'}, customAreas:[], resTags:['Buffet']
 };
 let uid=1; const nid=()=>'x'+(uid++)+Date.now().toString(36);
 
@@ -1786,6 +1996,7 @@ function pxChange(e){
   const t=e.target.closest('[data-px]'); if(!t)return;
   const v=Math.max(0,+t.value||0), id=t.dataset.id;
   if(t.dataset.px==='car'){ const s=(S.carSel||[]).find(x=>x.id===id); if(s)s.price=v; }
+  else if(t.dataset.px==='fuel'){ const s=(S.carSel||[]).find(x=>x.id===id); if(s)s.fuel=v; }
   else if(t.dataset.px==='hotel'){ const s=(S.hotelSel||[]).find(x=>x.id===id); if(s)s.price=v; }
   else if(t.dataset.px==='res'){ const s=(S.res||[]).find(x=>x.id===id); if(s)s.price=v; }
   recalc(); save();
@@ -2131,7 +2342,7 @@ const BACKUP_NAG_AT=25;
 /* v47 · ประทับเลขโครงสร้างข้อมูลไว้ในตัวข้อมูลเอง
    ของเดิมการแปลงข้อมูลเก่าทั้งหมดใช้วิธี "เดาจากรูปร่าง" (เช่น typeof it.ref==='number')
    ซึ่งพอมีรุ่นถัดไปจะแยกไม่ออกว่าแปลงไปแล้วหรือยัง แล้วจะแปลงซ้ำหรือข้าม */
-const SCHEMA=47;
+const SCHEMA=49;
 function saveNow(){
   clearTimeout(saveT); saveT=null;
   S.schema=SCHEMA; S.sinceBackup=(S.sinceBackup||0)+1;
@@ -2151,6 +2362,13 @@ function flushSave(){ if(saveT!==null)saveNow(); }
    ============================================================ */
 function debounced(fn,ms){ let t=null; return function(){ clearTimeout(t); t=setTimeout(()=>{t=null;fn.apply(null,arguments);},ms); }; }
 const recalcSoon=debounced(()=>recalc(),140);
+/* v48 · ชื่อโปรแกรมโผล่ในหัวหน้า Overview และป้าย "กำลังแก้" หน้า Home
+   ทั้งสองที่วาดใหม่ทั้งก้อน จึงหน่วงไว้ ไม่ต้องวาดทุกตัวอักษรที่พิมพ์ */
+const quoteNameEchoSoon=debounced(()=>{
+  const t=$('ovTitle'); if(t)t.textContent=S.quoteName||L('โปรแกรมทัวร์','Tour Program');
+  if(S.page==='home')renderHome();
+  const sub=$('homeSub'); if(sub&&S.progId)renderHome();
+},250);
 const reRenderSoon=debounced(()=>{ renderPaxButton(); reRenderAll(); },140);
 /* เตือนเมื่อแก้ไปหลายครั้งแล้วยังไม่ได้สำรองข้อมูล (ข้อมูลอยู่ในเบราว์เซอร์เครื่องเดียว) */
 /* v23 · ถ้าสำรองอัตโนมัติทำงานอยู่ ให้แสดงสถานะแบบสงบ ๆ แทนคำเตือน
@@ -2207,7 +2425,20 @@ async function load(){
     migrateHotels();
     // migrate single pax -> paxTypes
     if(!Array.isArray(S.paxTypes)||!S.paxTypes.length){ S.paxTypes=[{id:'pt1',code:'S',label:'ลูกทัวร์',count:Math.max(1,+d.pax||2),pay:true}]; }
-    if(!S.bedLabels||!S.bedLabels.STG){ S.bedLabels={STG:'เตียงเดี่ยว',TWN:'เตียงคู่',TRI:'เตียงสาม',Extra:'เตียงเสริม',...(S.bedLabels||{})}; }
+    /* ============================================================
+       v49 · เปลี่ยนรหัสเตียงเดี่ยว STG -> SGL
+
+       ต้องแปลงสองที่พร้อมกัน ไม่งั้นห้องเตียงเดี่ยวจะกลายเป็น "ไม่ระบุประเภทเตียง"
+       แล้วคิดราคาต่อหัวกับจำนวนห้องอัตโนมัติไม่ได้
+         1. ชื่อเรียกที่ผู้ใช้ตั้งเอง  S.bedLabels.STG
+         2. ค่าที่ฝังอยู่ในห้องแต่ละห้อง  hotels[].roomTypes[].bedPrimary
+       ============================================================ */
+    if(S.bedLabels&&S.bedLabels.STG!==undefined){
+      if(S.bedLabels.SGL===undefined)S.bedLabels.SGL=S.bedLabels.STG;
+      delete S.bedLabels.STG;
+    }
+    (S.hotels||[]).forEach(h=>(h.roomTypes||[]).forEach(rt=>{ if(rt&&rt.bedPrimary==='STG')rt.bedPrimary='SGL'; }));
+    if(!S.bedLabels||!S.bedLabels.SGL){ S.bedLabels={...BED_LABEL_DEF,...(S.bedLabels||{})}; }
     if(!Array.isArray(S.customAreas))S.customAreas=[];
     if(!Array.isArray(S.resTags))S.resTags=['Buffet'];
     /* v31 · ข้อมูลเก่าไม่มีธง custom — ถ้ารายการวันสั้นกว่าจำนวนวันทริป
@@ -2217,6 +2448,40 @@ async function load(){
     (S.carSel||[]).forEach(s=>{
       if(s.custom===undefined) s.custom=Array.isArray(s.days)&&s.days.length<nDay;
     });
+    /* ============================================================
+       v48 · ย้ายค่าน้ำมันก้อนเดียว (S.carFuel) มาเป็นของรายคัน
+
+       *** จุดนี้เคยทำให้ราคาขายต่ำกว่าความจริง อ่านให้จบก่อนแก้ ***
+
+       รุ่นแรกของการย้ายนี้เขียน first.fuel ทับทันทีที่เจอ S.carFuel>0
+       ปัญหาคือ S.carFuel มีค่าเริ่มต้นเป็น 4000 อยู่ใน DEFAULT state อยู่แล้ว
+       โค้ดจึงแยกไม่ออกระหว่าง "ผู้ใช้เคยตั้ง 4000 ไว้จริง" กับ "เครื่องใหม่ที่ไม่เคยแตะเลย"
+       เครื่องใหม่ทุกเครื่องเลยมีการย้ายค่านี้ง้างไกรออยู่ตลอด
+
+       และเพราะรุ่นเดิมไม่เซ็ต fuelMigrated ตอนยังไม่มีรถ (ตั้งใจ "พักค่าไว้ก่อน")
+       ไกที่ง้างไว้จึงไปลั่นในจังหวะที่แย่ที่สุดพอดี คือรีเฟรชครั้งแรก
+       หลังผู้ใช้เพิ่มรถคันแรก ซึ่งเป็นตอนที่ c.fuel ในฐานข้อมูลรถถูกต้องอยู่แล้ว
+
+       เคสจริงที่วัดได้: ฐานข้อมูลรถตั้ง ฿1,000/คัน/วัน · ทริป 5 วัน 2 คัน
+         ก่อนรีเฟรช ค่าน้ำมัน ฿10,000  ->  หลังรีเฟรช ฿4,000 (เขียนทับเป็น ฿400/คัน/วัน)
+       ต้นทุนหายไป ฿6,000 โดยไม่มีอะไรขึ้นเตือน และช่อง ⛽ ติดป้าย "แก้แล้ว"
+       เหมือนผู้ใช้เป็นคนพิมพ์เอง
+
+       กติกาใหม่ · สองข้อ
+         1. ย้ายเฉพาะตอนที่คันแรก "ไม่มีค่าน้ำมันจากทางไหนเลย"
+            ถ้าฐานข้อมูลรถตั้งไว้แล้ว ถือว่าค่านั้นใหม่กว่าและถูกต้องกว่า ห้ามทับ
+         2. ปิดไกเสมอ ไม่ว่าจะย้ายได้หรือไม่ — ปล่อยง้างไว้แล้วจะไปลั่นทีหลัง
+       ============================================================ */
+    if(S.carFuel!=null&&+S.carFuel>0&&!S.fuelMigrated){
+      const first=(S.carSel||[])[0];
+      const c=first&&(S.cars||[]).find(x=>x.id===first.carId);
+      if(first && first.fuel==null && !(+((c||{}).fuel)||0)){
+        const nd=(c&&c.mode==='day')?Math.max(1,carDaysOf(first).length):1;
+        const q=Math.max(1,+first.qty||1);
+        first.fuel=Math.round((+S.carFuel)/(nd*q));
+      }
+      S.carFuel=0; S.fuelMigrated=true;
+    }
   }
 }
 
@@ -2258,8 +2523,23 @@ function renderTripDates(){
 
 /* ============ CUSTOM DATE PICKER (ว/ด/ป) ============ */
 const dpView={start:{y:0,m:0},end:{y:0,m:0}};
+/* ============================================================
+   v48 · เลื่อนวันเริ่มไปหลังวันจบ = "เลื่อนทริป" ไม่ใช่ "ตัดทริปทิ้ง"
+
+   ปฏิทินฝั่งวันสุดท้ายปิดวันที่ก่อนวันเริ่มไว้แล้ว แต่ฝั่งวันเริ่มไม่มีการกันเลย
+   ของเดิมพอเจอ end<start จะลาก endDate มาเท่า startDate เงียบ ๆ = ทริปเหลือ 1 วัน
+   รายการของวัน 2 ถึง N เด้งไปกอง "นอกช่วงทริป" และยอดร่วงทันทีโดยไม่มีอะไรเตือน
+   (วัดจริง: ทริป 1–5 ก.ย. ค่าเข้าสถานที่ ฿3,650 -> กดวันเริ่ม 10 ก.ย. เหลือ ฿2,000)
+
+   สิ่งที่ผู้ใช้ตั้งใจเกือบทุกครั้งคือลูกค้าเลื่อนวันเดินทาง จึงรักษาจำนวนวันเดิมไว้
+   แล้วบอกให้รู้ว่าวันจบถูกเลื่อนตามไปด้วย
+   ============================================================ */
 function applyDates(){
-  if(S.startDate&&S.endDate&&parseISO(S.endDate)<parseISO(S.startDate)){ S.endDate=S.startDate; }
+  if(S.startDate&&S.endDate&&parseISO(S.endDate)<parseISO(S.startDate)){
+    const keep=Math.max(1,+S.days||1);
+    S.endDate=isoOf(addDays(parseISO(S.startDate),keep-1));
+    toast(`เลื่อนทริปเป็น ${fmtDMY(S.startDate)} – ${fmtDMY(S.endDate)} (${keep} วันเท่าเดิม)`);
+  }
   recomputeDaysFromDates();
   ensureTransfers();
   renderTripDates(); renderDayTabs(); renderAdmTable(); renderResDayTabs(); renderHotelNightPicker(); recalc(); save();
@@ -2456,13 +2736,27 @@ function renderAdmTable(){
   });
 }
 /* ---- เพิ่ม/เอาออก 1 รายการ (ไม่วาดหน้าจอ เพื่อให้เรียกรวดเดียวหลายอันได้) ---- */
+/* ============================================================
+   v48 · อ่านราคาที่พิมพ์มาในกล่อง prompt
+
+   parseFloat('1,200') ได้ 1 — คนไทยพิมพ์ราคาแบบมีจุลภาคเป็นเรื่องปกติมาก
+   ของเดิมจึงรับรายการราคา ฿1,200 เข้ามาเป็น ฿1 เงียบ ๆ
+   รับ '1,200' · '฿1,200' · '1 200' · '1200.50' ได้หมด · ติดลบปัดเป็น 0
+   ============================================================ */
+function parseMoney(v){
+  if(v==null)return NaN;
+  const s=String(v).replace(/[,\s฿]/g,'').trim();
+  if(!s||!/^-?\d*\.?\d+$/.test(s))return NaN;
+  const n=parseFloat(s);
+  return isNaN(n)?NaN:Math.max(0,n);
+}
 function admRefAdd(ref,askPrice){
   const x=admRec(ref); if(!x)return 'missing';
   let price=x.price;
   if(price==null){
     if(!askPrice)return 'noprice';
     const p=prompt('รายการนี้ยังไม่มีราคาในไฟล์ — กรอกราคา (บาท):');
-    price=parseFloat(p); if(isNaN(price))return 'cancel';
+    price=parseMoney(p); if(isNaN(price))return 'cancel';
   }
   const per=isPerson(x.unit);
   [...admDaySel].forEach(d=>{ if(!S.adm.some(it=>!it.kind&&it.ref===ref&&it.day===d)) S.adm.push({id:nid(),ref,day:d,units:per?null:1,price}); });
@@ -2646,6 +2940,30 @@ const TL_LATE_DEF=1200;       /* จบวันหลัง 20:00 ถือว�
 const dayStartOf=d=>{ const m=(S.dayStart||{})[d]; return m==null?(S.tlStart==null?TL_START_DEF:S.tlStart):m; };
 const tlLate=()=>(S.tlLate==null?TL_LATE_DEF:S.tlLate);
 
+/* ============================================================
+   v47 · ช่วงเวลาที่มื้ออาหารควรอยู่
+   Lunch 12:00-14:00 · Dinner 18:00-21:00 และ Lunch ต้องมาก่อน Dinner เสมอ
+
+   ทำไมต้องเตือน: เวลาของมื้อไม่ได้ตั้งเอง มันไหลตามลำดับรายการก่อนหน้า
+   แทรกสถานที่เพิ่มตอนเช้า มื้อกลางวันก็เลื่อนไปบ่ายสามโดยไม่มีอะไรบอก
+   ร้านปิดครัวไปแล้ว หรือลูกทัวร์หิวไปนานแล้ว จะรู้ตัวก็ตอนออกทริปจริง
+   ปรับได้ที่ S.mealWindow เผื่อกรุ๊ปที่กินมื้อผิดเวลาปกติ (เช่น ทัวร์จีนกินเย็น 17:00)
+   ============================================================ */
+const MEAL_WINDOW_DEF={Lunch:[720,840], Dinner:[1080,1260]};   /* 12:00-14:00 · 18:00-21:00 */
+const mealWindow=meal=>{
+  const w=(S.mealWindow||{})[meal];
+  return (Array.isArray(w)&&w.length===2&&w[0]!=null&&w[1]!=null)?w:MEAL_WINDOW_DEF[meal];
+};
+const mealLabelTh=meal=>meal==='Lunch'?'มื้อกลางวัน':'มื้อเย็น';
+/* คืนข้อความเตือนถ้าเวลาเริ่มมื้ออยู่นอกช่วง — คืน '' ถ้าปกติ */
+function mealTimeWarn(meal,at){
+  const w=mealWindow(meal); if(!w||at==null)return '';
+  const span=`${fmtClock(w[0])}-${fmtClock(w[1])}`;
+  if(at<w[0]) return `${mealLabelTh(meal)}เริ่ม ${fmtClock(at)} เร็วกว่าช่วงที่ควรเป็น (${span})`;
+  if(at>w[1]) return `${mealLabelTh(meal)}เริ่ม ${fmtClock(at)} เลยช่วงที่ควรเป็นแล้ว (${span})`;
+  return '';
+}
+
 /* จุดบนแผนที่ของโรงแรมที่นอนคืนหนึ่ง — ใช้เป็นหมุดต้นวันและท้ายวัน */
 function hotelPlaceOf(night){
   if(night<1)return null;
@@ -2745,6 +3063,12 @@ function dayTimeline(d){
     if(x&&x.close!=null&&e.at>=x.close) e.warns.push('ไปถึง '+fmtClock(e.at)+' แต่ปิด '+fmtClock(x.close)+' แล้ว');
     else if(x&&x.close!=null&&e.leave>x.close) e.warns.push('ออก '+fmtClock(e.leave)+' เลยเวลาปิด '+fmtClock(x.close));
     if(x&&closedOn(x,d)) e.warns.push('ปิดทำการวันนี้ ('+closedLabel(x.closed)+')');
+    /* v47 · มื้ออาหารอยู่นอกช่วงเวลาที่ควรเป็น */
+    if(it.kind==='meal'){
+      const mw=mealTimeWarn(it.meal,e.at);
+      if(mw)e.warns.push(mw);
+      e.meal=it.meal;
+    }
     /* ทุกบรรทัดของจุดแวะเดียวกันใช้ช่วงเวลาเดียวกัน — หน้า Plan จะได้เห็นตรงกัน */
     stop.items.forEach(z=>TL[z.id]=e);
     if(e.warns.length)sum.warns=sum.warns.concat(e.warns.map(w=>r.name+': '+w));
@@ -2760,6 +3084,24 @@ function dayTimeline(d){
   }
   sum.end=cur;
   if(sum.items&&cur>tlLate()) sum.warns.push('วันนี้จบ '+fmtClock(cur)+' ดึกกว่าที่ตั้งไว้ ('+fmtClock(tlLate())+')');
+
+  /* ============================================================
+     v47 · ลำดับมื้ออาหารในวันเดียวกัน
+     กลางวันต้องมาก่อนเย็นเสมอ ลากสลับลำดับกันตอนจัดโปรแกรมได้ง่ายมาก
+     แล้วใบที่ส่งลูกค้าจะกลายเป็น "มื้อเย็น 13:00 · มื้อกลางวัน 19:00" โดยไม่มีอะไรค้าน
+     ============================================================ */
+  const meals={};
+  S.adm.filter(it=>it.day===d&&it.kind==='meal').forEach(it=>{
+    const e=TL[it.id]; if(e&&e.at!=null&&meals[it.meal]===undefined)meals[it.meal]={at:e.at,e};
+  });
+  if(meals.Lunch&&meals.Dinner&&meals.Lunch.at>=meals.Dinner.at){
+    const w=`ลำดับมื้อสลับกัน — มื้อกลางวัน ${fmtClock(meals.Lunch.at)} อยู่หลังมื้อเย็น ${fmtClock(meals.Dinner.at)} · ลากสลับลำดับให้ถูก`;
+    sum.warns.push(w);
+    meals.Lunch.e.warns.push(w); meals.Dinner.e.warns.push(w);
+  }
+  /* มื้อที่อยู่นอกช่วงไม่ต้องเติมซ้ำตรงนี้ — ลูปด้านบนคัดลอก e.warns เข้า sum.warns
+     พร้อมชื่อร้านนำหน้าไปแล้ว ใส่อีกรอบจะกลายเป็นคำเตือนซ้ำสองบรรทัดที่หัววัน */
+
   TLDay[d]=sum;
   return sum;
 }
@@ -3047,11 +3389,17 @@ function admItemHTML(it,d){
     <button class="ed-btn" data-edit="${it.id}">✎</button>
     <button class="del" data-del="adm" data-id="${it.id}">×</button></div>`;
 }
+/* v48 · it.price อาจเป็น null ได้จากข้อมูลที่ไม่ได้ผ่าน admRefAdd (ซึ่งดักไว้แล้ว)
+   เช่นใบที่กู้คืนจากไฟล์ของเพื่อนร่วมทีม · ซิงค์จากชีต · ใบเก่าจากรุ่นก่อนหน้า
+   ของเดิมเรียก it.price.toLocaleString() ตรง ๆ พอเจอ null จะโยน TypeError
+   -> renderAdm พัง -> recalc พัง -> ทั้งหน้า Plan ตาย และบนมือถือไม่มี console ให้ดูด้วย
+   ราคาที่อ่านไม่ออกให้แสดงเป็น ฿0 แล้วปล่อยให้ผู้ใช้กด ✎ แก้ ดีกว่าทำแอปล่ม */
 function meta(it,x,per,unitLbl){
-  if(per) return `฿${it.price.toLocaleString()} × ${headTotal()} คน`;
+  const p=(+it.price||0).toLocaleString();
+  if(per) return `฿${p} × ${headTotal()} คน`;
   const u=admUnits(it,x), cap=admCap(x);
   const how=(cap>0&&!it.unitsFixed) ? ` <span class="cap-note">(${headTotal()} คน ÷ ${cap} = ${u})</span>` : '';
-  return `฿${it.price.toLocaleString()} × ${u} ${esc(unitLbl)}${how}`;
+  return `฿${p} × ${u} ${esc(unitLbl)}${how}`;
 }
 let admEditId=null;
 let lastRecalc=null;
@@ -3133,6 +3481,29 @@ function carDaysOf(sel){
 function carAmount(c,sel){
   return carUnitPrice(c,sel)*Math.max(1,+sel.qty||1)*(c&&c.mode==='day'?carDaysOf(sel).length:1);
 }
+/* ============================================================
+   v48 · ค่าน้ำมันแยกตามคัน
+
+   ของเดิมเป็นช่องเดียว S.carFuel เหมารวมทั้งทริป ซึ่งใช้ไม่ได้จริงเมื่อกรุ๊ปมีรถหลายแบบ
+   รถตู้กับรถบัส 42 ที่นั่งกินน้ำมันคนละเรื่อง พอเหมารวมก็ต้องมานั่งบวกเองในหัวทุกครั้ง
+
+   ลำดับความสำคัญของราคา (เหมือนราคารถ):
+     sel.fuel (พิมพ์ทับในรายการ) > c.fuel (ค่ามาตรฐานของรถคันนั้นในฐานข้อมูล) > 0
+   คิดต่อคัน × จำนวนคัน · รถรายวันคูณจำนวนวันด้วย เหมือนค่าเช่า
+   ============================================================ */
+const carFuelUnit=(c,sel)=>(sel&&sel.fuel!=null)?Math.max(0,+sel.fuel||0):Math.max(0,+((c&&c.fuel))||0);
+function carFuelAmount(c,sel){
+  const u=carFuelUnit(c,sel);
+  if(!u)return 0;
+  return u*Math.max(1,+sel.qty||1)*(c&&c.mode==='day'?carDaysOf(sel).length:1);
+}
+/* ค่าน้ำมันรวมของทั้งทริป — ใช้ร่วมกันทุกหน้า จะได้ไม่คิดคนละที่แล้วไม่ตรงกัน */
+function carFuelTotal(){
+  return (S.carSel||[]).reduce((s,sel)=>{
+    const c=(S.cars||[]).find(x=>x.id===sel.carId);
+    return c?s+carFuelAmount(c,sel):s;
+  },0);
+}
 function addCar(){
   const cid=$('carSelect').value; if(!cid){ toast('เพิ่มประเภทรถก่อน (ปุ่มจัดการรายการรถ)'); return; }
   const n=Math.max(1,S.days);
@@ -3148,8 +3519,13 @@ function renderCarItems(){
   const px=carUnitPrice;
   const row=(sel,c,dayNo)=>{
     const p=px(c,sel), t=p*sel.qty;
+    const fu=carFuelUnit(c,sel);
+    /* v48 · ช่องน้ำมันอยู่ในแถวเดียวกับราคารถ แก้ตรงนี้ได้เลยเหมือนราคาอื่น ๆ
+       ยอดที่โชว์ด้านขวายังเป็นค่าเช่าอย่างเดียว น้ำมันไปรวมที่กลุ่ม ⛽ ด้านล่าง
+       เพื่อให้ยอดของแต่ละวันยังเทียบกับใบเสนอราคาได้ตรง ๆ */
     return `<div class="item"><div class="info"><div class="nm">${esc(c.type)} <span style="color:var(--ink-faint)">(${c.seats} ที่นั่ง)</span></div>
-      <div class="meta">฿<input class="px" type="number" min="0" data-px="car" data-id="${sel.id}" value="${p}"> × ${sel.qty} คัน${sel.price!=null?' <span class="px-tag">แก้ราคาแล้ว</span>':''}</div></div>
+      <div class="meta">฿<input class="px" type="number" min="0" data-px="car" data-id="${sel.id}" value="${p}"> × ${sel.qty} คัน${sel.price!=null?' <span class="px-tag">แก้ราคาแล้ว</span>':''}</div>
+      <div class="meta">⛽ ฿<input class="px" type="number" min="0" data-px="fuel" data-id="${sel.id}" value="${fu}" title="ค่าน้ำมันต่อคัน${c.mode==='day'?' ต่อวัน':' ทั้งทริป'}">/คัน${c.mode==='day'?'/วัน':''}${sel.fuel!=null?' <span class="px-tag">แก้แล้ว</span>':''}</div></div>
       <div class="amt">${fmt(t)}</div>`+
       (dayNo?`<button class="del" data-del="carday" data-id="${sel.id}" data-day="${dayNo}" title="เอาออกจากวันที่ ${dayNo}">×</button>`
             :`<button class="del" data-del="car" data-id="${sel.id}">×</button>`)+`</div>`;
@@ -3172,12 +3548,47 @@ function renderCarItems(){
       const t=px(c,s)*s.qty; tsum+=t; sum+=t; rows+=row(s,c,0); });
     html+=`<div class="daygroup"><div class="dayhead"><span class="dh-lbl">🚌 เหมาทั้งทริป</span><span class="dh-sum">${fmt(tsum)}</span></div>${rows}</div>`;
   }
-  const fuel=Math.max(0,+S.carFuel||0);
-  if(fuel>0 && S.carSel.length){
+  /* v48 · สรุปน้ำมันแยกทีละคัน จะได้เห็นว่าคันไหนกินเท่าไร ไม่ใช่ก้อนเดียวที่ต้องเดา */
+  const fuel=carFuelTotal();
+  if(fuel>0){
     sum+=fuel;
-    html+=`<div class="daygroup"><div class="dayhead"><span class="dh-lbl">⛽ ค่าน้ำมัน</span><span class="dh-sum">${fmt(fuel)}</span></div>`+
-      `<div class="item" style="border-left-color:var(--gold)"><div class="info"><div class="nm">⛽ ค่าน้ำมัน</div>
-      <div class="meta">เหมารวมทั้งทริป</div></div><div class="amt">${fmt(fuel)}</div></div></div>`;
+    const lines=(S.carSel||[]).map(sel=>{
+      const c=(S.cars||[]).find(x=>x.id===sel.carId); if(!c)return '';
+      const a=carFuelAmount(c,sel); if(!a)return '';
+      const nd=c.mode==='day'?carDaysOf(sel).length:0;
+      return `<div class="item"><div class="info"><div class="nm">⛽ ${esc(c.type)}</div>
+        <div class="meta">฿${carFuelUnit(c,sel).toLocaleString()}/คัน${nd?'/วัน':''} × ${sel.qty} คัน${nd?' × '+nd+' วัน':' · เหมาทั้งทริป'}</div></div>
+        <div class="amt">${fmt(a)}</div></div>`;
+    }).join('');
+    html+=`<div class="daygroup"><div class="dayhead"><span class="dh-lbl">⛽ ค่าน้ำมัน</span><span class="dh-sum">${fmt(fuel)}</span></div>${lines}</div>`;
+  }
+  /* ============================================================
+     v48 · รถที่ตกสำรวจ — ต้องเห็น ไม่ใช่หายเงียบ
+
+     งาน "ของที่หายต้องขึ้นแถวแดง" ของ v47 ทำไว้เฉพาะหมวด 01 สถานที่ กับ 04 ร้านอาหาร
+     หมวดรถยังหายเงียบอยู่สองกรณี
+       1. รถรายวันที่วันทั้งหมดหลุดออกนอกช่วงทริป (เช่นตั้งไว้วัน 4-5 แล้วย่นทริปเหลือ 3 วัน)
+          ลูปวาดไล่แค่วัน 1..n จึงไม่โผล่ที่ไหนเลย และเพราะ mode==='day' ก็ไม่เข้ากลุ่ม "เหมาทั้งทริป" ด้วย
+       2. รถที่แบบรถถูกลบออกจากฐานข้อมูลไปแล้ว -> S.cars.find คืน undefined แล้วข้ามไป
+     ผลคือค่ารถ ฿16,000 หายไปจากใบเสนอราคาโดยหน้าจอขึ้นว่า "ยังไม่มีรถ"
+     (Dashboard กลับแสดง "(ลบแล้ว) ฿0" อยู่ สองหน้าเลยไม่ตรงกัน)
+     ============================================================ */
+  const lostCar=S.carSel.filter(s=>{
+    const c=S.cars.find(x=>x.id===s.carId);
+    return !c || (c.mode==='day' && !carDaysOf(s).length);
+  });
+  if(lostCar.length){
+    html+=`<div class="daygroup"><div class="dayhead"><span class="dh-lbl" style="color:var(--bad)">⚠️ ไม่ได้คิดเงิน</span><span class="dh-sum">฿0</span></div>`+
+      lostCar.map(s=>{
+        const c=S.cars.find(x=>x.id===s.carId);
+        const why=c ? `ตั้งไว้วันที่ ${fmtNights(s.days||[])} ซึ่งเลยช่วงทริป ${n} วันแล้ว — ยืดวันเดินทางแล้วกลับมาเอง`
+                    : 'รถแบบนี้ถูกลบออกจากฐานข้อมูลแล้ว — เพิ่มกลับเข้าฐานข้อมูล หรือลบแถวนี้ทิ้ง';
+        return `<div class="item"><div class="info">
+            <div class="nm">${c?esc(c.type):'(ถูกลบจากฐานข้อมูล)'} × ${Math.max(1,+s.qty||1)} คัน</div>
+            <div class="meta" style="color:var(--bad)">${why}</div></div>
+          <div class="amt">฿0</div>
+          <button class="del" data-del="car" data-id="${s.id}">×</button></div>`;
+      }).join('')+`</div>`;
   }
   el.innerHTML=html||'<div class="empty">ยังไม่มีรถในรายการ</div>';
   el.onchange=pxChange;
@@ -3248,16 +3659,62 @@ function renderGuideSelected(){
     `<span class="gx" data-gclear="${t}">×</span></span>`).join('');
 }
 function guideRateSum(){ return TYPE_ORDER.reduce((s,t)=>s+guideNum(t)*(+S.guideRates[t]||0),0); }
-function guideTotal(){ return guideRateSum()*S.days; }
+
+/* ============================================================
+   v48 · วันที่ไกด์ต้องทำงานจริง
+
+   ของเดิมคิด เรตรวม × S.days ทุกกรณี — วัน Free & Easy ที่ลูกค้าเที่ยวเอง
+   ไกด์ไม่ได้ไปด้วย แต่ต้นทุนยังถูกบวกเข้าไปเต็มวัน ทำให้เสนอราคาสูงเกินจริง
+
+   "วันทำงาน" = วันที่มีรายการอะไรก็ได้ในโปรแกรม (สถานที่ · มื้ออาหาร · รับ-ส่งสนามบิน)
+   วันที่ว่างเปล่า = Free & Easy จึงไม่นับ ตรงกับป้าย ✨ Free & Easy ที่ขึ้นในหน้า Plan อยู่แล้ว
+   กดสลับเองได้รายวัน เผื่อเคสที่ไกด์ต้องอยู่ทั้งที่ไม่มีรายการ (เช่น standby รอรับกลุ่ม)
+   ============================================================ */
+/* v48 · นับร้านอาหารเป็น "มีรายการ" ด้วย
+   ของเดิมดูแค่ S.adm — วันที่ผู้ใช้เลือกร้านตรงในหมวด 04 โดยไม่ได้แทรกป้ายมื้อจากหมวด 01
+   จะถูกนับเป็น Free & Easy แล้วไม่คิดค่าไกด์วันนั้น ทั้งที่ไกด์ต้องพาไปกินข้าว */
+const dayHasItems=d=>S.adm.some(it=>it.day===d)||S.res.some(it=>(it.day||1)===d);
+function guideWorksOn(d){
+  const ov=(S.guideDayOff||{})[d];
+  return ov===undefined ? dayHasItems(d) : !ov;
+}
+function guideDayList(){
+  const n=Math.max(1,S.days), out=[];
+  for(let d=1;d<=n;d++) if(guideWorksOn(d)) out.push(d);
+  return out;
+}
+const guideDays=()=>guideDayList().length;
+function guideTotal(){ return guideRateSum()*guideDays(); }
+
+function renderGuideDays(){
+  const el=$('guideDays'); if(!el)return;
+  const n=Math.max(1,S.days);
+  if(!guideTotalHeads()){ el.innerHTML=''; return; }
+  const free=[];
+  let html=Array.from({length:n},(_,k)=>k+1).map(d=>{
+    const work=guideWorksOn(d), auto=(S.guideDayOff||{})[d]===undefined;
+    if(!work)free.push(d);
+    const dt=tripDate(d);
+    return `<button class="gday${work?' on':''}" data-gday="${d}" type="button"
+      title="${work?'ไกด์ทำงานวันนี้ — กดเพื่อไม่นับ':'ไม่นับวันนี้ — กดเพื่อให้นับ'}${auto?'' : ' · ตั้งเอง'}">
+      Day ${d}<span class="n">${dt?fmtDShort(dt):''} ${work?'✓':'✨'}</span></button>`;
+  }).join('');
+  el.innerHTML=`<label class="flabel" style="margin-top:12px">วันที่ไกด์ทำงาน (${guideDays()} จาก ${n} วัน)</label>
+    <div class="gday-row">${html}</div>`+
+    (free.length?`<div class="note" style="margin-top:6px">✨ ไม่นับค่าไกด์ ${free.length} วัน (Day ${free.join(', ')}) — วันที่ไม่มีรายการในโปรแกรม ถือว่าลูกค้าเที่ยวเอง · กดที่วันเพื่อสลับ</div>`:'');
+}
 function renderGuideSub(){
   const total=guideTotal(); $('subGuide').textContent=fmt(total);
+  renderGuideDays();
   const gc=$('guideCalc'); if(!gc)return;
   const heads=guideTotalHeads();
   if(!heads){ gc.innerHTML=''; return; }
-  const hp=headPay();
+  const hp=headPay(), gd=guideDays(), n=Math.max(1,S.days);
   const parts=TYPE_ORDER.filter(t=>guideNum(t)>0)
     .map(t=>`${guideNum(t)}×฿${(+S.guideRates[t]||0).toLocaleString()}`).join(' + ');
-  gc.innerHTML=`<span class="cf-lbl">วิธีคิด:</span> (${parts} = ${fmt(guideRateSum())}/วัน × ${S.days} วัน) ÷ ${hp} คน = <b>${fmt(total/hp)}/หัว</b>`;
+  gc.innerHTML=`<span class="cf-lbl">วิธีคิด:</span> (${parts} = ${fmt(guideRateSum())}/วัน × <b>${gd} วันทำงาน</b>`+
+    (gd<n?` <span style="color:var(--orange)">(ทริป ${n} วัน · ไม่นับ Free &amp; Easy ${n-gd} วัน)</span>`:'')+
+    `) ÷ ${hp} คน = <b>${fmt(total/hp)}/หัว</b>`;
 }
 
 /* ============ RESTAURANTS ============ */
@@ -3328,7 +3785,7 @@ function addRes(){
   const r=$('resSelect').value; if(r===''){toast('เลือกร้านก่อน');return;}
   if(!resDaySel.size){ toast('เลือกวันก่อน (กดปุ่มวัน กดได้หลายวัน)'); return; }
   const x=resRec(r); let price=x.price;
-  if(price==null){ const p=prompt('ร้านนี้ยังไม่มีราคาในไฟล์ — กรอกราคา (บาท/ท่าน):'); price=parseFloat(p); if(isNaN(price))return; }
+  if(price==null){ const p=prompt('ร้านนี้ยังไม่มีราคาในไฟล์ — กรอกราคา (บาท/ท่าน):'); price=parseMoney(p); if(isNaN(price))return; }
   let replaced=0;
   [...resDaySel].forEach(day=>{
     // enforce 1 meal (Lunch/Dinner) per day: remove existing same-meal on that day
@@ -3436,13 +3893,51 @@ let hotelStarFilter=0;
 const hotelName=h=>h.nameEn||h.nameTh||h.name||'(ไม่มีชื่อ)';
 /* โครงใหม่: 1 โรงแรม = หลายห้อง  h.roomTypes=[{id,room,bedPrimary,bedExtra,price}] */
 const hotelRooms=h=>(h&&h.roomTypes)||[];
+/* ============================================================
+   v49 · ประเภทเตียง = จำนวนคนที่นอนได้ต่อ 1 ห้อง
+
+   SGL (เตียงเดี่ยว) 1 คน · TWN (เตียงคู่) 2 คน · TRI (เตียงสาม) 3 คน · เตียงเสริม +1 คน
+   ตัวเลขชุดนี้คือฐานของสองอย่าง
+     1. ราคาต่อหัว = ราคาห้อง ÷ จำนวนคนที่นอนได้
+     2. จำนวนห้องที่ต้องใช้ = ปัดขึ้น(จำนวนคนทั้งคณะ ÷ จำนวนคนต่อห้อง)
+   (รหัสเดิมคือ STG — เปลี่ยนเป็น SGL ให้ตรงกับที่ใช้กันในวงการ ของเก่าแปลงให้ตอนโหลด)
+   ============================================================ */
+const BED_CAP={SGL:1,TWN:2,TRI:3};
+function rtCapacity(rt){
+  if(!rt)return 1;
+  const base=BED_CAP[rt.bedPrimary]||0;
+  if(!base)return 0;                       /* ยังไม่ระบุประเภทเตียง = คิดต่อหัวไม่ได้ */
+  return base+(rt.bedExtra?1:0);
+}
+const BED_LABEL_DEF={SGL:'เตียงเดี่ยว',TWN:'เตียงคู่',TRI:'เตียงสาม',Extra:'เตียงเสริม'};
 function rtBedLabel(rt){
-  const L=S.bedLabels||{STG:'เตียงเดี่ยว',TWN:'เตียงคู่',TRI:'เตียงสาม',Extra:'เตียงเสริม'};
+  const L=S.bedLabels||BED_LABEL_DEF;
   if(!rt)return'';
   if(rt.bedPrimary){ let s=L[rt.bedPrimary]||rt.bedPrimary; if(rt.bedExtra)s+=' + '+(L.Extra||'เตียงเสริม'); return s; }
   return rt.bed||'';
 }
 const rtRoomBed=rt=>rt?[rt.room,rtBedLabel(rt)].filter(Boolean).join(' · '):'';
+/* ============================================================
+   v47 · เวลาเช็คอินของโรงแรม  h.ci = ต้นช่วง · h.ci2 = ท้ายช่วง (นาทีจากเที่ยงคืน)
+
+   เก็บเป็นช่วงเพราะของจริงเป็นช่วง — "เช็คอิน 14:00 เป็นต้นไป" หรือ "14:00-22:00 หลังจากนั้นแจ้งล่วงหน้า"
+   ของเดิมข้อมูลนี้ไปกองอยู่ในช่องหมายเหตุแบบข้อความล้วน ("เช็คอิน 14.00")
+   ระบบจึงเอาไปเทียบกับเวลาที่คณะจะถึงที่พักจริงไม่ได้เลย
+   ============================================================ */
+const hotelCI=h=>(h&&h.ci!=null)?h.ci:null;
+function hotelCIText(h){
+  if(!h||h.ci==null)return '';
+  return (h.ci2!=null&&h.ci2!==h.ci) ? fmtClock(h.ci)+'-'+fmtClock(h.ci2) : fmtClock(h.ci);
+}
+/* อ่านค่าที่ผู้ใช้พิมพ์: "14:00" · "14:00-22:00" · ว่าง = ไม่ระบุ */
+function parseCIRange(s){
+  const raw=String(s==null?'':s).trim();
+  if(!raw)return {ci:null,ci2:null};
+  const seg=raw.split(/\s*[-–—]\s*/).filter(Boolean);
+  const a=parseClock(seg[0]), b=seg.length>1?parseClock(seg[1]):null;
+  if(a==null||(seg.length>1&&b==null))return null;      /* อ่านไม่ออก */
+  return {ci:a, ci2:(b!=null&&b!==a)?b:null};
+}
 const findRT=(h,rtId)=>hotelRooms(h).find(r=>r.id===rtId)||hotelRooms(h)[0]||null;
 function hotelPriceRange(h){
   const ps=hotelRooms(h).map(r=>+r.price).filter(p=>p>0);
@@ -3465,7 +3960,7 @@ function migrateHotels(){
             area:h.area||'', stars:h.stars||0, tel:h.tel||null, abf:!!h.abf, note:h.note||null, roomTypes:[]};
       byKey.set(key,host); out.push(host);
     }
-    const rt={id:nid(), room:h.room||'Standard', bedPrimary:h.bedPrimary||(h.bed?null:'STG'), bedExtra:!!h.bedExtra, bed:h.bed||null, price:+h.price||0};
+    const rt={id:nid(), room:h.room||'Standard', bedPrimary:h.bedPrimary||(h.bed?null:'SGL'), bedExtra:!!h.bedExtra, bed:h.bed||null, price:+h.price||0};
     host.roomTypes.push(rt);
     remap[h.id]={hotelId:host.id, rtId:rt.id};
   });
@@ -3478,7 +3973,7 @@ function renderRTRows(){
   /* v41 · เริ่มต้นเป็น "ยังไม่ระบุ" — บางกรุ๊ปยังไม่รู้ว่าลูกค้าจะนอนเตียงแบบไหน
      เลือกไว้ล่วงหน้าให้ = เสี่ยงบันทึกผิดโดยไม่ได้ตั้งใจ */
   const bedOpts=rt=>[{v:'',t:L('— ยังไม่ระบุ —','— Not specified —')}].concat(
-    ['STG','TWN','TRI'].reduce((a,c)=>a.concat([
+    ['SGL','TWN','TRI'].reduce((a,c)=>a.concat([
       {v:c,      t:(BL[c]||c)},
       {v:c+'+E', t:(BL[c]||c)+' + '+(BL.Extra||'เตียงเสริม')}
     ]),[])
@@ -3511,18 +4006,63 @@ function fillHotelSelect(){
   list.forEach(h=>{
     const rts=hotelRooms(h); if(!rts.length)return;
     const gl=`${h.stars?starStr(h.stars)+' ':''}${hotelName(h)}${h.abf?' · 🍳ABF':''}`;
-    html+=`<optgroup label="${esc(gl)}">`+rts.map(rt=>
-      `<option value="${h.id}|${rt.id}">${esc(rtRoomBed(rt)||'ห้องพัก')} — ฿${(+rt.price||0).toLocaleString()}/คืน</option>`).join('')+`</optgroup>`;
+    html+=`<optgroup label="${esc(gl)}">`+rts.map(rt=>{
+      /* v49 · โชว์ราคาต่อหัวไว้ในตัวเลือกเลย จะได้เทียบห้องแต่ละแบบได้ตั้งแต่ตอนเลือก */
+      const cap=rtCapacity(rt), p=+rt.price||0;
+      const ph=cap?` · ฿${Math.round(p/cap).toLocaleString()}/หัว`:'';
+      return `<option value="${h.id}|${rt.id}">${esc(rtRoomBed(rt)||'ห้องพัก')} — ฿${p.toLocaleString()}/คืน${ph}</option>`;
+    }).join('')+`</optgroup>`;
   });
   $('hotelSelect').innerHTML=html;
+  syncHotelRoomsHint();
+}
+/* ============================================================
+   v49 · เติมจำนวนห้องที่ต้องใช้ให้เห็นทันทีตั้งแต่ตอนเลือกห้อง
+
+   ต้องเรียกใหม่ทุกครั้งที่ "จำนวนคน" หรือ "ห้องที่เลือก" เปลี่ยน
+   ไม่งั้นแก้จำนวนคนจาก 10 เป็น 30 แล้วช่องห้องยังค้างที่ 5 — กดเพิ่มไปคือจองห้องขาด
+
+   แต่ห้ามทับเลขที่ผู้ใช้พิมพ์เอง (บางกรุ๊ปจัดห้องไม่เต็มตามสูตร เช่นมีคู่รักขอห้องแยก)
+   roomsTouched จึงเป็นตัวจำว่า "คนเป็นคนพิมพ์" แล้วระบบจะไม่ยุ่งอีกจนกว่าจะเปลี่ยนห้อง
+   ============================================================ */
+let roomsTouched=false;
+function syncHotelRoomsHint(force){
+  const sel=$('hotelSelect'), box=$('hotelRooms'); if(!sel||!box)return;
+  const v=sel.value;
+  const lbl=$('hotelRoomsHint');
+  if(!v){ if(lbl)lbl.textContent=''; return; }
+  const [hid,rtId]=v.split('|');
+  const h=(S.hotels||[]).find(x=>x.id===hid), rt=h&&findRT(h,rtId);
+  const need=roomsNeeded(rt);
+  if(need>0){
+    if(force||!roomsTouched) box.value=need;
+    if(lbl)lbl.textContent = (force||!roomsTouched)
+      ? `${headTotal()} คน ÷ ${rtCapacity(rt)} คน/ห้อง = ${need} ห้อง`
+      : `พิมพ์เอง ${box.value} ห้อง · ตามจำนวนคนควรเป็น ${need} ห้อง`;
+  } else if(lbl) lbl.textContent='ระบุประเภทเตียงในฐานข้อมูลเพื่อให้คิดจำนวนห้องให้เอง';
+}
+/* v49 · จำนวนห้องที่ต้องใช้จริง = ปัดขึ้น(จำนวนคนทั้งคณะ ÷ จำนวนคนต่อห้อง)
+   ห้องที่ยังไม่ระบุประเภทเตียงคืน 0 = ให้ผู้ใช้กรอกเอง */
+function roomsNeeded(rt){
+  const cap=rtCapacity(rt);
+  return cap?Math.ceil(headTotal()/cap):0;
 }
 function addHotel(){
   const v=$('hotelSelect').value; if(!v){ toast('เลือกโรงแรม/ห้องก่อน'); return; }
   if(!hotelNightSel.size){ toast('เลือกคืนที่นอนก่อน (กดปุ่มคืน)'); return; }
   const [hid,rtId]=v.split('|');
-  S.hotelSel.push({id:nid(),hotelId:hid,rtId,rooms:Math.max(1,+$('hotelRooms').value||1),nights:[...hotelNightSel].sort((a,b)=>a-b)});
+  const h=(S.hotels||[]).find(x=>x.id===hid);
+  const rt=h&&findRT(h,rtId);
+  /* v49 · ถ้าผู้ใช้ไม่ได้แก้ช่อง "ห้อง" เอง ให้คิดจำนวนห้องจากจำนวนคนกับประเภทเตียงให้เลย
+     20 คน + เตียงคู่ = 10 ห้อง · ของเดิมตั้งไว้ที่ 1 ห้องเสมอ แล้วต้องมานั่งหารเองทุกครั้ง */
+  const typed=Math.max(1,+$('hotelRooms').value||1);
+  const auto=roomsNeeded(rt);
+  const rooms=(typed===1&&auto>0)?auto:typed;
+  S.hotelSel.push({id:nid(),hotelId:hid,rtId,rooms,nights:[...hotelNightSel].sort((a,b)=>a-b)});
   hotelNightSel=new Set(); renderHotelNightPicker();
+  roomsTouched=false;               /* เพิ่มเข้ารายการแล้ว รอบหน้าเริ่มคิดให้ใหม่ */
   renderHotelItems(); recalc(); save();
+  if(rooms!==typed) toast(`ใส่ ${rooms} ห้องให้ตามจำนวนคน (${headTotal()} คน ÷ ${rtCapacity(rt)} คน/ห้อง)`);
 }
 /* v31 · แหล่งความจริงเดียวของราคาโรงแรม — เหตุผลเดียวกับฝั่งรถ
    Dashboard/CSV เดิมอ่าน rt.price ตรง ๆ เลยไม่เห็นราคาที่พิมพ์แก้ในรายการ (sel.price) */
@@ -3537,10 +4077,22 @@ function renderHotelItems(){
     const h=(S.hotels||[]).find(x=>x.id===sel.hotelId); if(!h)return null;
     const rt=findRT(h,sel.rtId); if(!rt)return null;
     const unitP=hotelUnitPrice(rt,sel);
-    const per=unitP*sel.rooms;
+    /* v48 · กันห้อง null/0 จากข้อมูลนำเข้า — หมวดรถใช้ Math.max(1,...) อยู่แล้ว
+       ของเดิมคูณ sel.rooms ตรง ๆ เจอ null เมื่อไรยอดโรงแรมกลายเป็น ฿0 เงียบ ๆ */
+    const rooms=Math.max(1,+sel.rooms||1);
+    const per=unitP*rooms;
     const stars=h.stars?`<span class="stars">${starStr(h.stars)}</span> `:'';
+    /* v49 · ราคาต่อหัวของห้องแบบนี้ = ราคาห้อง ÷ จำนวนคนที่นอนได้
+       (เตียงเดี่ยว ÷1 · เตียงคู่ ÷2 · เตียงสาม ÷3 · +เตียงเสริมบวกอีก 1 คน)
+       เป็นตัวเลขที่ต้องใช้ตอนคุยราคากับลูกค้า ของเดิมต้องหารเองในหัวทุกครั้ง
+       ห้องที่ยังไม่ระบุประเภทเตียงจะไม่ขึ้นบรรทัดนี้ เพราะหารไม่ได้ */
+    const cap=rtCapacity(rt);
+    const headLine=cap
+      ? `<div class="meta hotel-perhead">👤 ฿${unitP.toLocaleString()} ÷ ${cap} คน = <b>฿${Math.round(unitP/cap).toLocaleString()}/หัว/คืน</b></div>`
+      : `<div class="meta" style="color:var(--ink-faint)">👤 ยังไม่ได้ระบุประเภทเตียง — คิดราคาต่อหัวไม่ได้</div>`;
     return {per, html:`<div class="item"><div class="info"><div class="nm">${stars}${esc(hotelName(h))}${rtRoomBed(rt)?' · '+esc(rtRoomBed(rt)):''}${h.abf?' <span style="color:var(--ink-faint);font-size:11px">🍳ABF</span>':''}</div>
-      <div class="meta">${h.area?esc(h.area)+' · ':''}฿<input class="px" type="number" min="0" data-px="hotel" data-id="${sel.id}" value="${unitP}"> × ${sel.rooms} ห้อง${sel.price!=null?' <span class="px-tag">แก้ราคาแล้ว</span>':''}</div></div>
+      <div class="meta">${h.area?esc(h.area)+' · ':''}฿<input class="px" type="number" min="0" data-px="hotel" data-id="${sel.id}" value="${unitP}"> × ${rooms} ห้อง${sel.price!=null?' <span class="px-tag">แก้ราคาแล้ว</span>':''}</div>
+      ${headLine}</div>
       <div class="amt">${fmt(per)}</div>
       <button class="del" data-del="hotelnight" data-id="${sel.id}" data-night="${nightNo}" title="เอาออกจากคืน ${nightNo}">×</button></div>`};
   };
@@ -3559,13 +4111,27 @@ function renderHotelItems(){
       (rows?`${over}<span class="dh-sum">${fmt(nsum)}</span>`:`<span class="dh-empty">— ยังไม่ได้จัดโรงแรม —</span>`)+
       `</div>${rows}</div>`;
   }
-  const orphan=S.hotelSel.filter(s=>!hotelNightsOf(s).length);
+  /* ============================================================
+     v48 · โรงแรมที่ตกสำรวจ — เหตุผลเดียวกับหมวดรถ
+
+     ของเดิมเช็กแค่ !hotelNightsOf(s).length (คืนหลุดนอกช่วงทริป)
+     แต่ rowOf() ทำ `if(!h)return null` / `if(!rt)return null` ด้วย
+     โรงแรมที่คืนถูกต้องแต่ตัวโรงแรมหรือประเภทห้องถูกลบจากฐานข้อมูลไปแล้ว
+     จึงไม่เข้าเงื่อนไข orphan และไม่ถูกวาดในคืนไหนเลย = หายไปทั้งแถว ลบทิ้งก็ไม่ได้
+     ============================================================ */
+  const orphan=S.hotelSel.filter(s=>{
+    const h=(S.hotels||[]).find(x=>x.id===s.hotelId);
+    return !hotelNightsOf(s).length || !h || !findRT(h,s.rtId);
+  });
   if(orphan.length){
-    html+=`<div class="daygroup"><div class="dayhead"><span class="dh-lbl" style="color:var(--bad)">⚠️ นอกช่วงทริป</span><span class="dh-sum">฿0</span></div>`+
+    html+=`<div class="daygroup"><div class="dayhead"><span class="dh-lbl" style="color:var(--bad)">⚠️ ไม่ได้คิดเงิน</span><span class="dh-sum">฿0</span></div>`+
       orphan.map(s=>{
         const h=(S.hotels||[]).find(x=>x.id===s.hotelId); const rt=h&&findRT(h,s.rtId);
+        const why = !h ? 'โรงแรมนี้ถูกลบออกจากฐานข้อมูลแล้ว — เพิ่มกลับเข้าฐานข้อมูล หรือลบแถวนี้ทิ้ง'
+                  : !rt ? 'ประเภทห้องที่เลือกไว้ถูกลบออกจากฐานข้อมูลแล้ว — กด 🗄 ฐานข้อมูลโรงแรม เพื่อเลือกห้องใหม่'
+                  : `จองไว้คืน ${fmtNights(s.nights||[])} ซึ่งเลยช่วงทริปแล้ว — ยืดวันเดินทางแล้วกลับมาเอง`;
         return `<div class="item"><div class="info"><div class="nm">${h?esc(hotelName(h)):'(ถูกลบจากฐานข้อมูล)'}${rt&&rtRoomBed(rt)?' · '+esc(rtRoomBed(rt)):''}</div>
-          <div class="meta" style="color:var(--bad)">จองไว้คืน ${fmtNights(s.nights||[])} ซึ่งเลยช่วงทริปแล้ว — ไม่คิดเงิน</div></div>
+          <div class="meta" style="color:var(--bad)">${why}</div></div>
           <div class="amt">฿0</div><button class="del" data-del="hotel" data-id="${s.id}">×</button></div>`;
       }).join('')+`</div>`;
   }
@@ -3573,6 +4139,9 @@ function renderHotelItems(){
   el.onchange=pxChange;
   $('subHotel').textContent=fmt(sum);
   updateUnassigned();
+  /* v49 · จำนวนคนเปลี่ยนแล้วจำนวนห้องที่แนะนำต้องเปลี่ยนตาม
+     recalc เรียกฟังก์ชันนี้อยู่แล้วทุกครั้ง จึงเกาะไปด้วยตรงนี้ */
+  syncHotelRoomsHint();
   const hc=$('hotelCalc');
   if(hc){
     if(S.hotelSel.length){
@@ -3698,10 +4267,13 @@ function dashRows(cat){
                  (sel.price!=null?' · แก้ราคาแล้ว':'')};
   });
 
-  if(cat==='guide') return TYPE_ORDER.filter(t=>guideNum(t)>0).map((t,i)=>({
-    i, amt:guideNum(t)*(+S.guideRates[t]||0)*S.days,
-    nm:TYPE_LABELS[t]||t,
-    meta:`${guideNum(t)} คน · ฿${(+S.guideRates[t]||0).toLocaleString()}×${S.days}วัน`}));
+  if(cat==='guide'){ const gd=guideDays(), nAll=Math.max(1,S.days);
+    return TYPE_ORDER.filter(t=>guideNum(t)>0).map((t,i)=>({
+      i, amt:guideNum(t)*(+S.guideRates[t]||0)*gd,      /* v48 · นับเฉพาะวันทำงาน ไม่ใช่ทุกวันของทริป */
+      nm:TYPE_LABELS[t]||t,
+      meta:`${guideNum(t)} คน · ฿${(+S.guideRates[t]||0).toLocaleString()}×${gd}วัน`+
+           (gd<nAll?` (ทริป ${nAll} วัน · ไม่นับ Free & Easy ${nAll-gd} วัน)`:'')}));
+  }
 
   if(cat==='res') return S.res.map((it,i)=>{
     const x=resRec(it.ref);
@@ -3746,9 +4318,9 @@ function renderDashboard(){
   const cats=[['adm','01 · ค่าเข้าสถานที่'],['car','02 · ค่ารถ'],['guide','03 · ค่าไกด์'],['res','04 · ร้านอาหาร'],['hotel','05 · โรงแรม']];
   cats.forEach(([cat,label])=>{
     const rows=dashRows(cat); let sub=rows.reduce((s,r)=>s+r.amt,0);
-    if(cat==='car'&&S.carSel.length)sub+=Math.max(0,+S.carFuel||0);
+    if(cat==='car')sub+=carFuelTotal();
     html+=`<div class="dash-cat"><div class="dash-cat-h"><span>${label}</span><span class="ct">${fmt(sub)}</span></div>`;
-    if(!rows.length && !(cat==='car'&&+S.carFuel>0&&S.carSel.length)) html+=`<div class="dash-cat-empty">— ไม่มีรายการ —</div>`;
+    if(!rows.length && !(cat==='car'&&carFuelTotal()>0)) html+=`<div class="dash-cat-empty">— ไม่มีรายการ —</div>`;
     else{
       /* v31 · หมวดที่เรียงลำดับไม่ได้ (03 ค่าไกด์) ต้องไม่โชว์ที่จับลากและปุ่ม ▲▼
          ของเดิมโชว์ให้ครบ พอกดจริงก็ค้างเพราะไม่มี array ให้สลับ */
@@ -3759,7 +4331,7 @@ function renderDashboard(){
         <span class="dr-amt">${fmt(r.amt)}</span>`+
         (sortable?`<span class="dash-move"><button data-mv="up" data-cat="${cat}" data-i="${r.i}">▲</button><button data-mv="down" data-cat="${cat}" data-i="${r.i}">▼</button></span>`:'')+
       `</div>`).join('');
-      if(cat==='car' && +S.carFuel>0 && S.carSel.length) html+=`<div class="dash-row" style="border-left-color:var(--gold)"><span class="dash-grip" style="visibility:hidden">⠿</span><span class="dr-nm">⛽ ค่าน้ำมัน<div class="dr-meta">เหมารวมทั้งทริป</div></span><span class="dr-amt">${fmt(+S.carFuel)}</span></div>`;
+      if(cat==='car' && carFuelTotal()>0) html+=`<div class="dash-row" style="border-left-color:var(--gold)"><span class="dash-grip" style="visibility:hidden">⠿</span><span class="dr-nm">⛽ ค่าน้ำมัน<div class="dr-meta">รวมทุกคัน</div></span><span class="dr-amt">${fmt(carFuelTotal())}</span></div>`;
     }
     html+='</div>';
   });
@@ -3815,16 +4387,38 @@ function exportCSV(){
   cats.forEach(([cat,label])=>{ dashRows(cat).forEach(r=>rows.push([label,r.nm,r.meta,Math.round(r.amt)])); });
   /* v31 · ต้องใช้เงื่อนไขเดียวกับ renderCarItems ที่บวกน้ำมันเฉพาะตอนมีรถในรายการ
      ไม่งั้นใบที่ยังไม่ใส่รถ CSV จะมีบรรทัดน้ำมัน ฿4,000 แต่ยอดรวมด้านล่างไม่มี */
-  if(+S.carFuel>0 && S.carSel.length)rows.push(['ค่ารถ','ค่าน้ำมัน','เหมารวม',Math.round(+S.carFuel)]);
+  if(carFuelTotal()>0)rows.push(['ค่ารถ','ค่าน้ำมัน','รวมทุกคัน',Math.round(carFuelTotal())]);
   rows.push(['','','',''],['','','ต้นทุนรวม',Math.round(t.cost)],['','','กำไรรวม',Math.round(t.profitTotal)],['','','ราคาขายรวม',Math.round(t.sellTotal)],['','','ราคาขาย/หัว',Math.round(t.sellHead)]);
   const csv='\ufeff'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
-  if(downloadFile(csv,safeName('tour-quote')+'.csv','text/csv')) toast('ดาวน์โหลด CSV แล้ว ✓');
-  else prompt('คัดลอก CSV:',csv);
+  /* v48 · ผ่าน saveOut เพื่อให้มือถือได้ share sheet และไม่ขึ้น ✓ ทั้งที่ไม่มีไฟล์ */
+  saveOutText(csv,safeName('tour-quote')+'.csv','text/csv',{title:'ใบเสนอราคา CSV'}).then(r=>{
+    if(r==='shared')toast('ส่งไฟล์ CSV แล้ว ✓');
+    else if(r==='download')toast('ดาวน์โหลด CSV แล้ว — ถ้าไม่เห็นไฟล์ ลองเปิดใน Chrome/Safari');
+    else if(r==='cancel')toast('ยกเลิก');
+    else prompt('คัดลอก CSV:',csv);
+  });
 }
 const safeName=fb=>(S.quoteName||fb).replace(/[^\w\u0E00-\u0E7F-]+/g,'_');
 function downloadFile(text,filename,mime){
   try{
     const blob=new Blob([text],{type:mime+';charset=utf-8'});
+    return downloadBlob(blob,filename);
+  }catch(e){ return false; }
+}
+/* ============================================================
+   v48 · ออกไฟล์บนมือถือ
+
+   ของเดิม downloadFile คืน true ตราบใดที่ไม่ throw — แต่ "a.click() ไม่ throw"
+   ไม่ได้แปลว่าเบราว์เซอร์ยอมดาวน์โหลด เบราว์เซอร์ในแอป LINE / Facebook
+   (ทางที่คนส่งลิงก์กันบ่อยที่สุด) บล็อกการดาวน์โหลด blob แบบเงียบ ๆ
+   ผู้ใช้เลยเห็น "สำรองข้อมูลแล้ว ✓" ทั้งที่ไม่มีไฟล์ออกมาสักไฟล์
+
+   ตอนนี้ลอง Web Share ก่อนเสมอ — ทั้ง iOS และ Android รองรับ เปิด share sheet
+   ให้เลือกได้ว่าจะเซฟลง Files / รูปภาพ หรือส่งเข้า LINE เลย ซึ่งตรงกับสิ่งที่
+   ผู้ใช้จะทำต่ออยู่แล้ว และที่สำคัญคือ "รู้ผลจริง" ว่าสำเร็จหรือผู้ใช้กดยกเลิก
+   ============================================================ */
+function downloadBlob(blob,filename){
+  try{
     const url=URL.createObjectURL(blob); const a=document.createElement('a');
     a.href=url; a.download=filename; a.style.display='none';
     document.body.appendChild(a); a.click(); a.remove();
@@ -3832,23 +4426,69 @@ function downloadFile(text,filename,mime){
     return true;
   }catch(e){ return false; }
 }
+/* คืน 'shared' = ผู้ใช้เซฟ/ส่งจริงแล้ว (ยืนยันได้)
+   'cancel'    = ผู้ใช้กดยกเลิกใน share sheet เอง
+   'download'  = ถอยไปใช้ <a download> ซึ่งยืนยันผลไม่ได้
+   'fail'      = ทำอะไรไม่ได้เลย ให้ผู้เรียกไปหาทางสำรองต่อ */
+async function saveOut(blob,filename,opt){
+  opt=opt||{};
+  try{
+    const file=new File([blob],filename,{type:blob.type||'application/octet-stream'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      try{ await navigator.share({files:[file],title:opt.title||filename}); return 'shared'; }
+      catch(e){ if(e&&e.name==='AbortError')return 'cancel'; /* ไม่รองรับจริง -> ตกไปทางล่าง */ }
+    }
+  }catch(e){}
+  return downloadBlob(blob,filename)?'download':'fail';
+}
+const saveOutText=(text,filename,mime,opt)=>
+  saveOut(new Blob([text],{type:mime+';charset=utf-8'}),filename,opt);
+/* ข้อความเตือนสำหรับกรณีที่ยืนยันผลไม่ได้ — บอกตรง ๆ ว่าต้องไปเช็กเอง */
+const DL_UNSURE='บางเบราว์เซอร์ (เช่นตัวที่อยู่ในแอป LINE) บล็อกการดาวน์โหลดเงียบ ๆ '+
+                'ถ้าไม่เห็นไฟล์ ให้เปิดแอปนี้ใน Chrome หรือ Safari แล้วลองใหม่';
 
 /* ---- BACKUP / RESTORE ----
    ข้อมูลทั้งหมดอยู่ใน localStorage ของเบราว์เซอร์เครื่องเดียว ล้างแคชแล้วหาย
    จึงต้องมีทางสำรองออกเป็นไฟล์ .json และกู้คืนกลับเข้ามาได้ */
-function backupData(){
+/* ============================================================
+   v48 · ตัวนับ "แก้ไปกี่ครั้งแล้วยังไม่ได้สำรอง" ต้องรีเซ็ตเมื่อได้ไฟล์จริงเท่านั้น
+
+   ของเดิมกด 💾 แล้วสั่ง S.sinceBackup=0 ทันทีที่ downloadFile ไม่ throw
+   พอเบราว์เซอร์บล็อกการดาวน์โหลด ผลคือแถบเตือนหายไปทั้งที่ไม่มีไฟล์สำรองเลย
+   ซึ่งอันตรายมากเพราะข้อมูลทั้งหมดอยู่ใน localStorage เครื่องเดียว
+
+   ทาง Web Share = รู้ผลจริง รีเซ็ตได้เลย
+   ทาง <a download> = ยืนยันไม่ได้ ต้องถามผู้ใช้หนึ่งครั้งว่าเห็นไฟล์ไหม
+   ============================================================ */
+function markBackedUp(){
+  S.sinceBackup=0; S.lastBackupAt=new Date().toISOString();
+  Store.set(KEY,S); updateBackupNag();
+}
+async function backupData(){
   const payload={app:'tourPriceBuilder',schema:1,exportedAt:new Date().toISOString(),data:S};
   const json=JSON.stringify(payload,null,2);
-  if(downloadFile(json,safeName('tour-backup')+'_'+isoToday()+'.json','application/json')){
-    S.sinceBackup=0; S.lastBackupAt=new Date().toISOString(); Store.set(KEY,S); updateBackupNag();
-    toast('สำรองข้อมูลแล้ว ✓');
+  const nm=safeName('tour-backup')+'_'+isoToday()+'.json';
+  const r=await saveOutText(json,nm,'application/json',{title:'สำรองข้อมูล Tour Price Builder'});
+  if(r==='shared'){ markBackedUp(); toast('สำรองข้อมูลแล้ว ✓'); return; }
+  if(r==='cancel'){ toast('ยกเลิกการสำรองข้อมูล'); return; }
+  if(r==='fail'){ prompt('คัดลอกข้อมูลสำรองนี้เก็บไว้:',json); return; }
+  /* r==='download' — เบราว์เซอร์รับคำสั่งไปแล้ว แต่ไม่มีทางรู้ว่าไฟล์ลงเครื่องจริงหรือเปล่า */
+  if(confirm('สั่งดาวน์โหลดไฟล์สำรองแล้ว\n\nเห็นไฟล์ '+nm+' ในเครื่องแล้วใช่ไหม?\n\n'+DL_UNSURE)){
+    markBackedUp(); toast('สำรองข้อมูลแล้ว ✓');
+  }else{
+    toast('ยังไม่นับว่าสำรองสำเร็จ — คำเตือนจะค้างไว้ก่อน');
+    if(confirm('อยากคัดลอกข้อมูลสำรองเป็นข้อความไปเก็บไว้ก่อนไหม?')) prompt('คัดลอกข้อมูลสำรองนี้เก็บไว้:',json);
   }
-  else prompt('คัดลอกข้อมูลสำรองนี้เก็บไว้:',json);
 }
 function restoreData(){
   const inp=document.createElement('input');
   inp.type='file'; inp.accept='.json,application/json';
+  /* v48 · ต้องอยู่ใน DOM ก่อนเรียก click() — บางเบราว์เซอร์บนมือถือ
+     ไม่เปิดหน้าต่างเลือกไฟล์ให้ถ้า input ยังลอยอยู่นอกเอกสาร */
+  inp.style.display='none'; document.body.appendChild(inp);
+  const cleanup=()=>setTimeout(()=>inp.remove(),0);
   inp.onchange=()=>{
+    cleanup();
     const f=inp.files&&inp.files[0]; if(!f)return;
     const fr=new FileReader();
     fr.onerror=()=>toast('อ่านไฟล์ไม่สำเร็จ');
@@ -3864,6 +4504,8 @@ function restoreData(){
     };
     fr.readAsText(f);
   };
+  /* ผู้ใช้กดยกเลิกในหน้าต่างเลือกไฟล์ onchange จะไม่ยิง — เก็บกวาดตอนกลับมาที่หน้า */
+  window.addEventListener('focus',cleanup,{once:true});
   inp.click();
 }
 function openDashboard(){ renderDashboard(); $('dashModal').classList.add('open'); }
@@ -3934,6 +4576,10 @@ function rowTimeText(e,single){
   if(!e||!tlOn())return '';
   return single?fmtClock(e.at):(fmtClock(e.at)+' - '+fmtClock(e.leave));
 }
+/* v47 · ใส่จุดตัดบรรทัด (zero-width space) หลังขีดของช่วงเวลา
+   ใช้เฉพาะตอนแสดงผลในช่องเวลา ห้ามเอาไปใส่ในค่าที่ผู้ใช้แก้ได้
+   ไม่งั้นตัวอักษรล่องหนตัวนี้จะติดกลับเข้ามาแล้วทำให้ parseClock อ่านไม่ออก */
+const timeCellText=s=>String(s==null?'':s).replace(/-(?!​)/g,'-​');
 /* ============================================================
    v24 · P3 — ข้อมูลหนึ่งวันที่ทุก Output ใช้ร่วมกัน
    เดิมตรรกะชุดนี้ถูกเขียนซ้ำอยู่ 4 ที่ (หน้า Itinerary, ปุ่มคัดลอก,
@@ -4018,18 +4664,33 @@ function itinDocRows(d,mode){
         const x=admRec(it.ref);
         if(x&&x.area&&mode==='edit')sub=x.area;
       }
+      /* v47 · คำเตือนของไทม์ไลน์ (มื้อผิดช่วง · ลำดับมื้อสลับ · ไปถึงก่อนเปิด · ปิดแล้ว)
+         โชว์เฉพาะโหมด edit = หน้า Overview ซึ่งเป็นหน้าทำงาน
+         หน้า Confirm เป็นใบที่ส่งลูกค้า ไม่ควรมีคำเตือนภายในติดไปด้วย */
+      if(mode==='edit'&&e&&e.warns&&e.warns.length&&head)
+        chips.push({c:'c-warn',t:'⚠️ '+e.warns.join(' · ')});
       rows.push({id:it.id, it, kind:it.kind||'place', head, e, text, sub, chips,
-                 single:it.kind==='transfer'});
+                 single:it.kind==='transfer',
+                 timeText:it.kind==='transfer'?transferWindowText(it):''});
     });
   });
   /* ปิดท้ายวันด้วยที่พัก — ให้ตรงกับที่ไทม์ไลน์คิดไว้ */
   const hotel=d<n?hotelForNight(d):null;
   if(hotel){
     const S_=TLDay[d];
+    const arrive=(tlOn()&&S_&&S_.items&&S_.end!=null)?S_.end:null;
+    const ciTxt=hotelCIText(hotel), ci=hotelCI(hotel);
+    const chips=[{c:'c-hotel',t:L('พัก: ','Overnight: ')+hotelName(hotel)+(hotel.stars?' '+starStr(hotel.stars):'')}];
+    /* v47 · มีเวลาเช็คอินแล้วให้ช่องเวลาโชว์ช่วงเช็คอิน ส่วนเวลาที่คณะถึงจริงย้ายไปเป็นป้าย
+       ถ้าถึงก่อนเช็คอินก็เตือน — เคสจริงที่เจอบ่อยคือลงจากสนามบินบ่ายโมง แต่โรงแรมเช็คอินบ่ายสอง */
+    if(ciTxt)chips.push({c:'c-time',t:L('เช็คอิน ','Check-in ')+ciTxt});
+    if(mode==='edit'&&ci!=null&&arrive!=null&&arrive<ci)
+      chips.push({c:'c-warn',t:`⚠️ ถึงที่พัก ${fmtClock(arrive)} ก่อนเวลาเช็คอิน ${fmtClock(ci)} — ต้องรอ ${fmtDur(ci-arrive)} หรือฝากกระเป๋าไว้ก่อน`});
     rows.push({id:null, kind:'hotel', head:true, e:null, single:true,
-      fixedTime:(tlOn()&&S_&&S_.items&&S_.end!=null)?fmtClock(S_.end):'',
+      fixedTime:ciTxt||(arrive!=null?fmtClock(arrive):''),
       text:L('เข้าที่พัก ','Check in at ')+'<b>'+esc(hotelName(hotel))+'</b>',
-      sub:'', chips:[{c:'c-hotel',t:L('พัก: ','Overnight: ')+hotelName(hotel)+(hotel.stars?' '+starStr(hotel.stars):'')}]});
+      sub:(mode==='edit'&&ciTxt&&arrive!=null)?L('ถึงที่พักประมาณ ','Arriving around ')+fmtClock(arrive):'',
+      chips});
   }
   return rows;
 }
@@ -4048,8 +4709,12 @@ function itinDocDay(d,mode){
       if(mode==='edit'&&r.it&&admEditId===r.id)return admItemHTML(r.it,d);
       let tcell='';
       if(tlOn()){
+        /* v47 · รับ-ส่งสนามบิน โชว์ "ช่วงเวลาเต็ม" ที่กรอกไว้ (เช่น 10:00-12:00)
+           ของเดิมโชว์แค่เวลาเดียวที่ระบบเลือกไปวางแผน (ขาเข้าใช้ท้ายช่วง ขาออกใช้ต้นช่วง)
+           คนอ่านใบเลยไม่รู้ว่าจริง ๆ เป็นช่วง และไม่รู้ว่าอีกฝั่งของช่วงคือกี่โมง */
         if(r.fixedTime!==undefined)tcell=r.fixedTime;
-        else if(r.head&&r.e)tcell=rowTimeText(r.e,r.single);
+        else if(r.head&&r.e)tcell=r.timeText||rowTimeText(r.e,r.single);
+        tcell=timeCellText(tcell);
       }
       const tap=(mode==='edit'&&r.id&&tcell)?` tapable" data-tledit="${r.id}" title="แตะเพื่อแก้เวลา`:'';
       const acts=(mode==='edit'&&r.id)
@@ -4133,17 +4798,27 @@ function openItinerary(){
 }
 
 /* ============ 4-PAGE SYSTEM ============ */
+let navPop=false;   /* v48 · true = กำลังถอยจากปุ่ม Back ห้าม pushState ซ้ำ */
 function showPage(name){
   S.page=name;
   document.querySelectorAll('.pagetabs .ptab').forEach(b=>b.classList.toggle('on',b.dataset.page===name));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   const pg=$('page'+name.charAt(0).toUpperCase()+name.slice(1)); if(pg)pg.classList.add('on');
-  const sb=document.querySelector('.summary'); if(sb)sb.style.display=(name==='plan'||name==='overview')?'':'none';
+  const hasSum=(name==='plan'||name==='overview');
+  const sb=document.querySelector('.summary'); if(sb)sb.style.display=hasSum?'':'none';
+  /* v48 · เว้นที่ท้ายหน้าเฉพาะหน้าที่มีแถบสรุปจริง (ดู body.has-summary ใน CSS) */
+  document.body.classList.toggle('has-summary',hasSum);
   if(name==='home')renderHome();
   if(name==='plan')applyCollapse();
   if(name==='overview')renderOverview();
   if(name==='confirm')renderConfirm();
   window.scrollTo(0,0); save();
+  /* v48 · ผูกหน้าเข้ากับ history เพื่อให้ปุ่ม Back ของมือถือถอยหน้าแทนที่จะออกจากแอป */
+  if(!navPop && typeof history!=='undefined' && history.pushState){
+    try{
+      if(!history.state||history.state.page!==name) history.pushState({page:name},'','#'+name);
+    }catch(e){}
+  }
 }
 const L=(th,en)=>S.lang==='en'?en:th;
 function renderOverview(){
@@ -4234,14 +4909,135 @@ const DOC_FACTORY=()=>({
      b:pair('บริษัททำหน้าที่เป็นตัวแทนของบริษัทขนส่ง โรงแรม และผู้ให้บริการอื่นในรายการเท่านั้น\nบริษัทไม่รับผิดชอบต่อความสูญเสีย บาดเจ็บ หรือความเสียหายต่อผู้เดินทางหรือทรัพย์สิน อันเกิดจากเหตุที่อยู่นอกเหนือการควบคุม เช่น เครื่องมือขัดข้อง การนัดหยุดงาน การโจรกรรม ความล่าช้า เหตุทางการแพทย์ กฎระเบียบศุลกากร การยกเลิก การเปลี่ยนแปลงรายการหรือตาราง และภัยธรรมชาติ',
             'The Organiser acts solely as an agent for the transportation companies, hotels, and other principals of the tour programme.\nThe Organiser accepts no responsibility for any loss, injury or damage to the passenger or the passenger’s belongings resulting directly or indirectly from occurrences beyond its control including breakdown in equipment, strike, theft, delays, medical, customs regulations, cancellation, changes in itinerary or schedule, and any natural disasters.')}
   ],
-  tiers:[],
+  tiers:[],        /* v48 (เลิกใช้แล้ว) — ถูกยกไปเป็น hotelOpts[0].tiers ตอนโหลดใบเก่า */
+  hotelOpts:[],    /* v49 · ชุดโรงแรม แต่ละชุดมีตารางราคาของตัวเอง (ดู docHotelOpts) */
+  options:[],      /* v48 · ตัวเลือกเสริมที่ยื่นให้ลูกค้าเลือก (อัปเกรดมื้ออาหาร ฯลฯ) */
+  blackouts:[],    /* v48 · ช่วงวันที่ราคานี้ใช้ไม่ได้ — เลือกจากคลังที่เก็บไว้ใช้ซ้ำ */
   validDays:14,
   imgSlots:false
 });
+
+/* ============================================================
+   v48 · ตัวเลือกเสริมในใบเสนอราคา (OPTIONS / UPGRADES)
+
+   ของเดิมบล็อกนี้ต้องพิมพ์เองทั้งหมดลงช่อง "หมายเหตุ" เช่น
+     ** Additional THB 350 / pax /meal - Special Menu to <พิมพ์ชื่อร้านเอง>
+   ปัญหาที่ตามมาคือชื่อร้านพิมพ์ผิด/ไม่ตรงกับที่เลือกไว้ในโปรแกรม
+   และเวลาปรับราคาต้องไล่แก้ทุกใบเอง
+
+   ตอนนี้ราคาเป็นตัวเลข ร้านติ๊กจากฐานข้อมูลจริง ระบบประกอบประโยคให้เอง
+   ============================================================ */
+const OPT_UNITS=[
+  {v:'pax_meal',  th:'/ ท่าน / มื้อ',  en:'/ pax / meal'},
+  {v:'pax',       th:'/ ท่าน',        en:'/ pax'},
+  {v:'pax_night', th:'/ ท่าน / คืน',  en:'/ pax / night'},
+  {v:'room_night',th:'/ ห้อง / คืน',  en:'/ room / night'},
+  {v:'group',     th:'เหมาทั้งคณะ',   en:'per group'}
+];
+const optUnitLabel=v=>{ const u=OPT_UNITS.find(x=>x.v===v)||OPT_UNITS[0]; return L(u.th,u.en); };
+const optNew=()=>({id:nid(), label:{th:'',en:''}, price:0, per:'pax_meal', res:[], note:{th:'',en:''}});
+
+/* ============================================================
+   v48 · คลังช่วงวันห้ามจอง (Blackout) — เก็บครั้งเดียว ใช้ได้ทุกใบ
+
+   เทศกาลพวกนี้วนมาทุกปีและใช้กับทุกใบเสนอราคา
+   ของเดิมต้องพิมพ์ยาว ๆ ใหม่ทุกครั้ง ซึ่งพิมพ์วันผิดเมื่อไหร่คือรับจองในวันที่ราคาใช้ไม่ได้
+   ============================================================ */
+const BLACKOUT_SEED=[
+  {label:{th:'ลอยกระทง',       en:'Loy Krathong Festival'}, from:'2026-11-22', to:'2026-11-26'},
+  {label:{th:'ช่วงพีคปีใหม่',   en:'Peak Period'},           from:'2026-12-22', to:'2027-01-06'},
+  {label:{th:'ตรุษจีน',        en:'Chinese New Year'},      from:'2027-02-06', to:'2027-02-12'},
+  {label:{th:'สงกรานต์',       en:'Water Festival'},        from:'2027-04-12', to:'2027-04-16'}
+];
+function blackoutLib(){
+  if(!Array.isArray(S.blackoutLib)||!S.blackoutLib.length)
+    S.blackoutLib=BLACKOUT_SEED.map(x=>({id:nid(),...JSON.parse(JSON.stringify(x))}));
+  return S.blackoutLib;
+}
+/* "Nov 22-26, 2026" · ข้ามเดือน "Dec 22, 2026 - Jan 6, 2027" */
+function blackoutText(b){
+  const s=parseISO(b.from), e=parseISO(b.to||b.from);
+  if(!s)return '';
+  if(!e||(s.getFullYear()===e.getFullYear()&&s.getMonth()===e.getMonth()))
+    return `${EN_MON[s.getMonth()]} ${s.getDate()}${e&&e.getDate()!==s.getDate()?'-'+e.getDate():''}, ${s.getFullYear()}`;
+  return `${EN_MON[s.getMonth()]} ${s.getDate()}, ${s.getFullYear()} - ${EN_MON[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()}`;
+}
+/* ทริปนี้ชนช่วงห้ามจองไหม — เตือนตั้งแต่ตอนทำใบ ไม่ใช่ไปรู้ตอนลูกค้าจอง */
+function blackoutHits(){
+  const s=S.startDate, e=S.endDate||S.startDate;
+  if(!s)return [];
+  return (S.doc&&Array.isArray(S.doc.blackouts)?S.doc.blackouts:[])
+    .map(id=>blackoutLib().find(b=>b.id===id)).filter(Boolean)
+    .filter(b=>!(e<b.from||s>(b.to||b.from)));
+}
+/* ============================================================
+   v48 · หมายเหตุสำเร็จรูป — กดปุ่มเดียว ระบบดึงตัวเลขจากข้อมูลจริงมาเขียนให้
+
+   ทุกบรรทัดที่เคยต้องพิมพ์เองล้วนมีข้อมูลอยู่ในแอปอยู่แล้ว
+     งบอาหาร -> ราคาร้านที่เลือกไว้จริงในหมวด 04
+     ภาษาไกด์ -> ประเภทไกด์ที่ใส่ไว้ในหมวด 03
+   พิมพ์เองเมื่อไหร่ก็มีโอกาสไม่ตรงกับที่คิดเงินจริง ซึ่งเป็นคนละเรื่องกับพิมพ์ผิด — มันคือเสนอผิด
+   ============================================================ */
+const GUIDE_LANG_EN={Chinese:'Chinese',English:'English',Indo:'Indo / Malay',Japanese:'Japanese',Biker:'Biker'};
+const GUIDE_LANG_TH={Chinese:'จีน',English:'อังกฤษ',Indo:'อินโด / มาเลย์',Japanese:'ญี่ปุ่น',Biker:'ไบค์เกอร์'};
+
+/* งบอาหาร: หาราคาที่ใช้บ่อยสุดเป็นฐาน แล้วไล่บอกเฉพาะมื้อที่ต่างออกไป */
+function mealBudgetNote(){
+  const n=Math.max(1,S.days);
+  const meals=(S.res||[]).filter(r=>r.day<=n&&(+r.price||0)>0);
+  if(!meals.length)return null;
+  const tally={};
+  meals.forEach(r=>{ const p=Math.round(+r.price||0); tally[p]=(tally[p]||0)+1; });
+  const base=+Object.keys(tally).sort((a,b)=>tally[b]-tally[a]||a-b)[0];
+  const odd=meals.filter(r=>Math.round(+r.price||0)!==base)
+    .sort((a,b)=>a.day-b.day)
+    .map(r=>{ const x=resRec(r.ref); const nm=x?(x.en||x.th):'';
+      return {day:r.day, price:Math.round(+r.price||0), nm}; });
+  const oddEn=odd.map(o=>`Day${o.day} @${o.nm||o.day} THB ${o.price} pp`).join(', ');
+  const oddTh=odd.map(o=>`วันที่ ${o.day} ${o.nm||''} ฿${o.price}/ท่าน`).join(' · ');
+  return {
+    en:`Meals budget based on THB ${base} pp${oddEn?', '+oddEn:''} - included`,
+    th:`งบค่าอาหารคิดที่ ฿${base}/ท่าน${oddTh?' · '+oddTh:''} (รวมในราคาแล้ว)`
+  };
+}
+function guideLangNote(){
+  const langs=TYPE_ORDER.filter(t=>guideNum(t)>0&&GUIDE_LANG_EN[t]);
+  if(!langs.length)return null;
+  return {
+    en:langs.map(t=>GUIDE_LANG_EN[t]).join(' / ')+' Speaking Guide',
+    th:'ไกด์พูดภาษา'+langs.map(t=>GUIDE_LANG_TH[t]).join(' / ')
+  };
+}
+function blackoutNote(){
+  const list=(S.doc&&Array.isArray(S.doc.blackouts)?S.doc.blackouts:[])
+    .map(id=>blackoutLib().find(b=>b.id===id)).filter(Boolean);
+  if(!list.length)return null;
+  return {
+    en:'Quoted rates cannot be applied for '+list.map(b=>`${blackoutText(b)} - ${b.label.en||b.label.th}`).join(', '),
+    th:'ราคานี้ใช้ไม่ได้ในช่วง '+list.map(b=>`${blackoutText(b)} (${b.label.th||b.label.en})`).join(' · ')
+  };
+}
+/* ปุ่มสำเร็จรูปทั้งชุด — ask:true = ถามตัวเลขก่อน ที่เหลือดึงจากข้อมูลเอง */
+const NOTE_PRESETS=[
+  {k:'tip', icon:'💵', name:'ทิปไกด์+คนขับ', ask:{q:'ทิปไกด์และคนขับ ทั้งทริป (บาท/ท่าน)',def:'300'},
+   build:v=>({en:`Tipping for tour guide and driver THB ${v} (whole trip) - Not included`,
+              th:`ค่าทิปไกด์และคนขับ ฿${v}/ท่าน ตลอดทริป (ไม่รวมในราคา)`})},
+  {k:'water', icon:'💧', name:'น้ำดื่มแจก', ask:{q:'แจกน้ำดื่มวันละกี่ขวด/ท่าน',def:'2'},
+   build:v=>({en:`Complementary ${pad2(+v||2)} bottle drinking water every day`,
+              th:`บริการน้ำดื่มวันละ ${+v||2} ขวด/ท่าน`})},
+  {k:'meal', icon:'🍽', name:'งบค่าอาหาร (ดึงจากที่เลือกไว้)', build:()=>mealBudgetNote()},
+  {k:'guide', icon:'🗣', name:'ภาษาไกด์ (ดึงจากหมวด 03)', build:()=>guideLangNote()},
+  {k:'shop', icon:'🛍', name:'ร้านช้อปปิ้ง', ask:{q:'แวะร้านช้อปวันไหนบ้าง (เว้นว่าง = ไม่มีแวะ)',def:''},
+   build:v=>String(v||'').trim()
+     ? {en:`With shopping stop on Day ${v}`, th:`มีแวะร้านช้อปวันที่ ${v}`}
+     : {en:'No shopping stop', th:'ไม่มีแวะร้านช้อป'}},
+  {k:'blackout', icon:'📅', name:'ช่วงห้ามจอง (ดึงจากที่ติ๊กไว้)', build:()=>blackoutNote()}
+];
+
 function docOf(){
   if(!S.doc||typeof S.doc!=='object'||!Array.isArray(S.doc.terms))
     S.doc=JSON.parse(JSON.stringify(S.docDefault&&S.docDefault.terms?S.docDefault:DOC_FACTORY()));
-  ['inclusions','excludes','notes','terms','tiers'].forEach(k=>{ if(!Array.isArray(S.doc[k]))S.doc[k]=[]; });
+  ['inclusions','excludes','notes','terms','tiers','hotelOpts','options','blackouts'].forEach(k=>{ if(!Array.isArray(S.doc[k]))S.doc[k]=[]; });
   return S.doc;
 }
 function companyOf(){
@@ -4272,8 +5068,132 @@ function singleSuppSuggest(){
   });
   return Math.ceil((perRoom/2)/100)*100;   /* ปัดขึ้นหลักร้อย */
 }
+/* ============================================================
+   v48 · สร้างตารางราคาตามจำนวนคนให้อัตโนมัติ
+
+   ราคาต่อหัวไม่ได้ลดแบบเส้นตรงตามจำนวนคน เพราะต้นทุนมีสองแบบปนกัน
+     ต่อคน (ค่าเข้า อาหาร) — คนเพิ่มก็เพิ่มตาม ราคาต่อหัวเท่าเดิม
+     ต่อหน่วย (รถ ไกด์ น้ำมัน) — คนเพิ่มแล้วหารกันได้มากขึ้น ราคาต่อหัวถูกลง
+   แต่พอคนเกินที่นั่งรถก็ต้องเพิ่มคัน ราคาต่อหัวจะ "กระโดดขึ้น" แล้วค่อยไหลลงใหม่
+   นี่คือเหตุผลที่ตารางจริงมีหลายช่วง และคิดในหัวแล้วพลาดง่ายมาก
+
+   วิธีทำ: สลับจำนวนคนเป็นเลขที่ขอ + เลือกรถที่ถูกที่สุดที่นั่งพอ แล้วให้เครื่องคิดใหม่ทั้งใบ
+   ใช้ตัวคิดตัวเดียวกับหน้า Plan จึงไม่มีทางหลุดจากกันได้
+   ============================================================ */
+/* เลือกรถให้กรุ๊ปขนาด n
+   เรียงตาม "ที่นั่งเหลือน้อยสุด" ก่อน แล้วค่อยดูราคา — ไม่ใช่เอาถูกสุดอย่างเดียว
+   เพราะรถบัส 42 ที่นั่งเหมาทั้งทริปมักถูกกว่ารถตู้สองคันจริง ๆ
+   แต่ไม่มีใครส่งบัส 42 ที่นั่งไปรับกรุ๊ป 10 คน ลูกค้าจะงงมากกว่าดีใจ
+   เลือกได้แล้วยังพิมพ์ทับในช่อง "รถที่ใช้" ได้เสมอ นี่เป็นแค่ตัวตั้งต้น */
+function bestVehicleFor(n){
+  const cars=(S.cars||[]).filter(c=>(+c.seats||0)>0&&(+c.price||0)>0);
+  if(!cars.length)return null;
+  const nd=Math.max(1,S.days);
+  let best=null;
+  cars.forEach(c=>{
+    const seats=+c.seats;
+    const units=Math.ceil(n/seats);
+    const waste=units*seats-n;
+    const mult=(c.mode==='day'?nd:1)*units;
+    const cost=((+c.price||0)+carFuelUnit(c,null))*mult;
+    if(!best || waste<best.waste || (waste===best.waste&&cost<best.cost)) best={waste,cost,c,units};
+  });
+  if(!best)return null;
+  const c=best.c;
+  return {
+    text:`${best.units>1?best.units+' × ':''}${c.seats} Seater ${c.type}`,
+    sel:[{id:'tmp_'+c.id, carId:c.id, qty:best.units, custom:false,
+          days:Array.from({length:nd},(_,k)=>k+1)}]
+  };
+}
+/* คำนวณราคาต่อหัวสำหรับกรุ๊ปขนาด n — คืนสภาพเดิมเสมอแม้ระหว่างทางจะพัง */
+function quoteTierFor(n,useAutoCar){
+  const keep={pax:JSON.parse(JSON.stringify(S.paxTypes||[])),
+              car:JSON.parse(JSON.stringify(S.carSel||[]))};
+  try{
+    S.paxTypes=[{id:'tmp',code:'S',label:'pax',count:n,pay:true}];
+    const veh=useAutoCar?bestVehicleFor(n):null;
+    if(veh)S.carSel=veh.sel;
+    const t=recalc();
+    return {label:`${n} pax`, car:veh?veh.text:'', adult:Math.round(t.sellHead),
+            child:0, single:singleSuppSuggest()};
+  }finally{
+    S.paxTypes=keep.pax; S.carSel=keep.car; recalc();
+  }
+}
+
 /* ช่วงราคาที่ตรงกับจำนวนคนตอนนี้ — ใช้ไฮไลต์แถวในตาราง */
 const tierIsCurrent=t=>{ const m=String(t.label||'').match(/\d+/); return m?(+m[0]===headPay()):false; };
+
+/* ============================================================
+   v49 · ชุดโรงแรม (HOTEL USED) — แต่ละชุดมีตารางราคาของตัวเอง
+
+   ใบเสนอราคาจริงที่ทีมส่งลูกค้าเขียนแบบนี้มาตลอด
+     3 Night x Star CNX (SUP) - 3 Star / IBIS Style CNX (STD)
+       10+1 pax (13 Seater VAN) : Twin/Triple THB 5,500 pp / Single Supp THB 2,100
+       11-14 pax (09 Seater VAN x 2)  : Twin/Triple THB 5,800 pp / Single Supp THB 2,100
+     3 Night x Movenpick Suriwongse (DLX) - 4 Star
+       20+1 pax : Twin/Triple THB 11,350 pp / Single Supp THB 4,600
+   คือ "เลือกโรงแรมได้หลายระดับ แล้วราคาต่างกันไปตามระดับ"
+
+   ของเดิมแอปมีตารางราคาชุดเดียว (D.tiers) กับตารางโรงแรมแยกอีกก้อน
+   ทำใบแบบนี้ไม่ได้เลย ต้องไปพิมพ์เพิ่มเองในช่องหมายเหตุ
+   ============================================================ */
+const hotelOptNew=lbl=>({id:nid(), label:{th:lbl||'',en:lbl||''}, note:{th:'',en:''}, tiers:[]});
+/* ชื่อชุดที่เดาจากโรงแรมที่เลือกไว้จริงในใบนี้ เช่น "3 คืน × Star CNX (Superior) · 3 ดาว" */
+function hotelUsedLabel(){
+  const n=Math.max(1,S.days), seen=[];
+  for(let d=1;d<n;d++){
+    const h=hotelForNight(d); if(!h)continue;
+    const nm=hotelName(h);
+    const f=seen.find(x=>x.nm===nm);
+    if(f)f.nights++; else seen.push({nm,nights:1,stars:+h.stars||0});
+  }
+  if(!seen.length)return '';
+  return seen.map(x=>`${x.nights} ${L('คืน','Night')} x ${x.nm}${x.stars?` - ${x.stars} ${L('ดาว','Star')}`:''}`).join(' / ');
+}
+/* คืนรายการชุดโรงแรม พร้อมยกข้อมูลใบเก่า (D.tiers ชุดเดียว) มาเป็นชุดแรกให้อัตโนมัติ */
+function docHotelOpts(){
+  const D=docOf();
+  if(!Array.isArray(D.hotelOpts))D.hotelOpts=[];
+  if(!D.hotelOpts.length&&Array.isArray(D.tiers)&&D.tiers.length){
+    const g=hotelOptNew(hotelUsedLabel());
+    g.tiers=D.tiers.map(t=>({...t}));
+    D.hotelOpts.push(g);
+    D.tiers=[];      /* ยกแล้ว ล้างของเดิมทิ้ง จะได้ไม่ยกซ้ำรอบหน้า */
+  }
+  return D.hotelOpts;
+}
+const allTiers=()=>docHotelOpts().reduce((a,g)=>a.concat(g.tiers||[]),[]);
+
+/* ============================================================
+   v49 · รายการเดินทางแบบบรรทัดเดียวต่อวัน (D1 / D2 / D3 …)
+
+   รูปแบบเดียวกับใบที่ทีมส่งลูกค้าอยู่แล้ว
+     D1: Pick up from CNX Airport / Doi Suthep Temple / One Nimman / Free & Easy / Dinner
+   เรียงตามลำดับจริงใน S.adm และแทนที่ป้ายมื้ออาหารด้วยชื่อร้านที่เลือกไว้ในหมวด 04
+   ============================================================ */
+function itinOneLine(d){
+  const out=[];
+  S.adm.filter(it=>it.day===d).forEach(it=>{
+    if(it.kind==='meal'){
+      const r=S.res.find(z=>z.day===d&&z.meal===it.meal);
+      const x=r&&resRec(r.ref);
+      out.push(it.meal+(x?' - '+(x.en||x.th):''));
+      return;
+    }
+    const nm=itinName(it,d);
+    if(nm)out.push(stripRich(nm));
+  });
+  /* มื้อที่เลือกร้านไว้ในหมวด 04 แต่ไม่ได้แทรกป้ายไว้ในลำดับ — ต่อท้ายให้ ไม่งั้นหายจากใบ */
+  S.res.filter(z=>z.day===d).forEach(r=>{
+    if(S.adm.some(it=>it.kind==='meal'&&it.day===d&&it.meal===r.meal))return;
+    const x=resRec(r.ref);
+    out.push(r.meal+(x?' - '+(x.en||x.th):''));
+  });
+  const seen=new Set();
+  return out.filter(s=>{ const k=s.trim(); if(!k||seen.has(k))return false; seen.add(k); return true; });
+}
 
 function quoteDocHtml(){
   const D=docOf(), C=companyOf(), t=lastRecalc||recalc();
@@ -4298,26 +5218,45 @@ function quoteDocHtml(){
       <div>${L('ยืนราคาถึง','Valid until')} <b>${esc(valid)}</b></div>
     </div></div>`;
 
-  /* ---- ตารางราคา ---- */
-  const tiers=(D.tiers||[]).filter(x=>String(x.label||'').trim());
-  const priceTable = tiers.length
-    ? `<div class="q-tblwrap"><table class="q-tbl"><thead><tr>
-        <th>${L('จำนวนผู้เดินทาง','Group size')}</th>
-        <th style="text-align:right">${L('ผู้ใหญ่ (พักคู่)','Adult (twin sharing)')}</th>
-        <th style="text-align:right">${L('เด็ก','Child')}</th>
-        <th style="text-align:right">${L('พักเดี่ยวจ่ายเพิ่ม','Single supplement')}</th>
+  /* ---- ตารางราคาของชุดโรงแรมหนึ่งชุด ---- */
+  const tierTable=tiers=>{
+    const ts=(tiers||[]).filter(x=>String(x.label||'').trim());
+    if(!ts.length)return `<div class="q-sub">${L('ยังไม่ได้ใส่ราคาให้ชุดนี้','No rates entered for this option yet')}</div>`;
+    const anyCar=ts.some(x=>String(x.car||'').trim());
+    const anyChild=ts.some(x=>+x.child>0);
+    return `<div class="q-tblwrap"><table class="q-tbl"><thead><tr>
+        <th>${L('จำนวนผู้เดินทาง','Group size')}</th>`+
+        (anyCar?`<th>${L('รถที่ใช้','Vehicle')}</th>`:'')+
+        `<th style="text-align:right">${L('ผู้ใหญ่ (พักคู่/สาม)','Twin / Triple')}</th>`+
+        (anyChild?`<th style="text-align:right">${L('เด็ก','Child')}</th>`:'')+
+        `<th style="text-align:right">${L('พักเดี่ยวจ่ายเพิ่ม','Single supplement')}</th>
       </tr></thead><tbody>`+
-      tiers.map(x=>`<tr class="${tierIsCurrent(x)?'hot':''}"><td>${esc(x.label)}${tierIsCurrent(x)?' ◄':''}</td>
-        <td class="num">${x.adult?money(x.adult)+' '+cur:'—'}</td>
-        <td class="num">${x.child?money(x.child)+' '+cur:'—'}</td>
-        <td class="num">${x.single?money(x.single)+' '+cur:'—'}</td></tr>`).join('')+
-      `</tbody></table></div>`
+      ts.map(x=>`<tr class="${tierIsCurrent(x)?'hot':''}"><td>${esc(x.label)}${tierIsCurrent(x)?' ◄':''}</td>`+
+        (anyCar?`<td>${esc(x.car||'—')}</td>`:'')+
+        `<td class="num">${x.adult?money(x.adult)+' '+cur:'—'}</td>`+
+        (anyChild?`<td class="num">${x.child?money(x.child)+' '+cur:'—'}</td>`:'')+
+        `<td class="num">${x.single?money(x.single)+' '+cur:'—'}</td></tr>`).join('')+
+      `</tbody></table></div>`;
+  };
+
+  /* ---- HOTEL USED · ชุดโรงแรม แต่ละชุดพร้อมราคาของตัวเอง ---- */
+  const opts=docHotelOpts().filter(g=>TX(g.label).trim()||(g.tiers||[]).length);
+  const many=opts.length>1;
+  const hotelBlock = opts.length
+    ? opts.map((g,i)=>`<div class="q-hopt">
+        <div class="q-hopt-h">`+
+          (many?`<span class="q-hopt-n">${L('ตัวเลือกที่','Option')} ${i+1}</span>`:'')+
+          `<span class="q-hopt-nm">${esc(TX(g.label)||L('(ยังไม่ได้ตั้งชื่อชุดโรงแรม)','(Untitled hotel option)'))}</span>
+        </div>
+        ${tierTable(g.tiers)}`+
+        (TX(g.note).trim()?`<div class="q-hopt-note">${esc(TX(g.note))}</div>`:'')+
+      `</div>`).join('')
     : `<div class="q-tblwrap"><table class="q-tbl"><thead><tr><th>${L('รายการ','Item')}</th><th style="text-align:right">${L('ราคา','Price')}</th></tr></thead><tbody>
         <tr class="hot"><td>${L('ราคาต่อท่าน (พักคู่)','Price per person (twin sharing)')} · ${esc(paxFormula())}</td><td class="num">${money(t.sellHead)} ${cur}</td></tr>
         <tr><td>${L('ราคารวมทั้งคณะ','Total for the group')}</td><td class="num">${money(t.sellTotal)} ${cur}</td></tr>
       </tbody></table></div>`;
 
-  /* ---- โรงแรมที่ใช้ ---- */
+  /* ---- โรงแรมที่จัดไว้จริงในใบนี้ (คืนไหนนอนที่ไหน) ---- */
   const hotelRows=[];
   for(let d=1;d<n;d++){
     const h=hotelForNight(d); if(!h)continue;
@@ -4325,31 +5264,59 @@ function quoteDocHtml(){
     if(last&&last.h===h){ last.to=d; continue; }
     hotelRows.push({h,from:d,to:d});
   }
-  const hotelBlock=hotelRows.length
+  const nightPlan=hotelRows.length
     ? `<div class="q-tblwrap"><table class="q-tbl"><thead><tr><th>${L('คืน','Nights')}</th><th>${L('โรงแรม','Hotel')}</th><th>${L('พื้นที่','Area')}</th></tr></thead><tbody>`+
       hotelRows.map(r=>`<tr><td>${r.from===r.to?L('คืน ','Night ')+r.from:L('คืน ','Nights ')+r.from+'–'+r.to}</td>
         <td><b>${esc(hotelName(r.h))}</b>${r.h.stars?' <span style="color:#c9942b">'+starStr(r.h.stars)+'</span>':''}${r.h.abf?' · 🍳 ABF':''}</td>
         <td>${esc(r.h.area||'')}</td></tr>`).join('')+`</tbody></table></div>`
-    : `<div class="q-sub">${L('ยังไม่ได้เลือกโรงแรม','Hotels to be confirmed')}</div>`;
+    : '';
+
+  /* ---- บรรทัดเปิดใบ: เสนออะไร ให้ใคร ช่วงไหนใช้ไม่ได้ ---- */
+  /* v49 · ชุดโรงแรมหลายชุดมักใช้ช่วงจำนวนคนเดียวกัน — ตัดซ้ำก่อน ไม่งั้นบรรทัดเปิดจะยาวและอ่านสะดุด */
+  const sizes=[...new Set(allTiers().map(x=>String(x.label||'').trim()).filter(Boolean))];
+  const blk=(D.blackouts||[]).map(id=>blackoutLib().find(b=>b.id===id)).filter(Boolean);
+  const offer=`<div class="q-offer">`+
+    L(`ขอเสนอโปรแกรมทัวร์ <b>${S.days} วัน ${Math.max(0,n-1)} คืน</b>`,
+      `Pleased to offer <b>${S.days}D/${Math.max(0,n-1)}N tour</b>`)+
+    (sizes.length?L(` สำหรับคณะ <b>${esc(sizes.join(' / '))}</b>`,` for <b>${esc(sizes.join(' / '))}</b>`)
+                 :L(` สำหรับคณะ <b>${esc(paxFormula())}</b>`,` for <b>${esc(paxFormula())}</b>`))+
+    (S.startDate?L(` เดินทาง <b>${esc(dateLine)}</b>`,` travelling <b>${esc(dateLine)}</b>`):'')+
+    (blk.length?`<div class="q-offer-blk">⛔ ${L('ราคานี้ใช้ไม่ได้ในช่วง','Rates cannot be applied from')} <b>`+
+      blk.map(b=>esc(blackoutText(b))+' ('+esc(TX(b.label))+')').join(' · ')+`</b></div>`:'')+
+  `</div>`;
+
+  /* ---- รายการเดินทางแบบย่อ บรรทัดเดียวต่อวัน ---- */
+  const brief=Array.from({length:n},(_,k)=>k+1).map(d=>{
+    const parts=itinOneLine(d);
+    const dt=tripDate(d);
+    return `<div class="q-dline"><span class="q-dtag">D${d}</span>
+      <span class="q-dtxt">${parts.length?esc(parts.join('  /  ')):`<i>${L('อิสระ / Free & Easy','Free & Easy')}</i>`}`+
+      (dt?`<span class="q-ddate">${esc(fmtDEngShort(dt))}</span>`:'')+`</span></div>`;
+  }).join('');
 
   const slot=lbl=>D.imgSlots?`<div class="q-imgslot">🖼 ${esc(lbl)}</div>`:'';
 
-  /* ---- ประกอบเอกสาร ---- */
+  /* ---- ประกอบเอกสาร ----
+     v49 · ลำดับตามใบจริงที่ทีมส่งลูกค้า: เสนออะไร -> ไปไหนบ้าง -> พักที่ไหนราคาเท่าไร
+     -> รวม/ไม่รวมอะไร -> หมายเหตุ -> ตัวเลือกเสริม (ปิดท้ายเพื่อให้ลูกค้าเห็นชัดที่สุด) */
   return `<div class="qdoc">
     <div class="qpage">
       ${head}
       <div class="q-h1">${L('ใบเสนอราคาทัวร์','TOUR QUOTATION')}</div>
       <div class="q-sub">${esc(S.quoteName||'')}${S.quoteName?' · ':''}${S.days} ${L('วัน','days')} ${Math.max(0,n-1)} ${L('คืน','nights')} · ${esc(dateLine)} · ${esc(paxFormula())}</div>
       ${slot(L('ใส่รูปหน้าปก / ภาพประกอบตรงนี้','Cover image here'))}
-      <div class="q-h2">${L('ราคาแพ็กเกจ','PACKAGE PRICE')}</div>
-      ${priceTable}
-      <div class="q-h2">${L('ที่พัก','ACCOMMODATION')}</div>
-      ${hotelBlock}
-      <div class="q-h2">${L('อัตรานี้รวม','INCLUSIONS')}</div>
+      ${offer}
+      <div class="q-h2">${L('รายการเดินทางโดยย่อ','ITINERARY AT A GLANCE')}</div>
+      <div class="q-brief">${brief}</div>
+      <div class="q-h2">${L('ที่พักและราคา','HOTEL USED &amp; RATES')}</div>
+      ${hotelBlock}`+
+      (nightPlan?`<div class="q-h3">${L('โรงแรมที่จัดไว้ในใบนี้','Hotels arranged for this quote')}</div>${nightPlan}`:'')+
+      `<div class="q-h2">${L('อัตรานี้รวม','INCLUSIONS')}</div>
       <ul class="q-ul">${list(D.inclusions)||'<li>—</li>'}</ul>
       <div class="q-h2">${L('อัตรานี้ไม่รวม','EXCLUSIONS')}</div>
       <ul class="q-ul">${list(D.excludes)||'<li>—</li>'}</ul>`+
       (D.notes.filter(x=>TX(x).trim()).length?`<div class="q-h2">${L('หมายเหตุสำคัญ','IMPORTANT NOTES')}</div><ul class="q-ul">${list(D.notes)}</ul>`:'')+
+      optionsBlock(cur,money)+
     `</div>
     <div class="qpage">
       <div class="q-h1">${L('รายการเดินทาง','ITINERARY')}</div>
@@ -4365,6 +5332,45 @@ function quoteDocHtml(){
       `</div>
       <div class="q-foot">${esc(co)}${C.tel?' · '+esc(C.tel):''}${C.email?' · '+esc(C.email):''}</div>
     </div>
+  </div>`;
+}
+
+/* ============================================================
+   v48 · บล็อกตัวเลือกเสริมในใบเสนอราคา
+   ประกอบประโยคจากตัวเลข + ร้านที่ติ๊กไว้ ให้หน้าตาเหมือนที่ทีมเขียนกันอยู่แล้ว
+   ============================================================ */
+function optionsBlock(cur,money){
+  const D=docOf();
+  const opts=(D.options||[]).filter(o=>TX(o.label).trim()||+o.price>0);
+  if(!opts.length)return '';
+  const rows=opts.map(o=>{
+    const nm=TX(o.label).trim()||L('ตัวเลือกเสริม','Optional upgrade');
+    const price=+o.price||0;
+    const resList=(o.res||[]).map(r=>{
+      const x=resRec(r.ref);
+      if(!x)return null;
+      return {nm:(x.en||x.th||''), rec:!!r.rec};
+    }).filter(Boolean);
+    const resTxt=resList.length
+      ? resList.map(r=>esc(r.nm)+(r.rec?` <span class="q-rec">★ ${L('แนะนำ','Recommended')}</span>`:'')).join(' · ')
+      : '';
+    return `<div class="q-optrow">
+      <div class="q-optmain">
+        <div class="q-optnm"><span class="q-optbullet">▸</span>${esc(nm)}</div>`+
+        (o.note&&TX(o.note).trim()?`<div class="q-optnote">${esc(TX(o.note))}</div>`:'')+
+        (resTxt?`<div class="q-optres">${resTxt}</div>`:'')+
+      `</div>
+      <div class="q-optprice">${price?'+ '+money(price)+' '+cur:'—'}<span class="q-optunit">${esc(optUnitLabel(o.per))}</span></div>
+    </div>`;
+  }).join('');
+  /* v49 · บล็อกนี้เคยเป็นตารางสีเดียวกับตารางอื่นทั้งใบ ลูกค้าเลื่อนผ่านไปเลย
+     ทั้งที่เป็นส่วนที่ทีมอยากให้เห็นที่สุด (ขายเพิ่มได้จริง)
+     ตอนนี้ทำเป็นกล่องกรอบส้ม มีหัวข้อของตัวเอง และราคาตัวหนาสีส้ม */
+  return `<div class="q-upgrade">
+    <div class="q-upgrade-h">⭐ ${L('ตัวเลือกเสริม — อัปเกรดได้ตามต้องการ','OPTIONAL UPGRADES')}</div>
+    <div class="q-upgrade-sub">${L('เลือกเพิ่มได้ตามต้องการ · แจ้งล่วงหน้าก่อนเดินทาง',
+                                   'Add on request · please advise before departure')}</div>
+    <div class="q-optlist">${rows}</div>
   </div>`;
 }
 
@@ -4425,20 +5431,49 @@ function renderQuoteEditor(){
     <label>${L('ที่อยู่','Address')}</label>
     <textarea id="qcAddr" style="min-height:56px">${esc(C.addr||'')}</textarea>
 
-    <label>${L('ตารางราคาตามจำนวนกรุ๊ป','Price tiers by group size')}</label>
-    <div class="qe-tierhead"><span>${L('ช่วงกรุ๊ป เช่น 20+1 FOC','Tier e.g. 20+1 FOC')}</span><span>${L('ผู้ใหญ่','Adult')}</span><span>${L('เด็ก','Child')}</span><span>${L('พักเดี่ยว','Single')}</span><span></span></div>
-    <div id="qTierRows">${(D.tiers||[]).map((x,i)=>tierRowHtml(x,i)).join('')}</div>
-    <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-      <button class="btn-ghost" id="qTierAdd" type="button" style="flex:1">＋ ${L('เพิ่มช่วงราคา','Add tier')}</button>
-      <button class="btn-ghost" id="qTierFill" type="button" style="flex:1">↩ ${L('เติมจากที่คำนวณได้','Fill from calculation')}</button>
+    <label>${L('ชุดโรงแรม + ตารางราคาของแต่ละชุด','Hotel options &amp; their rates')}</label>
+    <div class="qe-hint" style="margin-bottom:8px">${L(
+      'หนึ่งชุด = ทางเลือกโรงแรมหนึ่งแบบ (เช่น 3 คืน Star CNX 3 ดาว) พร้อมราคาตามจำนวนคนของชุดนั้น · เพิ่มได้หลายชุดเพื่อให้ลูกค้าเลือก',
+      'One option = one hotel choice with its own rates by group size. Add more options to let the customer choose')}</div>
+    <div id="qHotelOpts">${docHotelOpts().map((g,gi)=>hotelOptHtml(g,gi)).join('')||
+      `<div class="qe-hint">${L('ยังไม่มีชุดโรงแรม','No hotel options yet')}</div>`}</div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn-add" id="qHOAdd" type="button" style="flex:2">＋ ${L('เพิ่มชุดโรงแรม','Add hotel option')}</button>
+      <button class="btn-ghost" id="qHOFromTrip" type="button" style="flex:2">🏨 ${L('ดึงชื่อจากโรงแรมในใบนี้','Name it from this trip')}</button>
     </div>
-    <div class="qe-hint">${L('เว้นตารางนี้ว่างไว้ = ใบเสนอราคาจะโชว์ราคาเดียวจากที่คำนวณได้','Leave empty to show the single calculated price instead')}</div>
+
+    <label>${L('ตัวเลือกเสริมสำหรับลูกค้า','Optional upgrades')}</label>
+    <div id="qOptRows">${(D.options||[]).map((o,i)=>optRowHtml(o,i)).join('')||`<div class="qe-hint">${L('ยังไม่มีตัวเลือกเสริม','No optional upgrades yet')}</div>`}</div>
+    <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+      <button class="btn-ghost" id="qOptAdd" type="button" style="flex:1">＋ ${L('เพิ่มตัวเลือก','Add option')}</button>
+      <button class="btn-ghost" id="qOptMeal" type="button" style="flex:2">🍽 ${L('ชุดอัปเกรดมื้ออาหาร','Meal upgrade set')}</button>
+    </div>
+    <div class="qe-hint">${L('🍽 = ใส่ตัวอย่างให้ 2 บรรทัด (เมนูดีขึ้นร้านเดิม / เมนูพิเศษร้านใหม่) แล้วค่อยติ๊กร้านกับแก้ราคา','🍽 = adds two starter rows (better menu at same restaurant / special menu elsewhere) ready to tick restaurants and set prices')}</div>
+
+    <label>${L('ช่วงวันที่ราคานี้ใช้ไม่ได้ (Blackout)','Blackout periods')}</label>
+    <div id="qBlackRows"></div>
+    <!-- v49 · ฟอร์มกรอกในที่ ไม่ใช่กล่อง prompt ซ้อนกันสามชั้น
+         ใช้ input type=date จะได้ปฏิทินของเครื่อง เลือกวันบนมือถือง่ายกว่าพิมพ์ 2026-11-22 เอง -->
+    <div class="qe-blackform">
+      <div class="qbf-grid">
+        <input id="qbfName" class="txt" placeholder="${esc(L('ชื่อช่วง เช่น ลอยกระทง','Period name, e.g. Loy Krathong'))}">
+        <input id="qbfFrom" class="txt" type="date">
+        <input id="qbfTo" class="txt" type="date">
+      </div>
+      <div class="qbf-foot">
+        <span class="qe-hint" id="qbfPreview"></span>
+        <button class="btn-add" id="qBlackAdd" type="button">＋ ${L('เพิ่มเข้าคลัง','Add to library')}</button>
+      </div>
+    </div>
 
     <label>${L('อัตรานี้รวม (บรรทัดละ 1 ข้อ)','Inclusions (one per line)')}</label>
     <textarea id="qInc">${esc(linesOf(D.inclusions))}</textarea>
     <label>${L('อัตรานี้ไม่รวม (บรรทัดละ 1 ข้อ)','Exclusions (one per line)')}</label>
     <textarea id="qExc">${esc(linesOf(D.excludes))}</textarea>
     <label>${L('หมายเหตุสำคัญ (บรรทัดละ 1 ข้อ)','Important notes (one per line)')}</label>
+    <div class="qe-presets" id="qNotePresets">${NOTE_PRESETS.map(p=>
+      `<button class="qe-preset" type="button" data-preset="${p.k}">${p.icon} ${esc(p.name)}</button>`).join('')}</div>
+    <div class="qe-hint" style="margin:2px 0 6px">${L('กดปุ่มเพื่อเติมบรรทัดให้อัตโนมัติ — ตัวเลขดึงจากข้อมูลจริงในใบนี้','Tap to append a line — figures are pulled from this quote’s real data')}</div>
     <textarea id="qNote">${esc(linesOf(D.notes))}</textarea>
 
     <label>${L('เงื่อนไขการให้บริการ','Terms & conditions')}</label>
@@ -4457,29 +5492,272 @@ function renderQuoteEditor(){
     </div>`;
 
   const on=(id,fn)=>{ const b=$(id); if(b)b.onclick=fn; };
-  on('qTierAdd',()=>{ readQuoteEditor(); docOf().tiers.push({label:'',adult:0,child:0,single:0}); save(); renderQuoteEditor(); });
-  on('qTierFill',()=>{ readQuoteEditor();
-    const t=recalc(), D2=docOf();
-    D2.tiers.push({label:`${headPay()} ${L('ท่าน','pax')}`, adult:Math.round(t.sellHead), child:0, single:singleSuppSuggest()});
-    save(); renderQuoteEditor(); toast(L('เติมราคาจากที่คำนวณได้แล้ว','Filled from calculation')); });
   on('qSaveDef',()=>{ readQuoteEditor();
-    S.docDefault=JSON.parse(JSON.stringify(docOf())); S.docDefault.tiers=[];
+    S.docDefault=JSON.parse(JSON.stringify(docOf())); S.docDefault.tiers=[]; S.docDefault.hotelOpts=[];
     save(); toast(L('ตั้งเป็นค่าตั้งต้นแล้ว — ใบใหม่จะใช้ชุดนี้','Saved as default for new quotes')); });
-  on('qResetDef',()=>{ if(!confirm(L('คืนข้อความทั้งหมดเป็นค่าโรงงาน? (ตารางราคาไม่ถูกลบ)','Reset all text to factory defaults? (price tiers are kept)')))return;
-    readQuoteEditor(); const keep=docOf().tiers;
-    S.doc=DOC_FACTORY(); S.doc.tiers=keep; save(); renderQuoteEditor(); toast(L('คืนค่าแล้ว','Reset')); });
-  const rows=$('qTierRows');
-  if(rows)rows.onclick=e=>{ const d=e.target.closest('[data-tdel]'); if(!d)return;
-    readQuoteEditor(); docOf().tiers.splice(+d.dataset.tdel,1); save(); renderQuoteEditor(); };
+  on('qResetDef',()=>{ if(!confirm(L('คืนข้อความทั้งหมดเป็นค่าโรงงาน? (ชุดโรงแรมและตารางราคาไม่ถูกลบ)','Reset all text to factory defaults? (hotel options and rates are kept)')))return;
+    readQuoteEditor(); const keep=docOf().hotelOpts;
+    S.doc=DOC_FACTORY(); S.doc.hotelOpts=keep; save(); renderQuoteEditor(); toast(L('คืนค่าแล้ว','Reset')); });
+
+  /* ---------- v49 · ชุดโรงแรม + ตารางราคาของแต่ละชุด ---------- */
+  on('qHOAdd',()=>{ readQuoteEditor(); docHotelOpts().push(hotelOptNew('')); save(); renderQuoteEditor(); });
+  on('qHOFromTrip',()=>{
+    readQuoteEditor();
+    const nm=hotelUsedLabel();
+    if(!nm){ toast(L('ยังไม่ได้เลือกโรงแรมในหมวด 05','No hotels picked in section 05 yet')); return; }
+    const gs=docHotelOpts();
+    const g=gs.length?gs[gs.length-1]:(gs.push(hotelOptNew('')),gs[0]);
+    g.label={th:nm,en:nm};
+    save(); renderQuoteEditor(); toast(L('ใส่ชื่อชุดจากโรงแรมในใบนี้แล้ว','Named from this trip’s hotels'));
+  });
+  const hobox=$('qHotelOpts');
+  if(hobox)hobox.onclick=e=>{
+    /* ============================================================
+       v49 · ต้องเรียก docHotelOpts() *หลัง* readQuoteEditor() เสมอ
+
+       readQuoteEditor สร้าง D.hotelOpts เป็น "อาร์เรย์ใหม่" ทุกครั้ง (อ่านค่าจากช่องกรอกในฟอร์ม)
+       ถ้าจับตัวอาร์เรย์ไว้ก่อนอ่านฟอร์ม สิ่งที่ถืออยู่จะกลายเป็นของเก่าที่หลุดจาก state ไปแล้ว
+       แก้อะไรลงไปก็เขียนใส่ก้อนที่ไม่มีใครอ่าน — ปุ่มกดแล้วเหมือนไม่ทำงาน โดยไม่มี error ให้เห็น
+       ============================================================ */
+    const at=el=>e.target.closest(el);
+    const del=at('[data-hodel]');
+    if(del){ if(!confirm(L('ลบชุดโรงแรมนี้พร้อมราคาทั้งหมดของมัน?','Remove this hotel option and all of its rates?')))return;
+      readQuoteEditor(); docHotelOpts().splice(+del.dataset.hodel,1); save(); renderQuoteEditor(); return; }
+    const trow=at('[data-tdel]');
+    if(trow){ readQuoteEditor(); const g=docHotelOpts()[+trow.dataset.gi];
+      if(g)(g.tiers=g.tiers||[]).splice(+trow.dataset.tdel,1); save(); renderQuoteEditor(); return; }
+    const add=at('[data-hoadd]');
+    if(add){ readQuoteEditor(); const g=docHotelOpts()[+add.dataset.hoadd];
+      if(g)(g.tiers=g.tiers||[]).push({label:'',car:'',adult:0,child:0,single:0}); save(); renderQuoteEditor(); return; }
+    const fill=at('[data-hofill]');
+    if(fill){ readQuoteEditor(); const g=docHotelOpts()[+fill.dataset.hofill]; if(!g)return;
+      const t=recalc();
+      (g.tiers=g.tiers||[]).push({label:`${headPay()} ${L('ท่าน','pax')}`, car:'',
+        adult:Math.round(t.sellHead), child:0, single:singleSuppSuggest()});
+      save(); renderQuoteEditor(); toast(L('เติมราคาจากที่คำนวณได้แล้ว','Filled from calculation')); return; }
+    const auto=at('[data-hoauto]');
+    if(auto){
+      readQuoteEditor();
+      const gi=+auto.dataset.hoauto;
+      if(!docHotelOpts()[gi])return;
+      if(!(S.cars||[]).length&&!confirm(L('ยังไม่มีรถในฐานข้อมูล จะคิดโดยใช้รถเดิมของใบนี้ทุกช่วง ต่อไหม?',
+                                         'No vehicles in the database — every tier will reuse this trip’s vehicles. Continue?')))return;
+      const v=prompt(L('ใส่จำนวนคนของแต่ละช่วง คั่นด้วยจุลภาค\nเช่น  10, 14, 15, 19',
+                       'Enter group sizes separated by commas\ne.g.  10, 14, 15, 19'),'10, 14, 15, 19');
+      if(v==null)return;
+      const sizes=[...new Set(String(v).split(/[,\s]+/).map(x=>Math.round(+x)).filter(x=>x>0&&x<=200))].sort((a,b)=>a-b);
+      if(!sizes.length){ toast(L('อ่านจำนวนคนไม่ออก','Could not read the group sizes')); return; }
+      const useAuto=(S.cars||[]).length>0;
+      const tiers=sizes.map(n=>quoteTierFor(n,useAuto));
+      /* quoteTierFor เรียก recalc() ซึ่งไม่แตะ D.hotelOpts แต่ดึงใหม่อีกรอบให้ชัวร์ */
+      const g2=docHotelOpts()[gi]; if(!g2)return;
+      g2.tiers=tiers;
+      save(); renderQuoteEditor();
+      toast(L(`สร้าง ${sizes.length} ช่วงราคาแล้ว`,`Built ${sizes.length} tiers`));
+      return;
+    }
+  };
+
+  /* ---------- v48 · ตัวเลือกเสริม ---------- */
+  on('qOptAdd',()=>{ readQuoteEditor(); docOf().options.push(optNew()); save(); renderQuoteEditor(); });
+  on('qOptMeal',()=>{
+    readQuoteEditor();
+    const D2=docOf();
+    /* สองบรรทัดที่ทีมใช้จริงอยู่แล้ว — เติมโครงให้ เหลือแค่ติ๊กร้านกับปรับตัวเลข */
+    D2.options.push({...optNew(), price:150, per:'pax_meal',
+      label:{th:'เมนูดีขึ้น ร้านเดิม',en:'Better menu, same restaurants'},
+      note:{th:'เลือกได้: หมู / ไม่มีหมู / ซีฟู้ด',en:'Choices: PORK / PORK FREE / SEAFOOD MENU'}});
+    D2.options.push({...optNew(), price:350, per:'pax_meal',
+      label:{th:'เมนูพิเศษ (เปลี่ยนร้าน)',en:'Special menu (upgraded restaurant)'},
+      note:{th:'',en:''}});
+    save(); renderQuoteEditor();
+    toast(L('ใส่ชุดอัปเกรดมื้ออาหารแล้ว — ติ๊กร้านต่อได้เลย','Meal upgrade set added — pick restaurants next'));
+  });
+  const optRows=$('qOptRows');
+  if(optRows)optRows.onclick=e=>{
+    const del=e.target.closest('[data-optdel]');
+    if(del){ readQuoteEditor(); docOf().options.splice(+del.dataset.optdel,1); save(); renderQuoteEditor(); return; }
+    const x=e.target.closest('[data-odel]');
+    if(x){ readQuoteEditor(); const o=docOf().options[+x.dataset.odel];
+      if(o)o.res=(o.res||[]).filter(r=>r.ref!==x.dataset.oref);
+      save(); renderQuoteEditor(); return; }
+    const pick=e.target.closest('[data-optpick]');
+    if(pick){ readQuoteEditor(); openResPicker(+pick.dataset.optpick); return; }
+    const tag=e.target.closest('[data-oref]');
+    if(tag){ readQuoteEditor(); const o=docOf().options[+tag.dataset.oi];
+      const r=o&&(o.res||[]).find(z=>z.ref===tag.dataset.oref);
+      if(r){ r.rec=!r.rec; save(); renderQuoteEditor();
+        toast(r.rec?L('ติดป้าย ★ แนะนำแล้ว','Marked as Recommended'):L('เอาป้ายแนะนำออกแล้ว','Recommendation removed')); }
+      return; }
+  };
+
+  /* ---------- v48 · ช่วงวันห้ามจอง ---------- */
+  renderBlackoutRows();
+  const bl=$('qBlackRows');
+  if(bl){
+    bl.onchange=e=>{ const c=e.target.closest('[data-black]'); if(!c)return;
+      readQuoteEditor(); const D2=docOf(); const id=c.dataset.black;
+      D2.blackouts=c.checked?[...new Set([...(D2.blackouts||[]),id])]:(D2.blackouts||[]).filter(x=>x!==id);
+      save(); renderBlackoutRows(); };
+    bl.onclick=e=>{ const d=e.target.closest('[data-blackdel]'); if(!d)return;
+      e.preventDefault();
+      if(!confirm(L('ลบช่วงนี้ออกจากคลัง? (ใบอื่นที่ติ๊กไว้จะไม่แสดงช่วงนี้อีก)',
+                    'Remove this period from the library? Quotes that reference it will drop it.')))return;
+      S.blackoutLib=blackoutLib().filter(b=>b.id!==d.dataset.blackdel);
+      const D2=docOf(); D2.blackouts=(D2.blackouts||[]).filter(x=>x!==d.dataset.blackdel);
+      save(); renderBlackoutRows(); };
+  }
+  /* ---------- v49 · ฟอร์มเพิ่มช่วงห้ามจอง (แทน prompt สามชั้นของเดิม) ---------- */
+  const bfPreview=()=>{
+    const p=$('qbfPreview'); if(!p)return;
+    const f=($('qbfFrom')||{}).value, t=($('qbfTo')||{}).value;
+    if(!f){ p.textContent=L('เลือกวันเริ่มก่อน','Pick a start date first'); return; }
+    const to=(t&&t<f)?f:(t||f);
+    const days=Math.round((parseISO(to)-parseISO(f))/86400000)+1;
+    p.textContent=blackoutText({from:f,to})+` · ${days} ${L('วัน','days')}`;
+  };
+  ['qbfName','qbfFrom','qbfTo'].forEach(id=>{ const e=$(id); if(e){ e.oninput=bfPreview; e.onchange=bfPreview; } });
+  /* เลือกวันเริ่มแล้วยังไม่ได้เลือกวันจบ ให้เติมวันเดียวกันไว้ก่อน — ช่วงห้ามจองวันเดียวก็มี */
+  const bfFrom=$('qbfFrom');
+  if(bfFrom)bfFrom.onchange=()=>{ const t=$('qbfTo'); if(t&&(!t.value||t.value<bfFrom.value))t.value=bfFrom.value; bfPreview(); };
+  bfPreview();
+  on('qBlackAdd',()=>{
+    const nm=(($('qbfName')||{}).value||'').trim();
+    const from=(($('qbfFrom')||{}).value||'').trim();
+    let to=(($('qbfTo')||{}).value||'').trim()||from;
+    if(!nm){ toast(L('ใส่ชื่อช่วงก่อน เช่น ลอยกระทง','Enter a name first, e.g. Loy Krathong')); const e=$('qbfName'); if(e)e.focus(); return; }
+    if(!from){ toast(L('เลือกวันเริ่มก่อน','Pick a start date')); const e=$('qbfFrom'); if(e)e.focus(); return; }
+    if(to<from)to=from;
+    readQuoteEditor();
+    const b={id:nid(),label:{th:nm,en:nm},from,to};
+    blackoutLib().push(b);
+    /* เพิ่มแล้วติ๊กให้เลย — คนกดเพิ่มเพราะอยากใช้กับใบนี้ ไม่ใช่แค่เก็บเข้าคลังเฉย ๆ */
+    const D2=docOf(); D2.blackouts=[...new Set([...(D2.blackouts||[]),b.id])];
+    save(); renderQuoteEditor();
+    toast(L('เพิ่มเข้าคลังและติ๊กให้ใบนี้แล้ว','Added to the library and ticked for this quote'));
+  });
+
+  /* ---------- v48 · ปุ่มหมายเหตุสำเร็จรูป ---------- */
+  const np=$('qNotePresets');
+  if(np)np.onclick=e=>{
+    const b=e.target.closest('[data-preset]'); if(!b)return;
+    const p=NOTE_PRESETS.find(x=>x.k===b.dataset.preset); if(!p)return;
+    let val='';
+    if(p.ask){ const r=prompt(p.ask.q,p.ask.def); if(r==null)return; val=r; }
+    const line=p.build(val);
+    if(!line){ toast(L('ยังไม่มีข้อมูลให้ดึง — ใส่ข้อมูลในหน้า Plan ก่อน','No data to pull yet — fill in the Plan page first')); return; }
+    const ta=$('qNote');
+    const cur=ta.value.replace(/\s+$/,'');
+    const txt=S.lang==='en'?line.en:line.th;
+    if(cur.split('\n').some(l=>l.trim()===txt.trim())){ toast(L('บรรทัดนี้มีอยู่แล้ว','That line is already there')); return; }
+    ta.value=(cur?cur+'\n':'')+txt;
+    /* เขียนกลับทั้งสองภาษา ไม่ใช่แค่ภาษาที่กำลังแก้ — ไม่งั้นสลับภาษาแล้วบรรทัดหาย */
+    readQuoteEditor();
+    const D2=docOf();
+    const last=D2.notes[D2.notes.length-1];
+    if(last){ last.th=line.th||last.th; last.en=line.en||last.en; }
+    save(); renderQuoteEditor();
+    toast(L('เติมหมายเหตุแล้ว','Note added'));
+  };
 }
-function tierRowHtml(x,i){
-  return `<div class="qe-tier" data-ti="${i}">
+
+/* ============================================================
+   v48 · ตัวเลือกร้านอาหารสำหรับตัวเลือกเสริม
+   ติ๊กจากฐานข้อมูลจริง จะได้ไม่ต้องพิมพ์ชื่อร้าน (และไม่มีทางพิมพ์ผิด)
+   ============================================================ */
+let resPickerFor=-1, resPickerQ='';
+function openResPicker(i){ resPickerFor=i; resPickerQ=''; renderResPicker(); $('resPickModal').classList.add('open'); }
+function renderResPicker(){
+  const body=$('resPickBody'); if(!body)return;
+  const o=docOf().options[resPickerFor]; if(!o)return;
+  const chosen=new Set((o.res||[]).map(r=>r.ref));
+  const q=resPickerQ.toLowerCase().trim();
+  const list=resAll().filter(z=>z.x&&!z.hidden)
+    .filter(z=>!q||((z.x.en||'')+(z.x.th||'')+(z.x.area||'')).toLowerCase().includes(q))
+    .sort((a,b)=>(a.x.en||a.x.th||'').localeCompare(b.x.en||b.x.th||''));
+  body.innerHTML=list.map(z=>{
+    const r=(o.res||[]).find(y=>y.ref===z.ref);
+    return `<div class="rp-row${chosen.has(z.ref)?' on':''}">
+      <label class="rp-main"><input type="checkbox" data-rp="${esc(z.ref)}" ${chosen.has(z.ref)?'checked':''}>
+        <span class="rp-nm">${esc(z.x.en||z.x.th)}${z.x.halal?' 🕌':''}</span>
+        <span class="rp-meta">${esc(z.x.area||'')}${z.x.price!=null?' · ฿'+z.x.price:''}</span></label>
+      <button class="rp-star${r&&r.rec?' on':''}" type="button" data-rpstar="${esc(z.ref)}"
+        title="${esc(L('ติดป้าย ★ แนะนำ','Mark as Recommended'))}"${chosen.has(z.ref)?'':' disabled'}>★</button>
+    </div>`;
+  }).join('')||`<div class="empty">${L('ไม่พบร้าน','No restaurants found')}</div>`;
+  updateResPickCount();
+}
+function updateResPickCount(){
+  const el=$('resPickCount'); if(!el)return;
+  const o=docOf().options[resPickerFor];
+  const n=(o&&o.res||[]).length, rec=(o&&o.res||[]).filter(r=>r.rec).length;
+  el.textContent=L(`เลือกแล้ว ${n} ร้าน`,`${n} selected`)+(rec?L(` · แนะนำ ${rec}`,` · ${rec} recommended`):'');
+}
+function tierRowHtml(x,i,gi){
+  return `<div class="qe-tier" data-ti="${i}" data-gi="${gi}">
     <input data-tf="label" value="${esc(x.label||'')}" placeholder="20+1 FOC">
+    <input data-tf="car" value="${esc(x.car||'')}" placeholder="13 Seater VAN">
     <input data-tf="adult" type="number" min="0" value="${+x.adult||''}" placeholder="0">
     <input data-tf="child" type="number" min="0" value="${+x.child||''}" placeholder="0">
     <input data-tf="single" type="number" min="0" value="${+x.single||''}" placeholder="0">
-    <button class="tdel" type="button" data-tdel="${i}">×</button>
+    <button class="tdel" type="button" data-tdel="${i}" data-gi="${gi}">×</button>
   </div>`;
+}
+/* ---------- v49 · การ์ดชุดโรงแรมหนึ่งชุด (ชื่อชุด + ตารางราคาของชุดนั้น) ---------- */
+function hotelOptHtml(g,gi){
+  return `<div class="qe-hopt" data-gi="${gi}">
+    <div class="qe-hopt-h">
+      <span class="qe-hopt-n">${L('ชุดที่','Option')} ${gi+1}</span>
+      <input data-gf="label" value="${esc(TX(g.label))}"
+        placeholder="${esc(L('เช่น 3 คืน x Star CNX (SUP) - 3 ดาว / IBIS Style CNX (STD)','e.g. 3 Night x Star CNX (SUP) - 3 Star'))}">
+      <button class="tdel" type="button" data-hodel="${gi}" title="${esc(L('ลบชุดนี้','Remove this option'))}">×</button>
+    </div>
+    <div class="qe-tierhead"><span>${L('ช่วงกรุ๊ป','Tier')}</span><span>${L('รถที่ใช้','Vehicle')}</span><span>${L('พักคู่/สาม','Twin/Tri')}</span><span>${L('เด็ก','Child')}</span><span>${L('พักเดี่ยว','Single')}</span><span></span></div>
+    <div class="qe-tiers">${(g.tiers||[]).map((x,i)=>tierRowHtml(x,i,gi)).join('')||
+      `<div class="qe-hint" style="padding:4px 0">${L('ยังไม่มีแถวราคา','No rate rows yet')}</div>`}</div>
+    <div class="qe-hopt-btns">
+      <button class="btn-add" type="button" data-hoauto="${gi}">⚙ ${L('สร้างจากจำนวนคน','Build from group sizes')}</button>
+      <button class="btn-ghost" type="button" data-hoadd="${gi}">＋ ${L('แถวเปล่า','Blank row')}</button>
+      <button class="btn-ghost" type="button" data-hofill="${gi}">↩ ${L('เติมจากใบนี้','From this trip')}</button>
+    </div>
+    <input class="qe-hopt-note" data-gf="note" value="${esc(TX(g.note))}"
+      placeholder="${esc(L('หมายเหตุของชุดนี้ (ถ้ามี) เช่น Free WIFI ทุกห้อง','Note for this option, e.g. Free WIFI'))}">
+  </div>`;
+}
+/* ---------- v48 · แถวตัวเลือกเสริม ---------- */
+function optRowHtml(o,i){
+  const chosen=(o.res||[]).map(r=>{
+    const x=resRec(r.ref);
+    return `<span class="qo-res${r.rec?' rec':''}" data-oi="${i}" data-oref="${esc(r.ref)}"
+       title="${r.rec?'ติดป้ายแนะนำอยู่ — กดเพื่อเอาออก':'กดเพื่อติดป้าย ★ แนะนำ'}">
+       ${r.rec?'★ ':''}${esc(x?(x.en||x.th):'(ถูกลบแล้ว)')}
+       <span class="qo-x" data-odel="${i}" data-oref="${esc(r.ref)}">×</span></span>`;
+  }).join('');
+  return `<div class="qe-opt" data-oi="${i}">
+    <div class="qe-optline">
+      <input data-of="label" value="${esc(TX(o.label))}" placeholder="${esc(L('เช่น เมนูพิเศษ (ซีฟู้ด)','e.g. Special menu (seafood)'))}">
+      <input data-of="price" type="number" min="0" value="${+o.price||''}" placeholder="0">
+      <select data-of="per">${OPT_UNITS.map(u=>`<option value="${u.v}" ${o.per===u.v?'selected':''}>${esc(L(u.th,u.en))}</option>`).join('')}</select>
+      <button class="tdel" type="button" data-optdel="${i}">×</button>
+    </div>
+    <div class="qe-optres">${chosen||`<span class="qe-hint">${L('ยังไม่ได้เลือกร้าน','No restaurants selected')}</span>`}
+      <button class="qo-add" type="button" data-optpick="${i}">＋ ${L('ติ๊กร้านจากฐานข้อมูล','Pick restaurants')}</button></div>
+  </div>`;
+}
+/* ---------- v48 · ตัวเลือกช่วงวันห้ามจอง ---------- */
+function renderBlackoutRows(){
+  const el=$('qBlackRows'); if(!el)return;
+  const D=docOf(), on=new Set(D.blackouts||[]);
+  el.innerHTML=blackoutLib().map(b=>
+    `<label class="qe-black${on.has(b.id)?' on':''}">
+      <input type="checkbox" data-black="${b.id}" ${on.has(b.id)?'checked':''}>
+      <span class="qb-nm">${esc(b.label.th||b.label.en)}</span>
+      <span class="qb-dt">${esc(blackoutText(b))}</span>
+      <span class="qb-x" data-blackdel="${b.id}" title="${esc(L('ลบออกจากคลัง','Remove from library'))}">×</span>
+    </label>`).join('')||`<div class="qe-hint">${L('คลังว่าง','Library is empty')}</div>`;
+  const hit=blackoutHits();
+  if(hit.length)el.innerHTML+=`<div class="qe-warn">⚠️ ${L('วันเดินทางของใบนี้ชนช่วงห้ามจอง','This trip’s dates fall inside a blackout period')}: `+
+    hit.map(b=>esc(b.label.th||b.label.en)).join(', ')+`</div>`;
 }
 function termsToText(terms){
   return (terms||[]).map(t=>'# '+TX(t.h)+'\n'+TX(t.b)).join('\n\n');
@@ -4512,14 +5790,49 @@ function readQuoteEditor(){
   D.terms     =textToTerms(D.terms,   $('qTerms')?$('qTerms').value:'');
   D.validDays =Math.max(1,+v('qValid')||14);
   D.imgSlots  =!!($('qSlots')&&$('qSlots').checked);
-  const rows=$('qTierRows');
-  if(rows){
-    D.tiers=[...rows.querySelectorAll('.qe-tier')].map(r=>({
-      label:r.querySelector('[data-tf="label"]').value.trim(),
-      adult:+r.querySelector('[data-tf="adult"]').value||0,
-      child:+r.querySelector('[data-tf="child"]').value||0,
-      single:+r.querySelector('[data-tf="single"]').value||0
-    }));
+  /* v49 · อ่านชุดโรงแรมกลับ — ชื่อชุด/หมายเหตุเก็บเป็นคู่ th/en เขียนทับเฉพาะภาษาที่กำลังแก้ */
+  const hobox=$('qHotelOpts');
+  if(hobox){
+    const old=D.hotelOpts||[];
+    const cards=[...hobox.querySelectorAll('.qe-hopt')];
+    if(cards.length||old.length){
+      D.hotelOpts=cards.map(card=>{
+        const gi=+card.dataset.gi, prev=old[gi]||hotelOptNew('');
+        const pick=(prevVal,el)=>{
+          const base=(prevVal&&typeof prevVal==='object')?{th:prevVal.th||'',en:prevVal.en||''}:{th:'',en:''};
+          const s=el?el.value.trim():'';
+          if(S.lang==='en')base.en=s; else base.th=s;
+          return base;
+        };
+        return {
+          id:prev.id||nid(),
+          label:pick(prev.label,card.querySelector('[data-gf="label"]')),
+          note :pick(prev.note ,card.querySelector('[data-gf="note"]')),
+          tiers:[...card.querySelectorAll('.qe-tier')].map(r=>({
+            label:r.querySelector('[data-tf="label"]').value.trim(),
+            car:(r.querySelector('[data-tf="car"]')||{value:''}).value.trim(),
+            adult:+r.querySelector('[data-tf="adult"]').value||0,
+            child:+r.querySelector('[data-tf="child"]').value||0,
+            single:+r.querySelector('[data-tf="single"]').value||0
+          }))
+        };
+      });
+    }
+  }
+  /* v48 · ตัวเลือกเสริม — เก็บร้านที่ติ๊กไว้เดิม แล้วเขียนทับเฉพาะช่องที่แก้ได้ในฟอร์ม
+     (ร้านกับป้ายแนะนำแก้ผ่านปุ่ม ไม่ได้อยู่ในช่องกรอก จึงต้องอ่านจากของเดิม) */
+  const orows=$('qOptRows');
+  if(orows){
+    const old=D.options||[];
+    const got=[...orows.querySelectorAll('.qe-opt')].map(r=>{
+      const i=+r.dataset.oi, prev=old[i]||optNew();
+      const lb=r.querySelector('[data-of="label"]').value.trim();
+      const label=(prev.label&&typeof prev.label==='object')?{...prev.label}:{th:'',en:''};
+      if(S.lang==='en')label.en=lb; else label.th=lb;
+      return {...prev, label, price:+r.querySelector('[data-of="price"]').value||0,
+              per:r.querySelector('[data-of="per"]').value, res:prev.res||[]};
+    });
+    if(got.length||old.length)D.options=got;
   }
   save();
 }
@@ -4576,6 +5889,7 @@ function buildProgramImage(withPrice){
     days.push({d,dt:b.dt,title:dayTitleShown(d),places:b.places,timed:b.timed,subs:daySubs(b)});
   }
   const LBLW=196, TIMEW=186;   /* v38 · กว้างพอสำหรับ "07:45 - 08:45" */
+  const pageBreaks=[];   /* v49 · ดู days.forEach ด้านล่าง */
   const pass=(ctx,draw)=>{
     let y=0;
     const HB=118;
@@ -4599,6 +5913,9 @@ function buildProgramImage(withPrice){
     if(draw){ ctx.strokeStyle='#dfe5ee'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); }
     y+=44;
     days.forEach(dd=>{
+      /* v49 · จำตำแหน่งหัววันไว้ ใช้เป็น "จุดตัดหน้าที่ปลอดภัย" ตอนทำ PDF
+         ถ้าตัดหน้าตรงไหนก็ได้ บล็อกของวันจะถูกผ่าครึ่งคาหน้า ซึ่งดูไม่ได้เลยในเอกสารที่ส่งลูกค้า */
+      if(!draw) pageBreaks.push(y-32);
       const barTop=y-28;
       ctx.font=imgFont(800,26);
       if(draw){ ctx.fillStyle='#1b2f6b'; ctx.fillText(`DAY ${dd.d}${dd.dt?' · '+fmtDEng(dd.dt).toUpperCase():''}`,PAD+24,y); }
@@ -4669,13 +5986,29 @@ function buildProgramImage(withPrice){
   const probe=document.createElement('canvas').getContext('2d');
   probe.textBaseline='alphabetic';
   const H=Math.ceil(pass(probe,false));
+  /* ============================================================
+     v48 · จำกัดขนาดแคนวาสไม่ให้เกินเพดานของ iOS
+
+     ของเดิมตรึง SC=2 แล้วปล่อยความสูงไหลตามเนื้อหา
+     iOS Safari จำกัดแคนวาสไว้ราว 16.7 ล้านพิกเซล พอเกินแล้ว "ไม่ error"
+     — คืนแคนวาสว่างมาเฉย ๆ ผู้ใช้จึงได้รูปขาวเปล่าพร้อมข้อความ "บันทึกรูปแล้ว ✓"
+
+     วัดจริง: ทริป 14 วันที่เปิด "ใส่เวลาในโปรแกรม" = 2160×8004 = 17.3 ล้าน px -> เกิน
+     ซึ่งเป็นความยาวทริปที่ขายกันจริง ไม่ใช่เคสสุดโต่ง
+     ลดความละเอียดลงแทนที่จะพัง · รูปเล็กลงนิดหน่อยยังอ่านออก ดีกว่าได้รูปว่าง
+     ============================================================ */
+  const MAXPX=16000000;
+  let sc=SC;
+  if(W*H*sc*sc>MAXPX) sc=Math.max(1,Math.sqrt(MAXPX/(W*H)));
   const cv=document.createElement('canvas');
-  cv.width=Math.round(W*SC); cv.height=Math.round(H*SC);
+  cv.width=Math.round(W*sc); cv.height=Math.round(H*sc);
   const ctx=cv.getContext('2d');
-  ctx.scale(SC,SC);
+  ctx.scale(sc,sc);
   ctx.textBaseline='alphabetic';
   ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
   pass(ctx,true);
+  cv.__scaled = sc<SC;      /* บอกผู้เรียกว่าถูกลดความละเอียด จะได้เตือนผู้ใช้ */
+  cv.__breaks = pageBreaks.map(v=>Math.round(v*sc)).filter(v=>v>0);   /* v49 · จุดตัดหน้าสำหรับ PDF */
   return cv;
 }
 function programImage(){
@@ -4683,19 +6016,152 @@ function programImage(){
   let cv;
   try{ cv=buildProgramImage(withPrice); }
   catch(e){ toast('สร้างรูปไม่สำเร็จ: '+e.message); return; }
+  const shrunk=!!cv.__scaled;
   cv.toBlob(blob=>{
-    if(!blob){ toast('สร้างรูปไม่สำเร็จ'); return; }
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=safeName('tour-program')+'.png'; a.style.display='none';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    toast('บันทึกรูปแล้ว ✓');
+    if(!blob){ toast('สร้างรูปไม่สำเร็จ — ลองปิด "ใส่เวลาในโปรแกรม" แล้วกดใหม่'); return; }
+    /* v48 · Web Share ก่อน — บนมือถือจะได้เลือกเซฟลงรูปภาพ หรือส่งเข้า LINE ได้เลย
+       ซึ่งเป็นสิ่งที่ผู้ใช้จะทำต่ออยู่แล้ว และรู้ผลจริงว่าสำเร็จหรือกดยกเลิก */
+    saveOut(blob,safeName('tour-program')+'.png',{title:S.quoteName||'โปรแกรมทัวร์'}).then(r=>{
+      const note=shrunk?' (โปรแกรมยาว ระบบลดความละเอียดรูปลงให้)':'';
+      if(r==='shared')toast('ส่งรูปแล้ว ✓'+note);
+      else if(r==='download')toast('บันทึกรูปแล้ว'+note+' — ถ้าไม่เห็นไฟล์ ลองเปิดใน Chrome/Safari');
+      else if(r==='cancel')toast('ยกเลิก');
+      else toast('บันทึกรูปไม่สำเร็จ — เบราว์เซอร์นี้ไม่ยอมให้ดาวน์โหลด');
+    });
   },'image/png');
 }
 
 /* ============================================================
-   v44 · ทำโปรแกรมทัวร์เป็น PDF
+   v49 · ทำไฟล์ PDF จริง ไม่ผ่านหน้าต่างสั่งพิมพ์
+
+   ของเดิมปุ่ม "ทำเป็น PDF" เรียก window.print() แล้วให้ผู้ใช้เลือก "บันทึกเป็น PDF" เอง
+   ซึ่งบนมือถือใช้ไม่ได้จริง — iOS ต้องกดผ่าน share sheet หลายชั้น
+   ส่วนเบราว์เซอร์ในแอป LINE / Facebook ไม่มีเมนูสั่งพิมพ์เลย กดแล้วเงียบ
+
+   ตอนนี้เขียนไฟล์ PDF เองทั้งก้อน โดยเอารูปที่วาดจาก canvas (ตัวเดียวกับปุ่ม 📸)
+   มาฝังเป็นภาพเต็มหน้า A4 หน้าละภาพ
+
+   ทำไมถึงใช้ภาพ ไม่ใช่ตัวอักษรจริง:
+     PDF ที่มีตัวอักษรไทยต้องฝังฟอนต์ TTF พร้อม subset + CID mapping เข้าไปในไฟล์
+     ซึ่งเป็นงานหนักและพังง่ายมาก ส่วนแอปนี้เปิดจากไฟล์ในเครื่องได้ จึงโหลดไลบรารีนอกไม่ได้
+     ข้อแลกเปลี่ยนคือ "เลือกข้อความในไฟล์ PDF ไม่ได้" ซึ่งสำหรับใบที่ส่งลูกค้าดูไม่ใช่ปัญหา
+     ข้อดีคือหน้าตาตรงกับที่เห็นบนจอเป๊ะ และภาษาไทยไม่มีทางเพี้ยน
+   ============================================================ */
+const pdfStr=s=>{ const a=new Uint8Array(s.length); for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i)&0xff; return a; };
+const canvasBlob=(cv,type,q)=>new Promise(res=>cv.toBlob(res,type,q));
+
+/* ฝังภาพ JPEG หน้าละภาพ · ขนาดหน้า A4 แนวตั้ง (595.28 × 841.89 pt) */
+function pdfFromJpegPages(pages){
+  const A4W=595.28, A4H=841.89;
+  const parts=[]; let len=0;
+  const put=u8=>{ parts.push(u8); len+=u8.length; };
+  const putS=s=>put(pdfStr(s));
+
+  /* 1=Catalog · 2=Pages · จากนั้นหน้าละ 3 object (Page · Contents · Image) */
+  const nPage=pages.length;
+  const objCount=2+nPage*3;
+  const offsets=new Array(objCount+1).fill(0);
+  const startObj=n=>{ offsets[n]=len; putS(n+' 0 obj\n'); };
+  const endObj=()=>putS('endobj\n');
+
+  putS('%PDF-1.4\n');
+  putS('%\xE2\xE3\xCF\xD3\n');            /* ธงไบนารี — บอกโปรแกรมอ่านว่าไฟล์นี้ไม่ใช่ข้อความล้วน */
+
+  const pageObj=i=>3+i*3, contObj=i=>4+i*3, imgObj=i=>5+i*3;
+
+  startObj(1);
+  putS('<< /Type /Catalog /Pages 2 0 R >>\n'); endObj();
+
+  startObj(2);
+  putS('<< /Type /Pages /Count '+nPage+' /Kids ['+
+       pages.map((_,i)=>pageObj(i)+' 0 R').join(' ')+'] >>\n'); endObj();
+
+  pages.forEach((p,i)=>{
+    startObj(pageObj(i));
+    putS('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+A4W.toFixed(2)+' '+A4H.toFixed(2)+'] '+
+         '/Resources << /XObject << /Im0 '+imgObj(i)+' 0 R >> >> '+
+         '/Contents '+contObj(i)+' 0 R >>\n'); endObj();
+
+    /* วางภาพเต็มหน้า — cm คือเมทริกซ์ [กว้าง 0 0 สูง x y] */
+    const stream='q\n'+A4W.toFixed(2)+' 0 0 '+A4H.toFixed(2)+' 0 0 cm\n/Im0 Do\nQ\n';
+    startObj(contObj(i));
+    putS('<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream\n'); endObj();
+
+    startObj(imgObj(i));
+    putS('<< /Type /XObject /Subtype /Image /Width '+p.w+' /Height '+p.h+
+         ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.bytes.length+' >>\nstream\n');
+    put(p.bytes);
+    putS('\nendstream\n'); endObj();
+  });
+
+  const xref=len;
+  putS('xref\n0 '+(objCount+1)+'\n0000000000 65535 f \n');
+  for(let n=1;n<=objCount;n++) putS(String(offsets[n]).padStart(10,'0')+' 00000 n \n');
+  putS('trailer\n<< /Size '+(objCount+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n');
+
+  const out=new Uint8Array(len); let at=0;
+  parts.forEach(u=>{ out.set(u,at); at+=u.length; });
+  return new Blob([out],{type:'application/pdf'});
+}
+
+/* ตัดรูปยาวเป็นหน้า ๆ ตามสัดส่วน A4 — ตัดที่หัววันเสมอ ไม่ผ่ากลางบล็อก */
+async function sliceCanvasToPages(cv){
+  const ratio=841.89/595.28;
+  const maxH=Math.round(cv.width*ratio);         /* ความสูงสูงสุดต่อหนึ่งหน้า */
+  const breaks=(cv.__breaks||[]).slice().sort((a,b)=>a-b);
+  const cuts=[0];
+  while(cuts[cuts.length-1]<cv.height){
+    const from=cuts[cuts.length-1];
+    const limit=from+maxH;
+    if(limit>=cv.height){ cuts.push(cv.height); break; }
+    /* หาหัววันที่อยู่ก่อนขอบหน้า และห่างจากจุดเริ่มพอสมควร (กันหน้าที่บางเกินไป) */
+    const safe=breaks.filter(b=>b>from+maxH*0.35 && b<=limit).pop();
+    cuts.push(safe||limit);
+  }
+  const out=[];
+  for(let i=0;i<cuts.length-1;i++){
+    const from=cuts[i], h=cuts[i+1]-from;
+    if(h<=0)continue;
+    const p=document.createElement('canvas');
+    p.width=cv.width; p.height=maxH;             /* ทุกหน้าสูงเท่ากัน ส่วนที่เหลือเป็นพื้นขาว */
+    const c=p.getContext('2d');
+    c.fillStyle='#ffffff'; c.fillRect(0,0,p.width,p.height);
+    c.drawImage(cv, 0,from,cv.width,h, 0,0,cv.width,h);
+    const blob=await canvasBlob(p,'image/jpeg',0.92);
+    if(!blob)throw new Error('แปลงหน้าที่ '+(i+1)+' ไม่สำเร็จ');
+    out.push({bytes:new Uint8Array(await blob.arrayBuffer()), w:p.width, h:p.height});
+  }
+  return out;
+}
+
+async function programPdf(){
+  const withPrice=$('cfImgPrice')?$('cfImgPrice').checked:true;
+  toast(L('กำลังสร้างไฟล์ PDF…','Building PDF…'));
+  let cv;
+  try{ cv=buildProgramImage(withPrice); }
+  catch(e){ toast(L('สร้าง PDF ไม่สำเร็จ: ','Could not build PDF: ')+e.message); return; }
+  try{
+    const pages=await sliceCanvasToPages(cv);
+    const blob=pdfFromJpegPages(pages);
+    const nm=safeName('tour-program')+'.pdf';
+    const r=await saveOut(blob,nm,{title:S.quoteName||L('โปรแกรมทัวร์','Tour Program')});
+    const note=cv.__scaled?L(' (โปรแกรมยาว ระบบลดความละเอียดลงให้)',' (long program — resolution reduced)'):'';
+    if(r==='shared')      toast(L('ส่งไฟล์ PDF แล้ว ✓','PDF shared ✓')+note);
+    else if(r==='download')toast(L(`ได้ไฟล์ PDF ${pages.length} หน้าแล้ว`,`PDF saved · ${pages.length} pages`)+note+' — '+DL_UNSURE);
+    else if(r==='cancel')  toast(L('ยกเลิก','Cancelled'));
+    else{
+      /* เบราว์เซอร์ไม่ยอมทั้ง share และ download — เหลือทางเดียวคือให้ผู้ใช้สั่งพิมพ์เอง */
+      if(confirm(L('เบราว์เซอร์นี้ไม่ยอมให้บันทึกไฟล์\n\nจะเปิดหน้าต่างสั่งพิมพ์แทนไหม? (เลือก "บันทึกเป็น PDF" ในหน้าต่างนั้น)',
+                   'This browser blocked the download.\n\nOpen the print dialog instead? (choose “Save as PDF” there)')))
+        printItinPdf();
+    }
+  }catch(e){ toast(L('สร้าง PDF ไม่สำเร็จ: ','Could not build PDF: ')+e.message); }
+}
+
+/* ============================================================
+   v44 · ทำโปรแกรมทัวร์เป็น PDF ด้วยการสั่งพิมพ์
+   v49 · ไม่ใช่ทางหลักแล้ว — ปุ่ม 🧾 ทำเป็น PDF เขียนไฟล์เองผ่าน programPdf()
+         ตัวนี้เหลือไว้เป็นทางสำรองสุดท้าย เผื่อเบราว์เซอร์ไม่ยอมทั้ง share และ download
    ใช้ "สั่งพิมพ์ของเบราว์เซอร์ -> Save as PDF" เหมือนใบเสนอราคา
    ไม่พึ่งไลบรารีนอก เพราะแอปเปิดจากไฟล์ในเครื่อง สคริปต์จาก CDN โหลดไม่ได้
    ต่างจากปุ่ม 🧾 ใบเสนอราคา ตรงที่อันนี้เอาเฉพาะโปรแกรมรายวัน
@@ -4766,7 +6232,7 @@ const DEVICE_KEYS=['userName','gsUrl','gsExec','gsKey','gsAt','hubName','lastSyn
    = ราคาที่เคยเสนอลูกค้าไปแล้วเพี้ยน · ของแค่ 6 ตัวเลข ไม่ได้ทำให้ใบบวม จึงเก็บไว้ในใบ
    ============================================================ */
 const DB_KEYS=['cars','hotels','customAdm','customRes','admEdits','resEdits',
-               'admHidden','resHidden','customAreas','resTags','bedLabels','tomb','priceCaps'];
+               'admHidden','resHidden','customAreas','resTags','bedLabels','tomb','priceCaps','blackoutLib'];
 const NON_TOUR_KEYS=DEVICE_KEYS.concat(DB_KEYS);
 const stripDeviceKeys=o=>{ NON_TOUR_KEYS.forEach(k=>delete o[k]); return o; };
 /* ข้อมูลทัวร์ล้วน ๆ สำหรับเก็บลงใบ */
@@ -4843,7 +6309,6 @@ function afterStateSwap(){
   hotelArea=admAreaList()[0]; admArea=DB.admAreas[0];
   renderSettings(); renderChips(); renderHotelAreas(); renderHotelStarFilter(); renderHotelNightPicker();
   renderDayTabs(); renderResDayTabs();
-  const cf=$('carFuel'); if(cf)cf.value=(S.carFuel!=null?S.carFuel:4000);
   const pv=$('profitVal'); if(pv)pv.value=S.profitVal;
   renderAdmTable(); fillResSelect(); fillCarSelect(); fillHotelSelect(); renderGuideGroups();
   recalc(); renderOverview(); applyHideCost(); applyCollapse(); renderHubBox(); renderHome(); save();
@@ -4874,6 +6339,7 @@ function newProgram(){
      ตัวที่เจ็บสุดคือ transferOff — เคยลบรับสนามบินในใบก่อน
      ใบใหม่ทุกใบจะไม่มีรับ-ส่งสนามบินให้อีกเลยโดยไม่มีอะไรบอก */
   S.transferOff={}; S.dayStart={}; S.itinTime=false; S.dayTitle={}; S.doc=null; docOf();
+  S.guideDayOff={};   /* v48 · วันที่ตั้งเองว่าไกด์ไม่ทำงาน ผูกกับทริปนั้น ไม่ใช่ของกลาง */
   S.paxTypes=[{id:nid(),code:'S',label:'ลูกทัวร์',count:2,pay:true}];
   S.days=3; S.startDate=isoToday(); S.endDate=isoOf(addDays(parseISO(S.startDate),2));
   afterStateSwap(); showPage('input'); toast('เริ่มโปรแกรมใหม่');
@@ -4898,6 +6364,8 @@ const HUB_ARR={customAdm:'adm',customRes:'res',cars:'car',hotels:'hotel'};
 const HUB_MAP=['admEdits','resEdits'];
 const HUB_LIST=['admHidden','resHidden','customAreas','resTags','dupOk'];
 const HUB_OBJ=['guideRates','bedLabels','company','docDefault','priceCaps'];   /* v47 · เพดานเตือนราคาใช้ร่วมกันทั้งทีม */
+/* v48 · คลังช่วงห้ามจองเป็นของกลางของทีม — เทศกาลเหมือนกันทุกใบ ไม่ควรต่างคนต่างพิมพ์ */
+HUB_ARR.blackoutLib='blackout';
 
 /* --- เก็บ handle ของไฟล์กลางไว้ใน IndexedDB เพื่อจำข้ามการเปิดแอป --- */
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('tourHubDB',1);
@@ -5133,13 +6601,16 @@ async function hubRestore(){
   renderHubBox();
 }
 /* --- โหมดเลือกไฟล์เอง (ใช้ได้ทุกเบราว์เซอร์/ทุกโหมด) --- */
-function hubExportFile(){
+async function hubExportFile(){
   if(!ensureUserName())return;
   const p=buildHub(); const json=JSON.stringify(p,null,2);
-  if(downloadFile(json,'tour-hub.json','application/json')){
-    S.lastSyncAt=p.updatedAt; save(); renderHubBox();
-    toast('ส่งออกแล้ว — เอาไปวางทับไฟล์กลางในโฟลเดอร์ทีม');
-  } else prompt('คัดลอกไฟล์กลาง:',json);
+  /* v48 · ผ่าน saveOut — บนมือถือจะได้ share sheet ส่งเข้าไดรฟ์/ไลน์ทีมได้ตรง ๆ */
+  const r=await saveOutText(json,'tour-hub.json','application/json',{title:'ไฟล์กลางของทีม'});
+  if(r==='fail'){ prompt('คัดลอกไฟล์กลาง:',json); return; }
+  if(r==='cancel'){ toast('ยกเลิก'); return; }
+  S.lastSyncAt=p.updatedAt; save(); renderHubBox();
+  toast(r==='shared'?'ส่งออกแล้ว ✓ — เอาไปวางทับไฟล์กลางในโฟลเดอร์ทีม'
+                    :'ส่งออกแล้ว — เอาไปวางทับไฟล์กลางในโฟลเดอร์ทีม · '+DL_UNSURE);
 }
 function hubImportFile(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
@@ -5396,7 +6867,11 @@ function showDbForm(ref,seed){
       `<div class="frow"><div class="fcol"><label class="flabel">ที่นั่ง</label><input class="txt" id="dfSeats" type="number" min="1" value="${rec.seats||''}"></div>
         <div class="fcol"><label class="flabel">ราคา</label><input class="txt" id="dfPrice" type="number" min="0" value="${rec.price||''}"></div></div>`+
       `<div class="frow"><div class="fcol"><label class="flabel">คิดราคาแบบ</label>
-        <div class="seg" id="dfCarMode"><button data-md="day" class="${dbFormCarMode==='day'?'on':''}">ต่อวัน (×วัน)</button><button data-md="trip" class="${dbFormCarMode==='trip'?'on':''}">ต่อทริป (เหมา)</button></div></div></div>`;
+        <div class="seg" id="dfCarMode"><button data-md="day" class="${dbFormCarMode==='day'?'on':''}">ต่อวัน (×วัน)</button><button data-md="trip" class="${dbFormCarMode==='trip'?'on':''}">ต่อทริป (เหมา)</button></div></div></div>`+
+      /* v48 · ค่าน้ำมันมาตรฐานของรถแบบนี้ — เพิ่มรถเข้ารายการแล้วเติมให้เอง ไม่ต้องพิมพ์ซ้ำทุกครั้ง */
+      `<div class="frow"><div class="fcol"><label class="flabel">⛽ ค่าน้ำมันต่อคัน (ค่าเริ่มต้น)</label>
+        <input class="txt" id="dfFuel" type="number" min="0" step="100" value="${rec.fuel!=null?rec.fuel:''}" placeholder="เช่น 4000">
+        <div class="note" style="margin-top:4px">คิดแบบเดียวกับราคาเช่า — รถต่อวันจะคูณจำนวนวันให้ · แก้เฉพาะทริปได้ที่รายการหน้า Plan</div></div></div>`;
     (()=>{ $('dfCarMode').onclick=e=>{const b=e.target.closest('[data-md]');if(!b)return;dbFormCarMode=b.dataset.md;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));}; })();
   }
   else if(dbTab==='hotel'){
@@ -5423,12 +6898,16 @@ function showDbForm(ref,seed){
         <input class="txt" id="dfTel" type="tel" value="${esc(rec.tel||'')}" placeholder="08X-XXX-XXXX"></div>
         <div class="fcol" style="flex:0 0 148px"><label class="flabel">อาหารเช้า</label>
         <div class="seg" id="dfAbf"><button data-abf="0" class="${dbFormAbf?'':'on'}">ไม่รวม</button><button data-abf="1" class="${dbFormAbf?'on':''}">🍳 รวม</button></div></div></div>`+
+      /* v47 · ระบุเป็นเวลาจริง ไม่ใช่ข้อความในช่องหมายเหตุ ระบบจะได้เอาไปเทียบกับเวลาที่คณะถึงที่พักได้ */
+      `<div class="frow"><div class="fcol"><label class="flabel">เวลาเช็คอิน</label>
+        <input class="txt" id="dfCheckIn" value="${esc(hotelCIText(rec))}" placeholder="14:00 หรือ 14:00-22:00">
+        <div class="note" style="margin-top:4px">ใส่เวลาเดียว = เช็คอินได้ตั้งแต่เวลานั้น · ใส่เป็นช่วง = เช็คอินได้ในช่วงนี้ · เว้นว่าง = ไม่ระบุ</div></div></div>`+
       `<div class="frow"><div class="fcol"><label class="flabel">หมายเหตุ</label>
         <input class="txt" id="dfNote" value="${esc(rec.note||'')}" placeholder="เช่น เช็คอิน 14.00 · ห้องวิวสระ"></div></div>`+
       `<div class="rt-head"><label class="flabel" style="margin:0">🛏 ห้องพัก และราคา/คืน</label>
          <button class="bed-editlbl" id="dfBedEditToggle" type="button">✎ แก้ชื่อเตียง</button></div>
        <div id="dfBedLabels" class="bed-labels" style="display:none">
-         ${['STG','TWN','TRI','Extra'].map(c=>`<label>${c}<input class="txt" data-bedlbl="${c}" value="${esc(BL[c]||'')}"></label>`).join('')}
+         ${['SGL','TWN','TRI','Extra'].map(c=>`<label>${c}<input class="txt" data-bedlbl="${c}" value="${esc(BL[c]||'')}"></label>`).join('')}
        </div>
        <div class="rt-cols"><span>ประเภทห้อง</span><span>เตียง</span><span>ราคา/คืน</span><span></span></div>
        <div id="dfRooms"></div>
@@ -5525,7 +7004,8 @@ function saveDbForm(){
   else if(dbTab==='car'){
     const type=v('dfType'),seats=n('dfSeats'),price=n('dfPrice');
     if(!type||!seats||isNaN(price)){toast('กรอกให้ครบ');return;}
-    const data=withStamp({type,seats,price,mode:dbFormCarMode});
+    const fu=v('dfFuel');
+    const data=withStamp({type,seats,price,mode:dbFormCarMode,fuel:fu===''?null:Math.max(0,+fu||0)});
     if(!dbGuardBeforeSave('car',data))return;
     if(dbEditRef){ const c=(S.cars||[]).find(x=>'car:'+x.id===dbEditRef); if(c)Object.assign(c,data); }
     else S.cars.push({id:nid(),...data});
@@ -5538,8 +7018,11 @@ function saveDbForm(){
     const rts=dbRTs.filter(rt=>rt.price!=null&&!isNaN(rt.price))
                    .map(rt=>({id:rt.id||nid(),room:rt.room||'Standard',bedPrimary:rt.bedPrimary||null,bedExtra:!!rt.bedExtra,bed:null,price:+rt.price}));
     if(!rts.length){toast('ใส่ห้องพักอย่างน้อย 1 ห้อง พร้อมราคา');return;}
+    const ci=parseCIRange(v('dfCheckIn'));
+    if(ci===null){ toast('อ่านเวลาเช็คอินไม่ออก — ลองใส่แบบ 14:00 หรือ 14:00-22:00'); return; }
     const data=withStamp({nameTh:nameTh||nameEn, nameEn:nameEn||nameTh, name:nameTh||nameEn,
-      area:v('dfArea'), stars:dbFormStars||0, tel:v('dfTel')||null, abf:dbFormAbf, note:v('dfNote')||null, roomTypes:rts});
+      area:v('dfArea'), stars:dbFormStars||0, tel:v('dfTel')||null, abf:dbFormAbf, note:v('dfNote')||null,
+      ci:ci.ci, ci2:ci.ci2, roomTypes:rts});
     if(!dbGuardBeforeSave('hotel',data))return;
     if(dbEditRef){ const h=(S.hotels||[]).find(x=>'hotel:'+x.id===dbEditRef); if(h)Object.assign(h,data); }
     else S.hotels.push({id:nid(),...data});
@@ -5845,15 +7328,29 @@ function applyBulkPrice(){
   toast(`ปรับราคาแล้ว ${n} รายการ (${label})`);
 }
 
-function dbDelete(ref){
-  /* v47 · หมายเหตุเรื่องทิศทางของ tombstone
+/* v47 · แกนการลบล้วน ๆ ไม่แตะ UI — ใช้ซ้ำได้ทั้งปุ่มลบทีละอัน และการลบตามชีตทีละหลายสิบรายการ
+   หมายเหตุเรื่องทิศทางของ tombstone
      รายการที่มากับไฟล์ลบจริงไม่ได้ "ลบ" = ใส่ชื่อลงรายการซ่อน (admHidden) ซึ่งเป็นการ "เพิ่ม"
      ของที่ถูกลบจริงจึงเป็นตอน dbRestore (เลิกซ่อน = เอาออกจากรายการ) — ทะเบียนต้องไปอยู่ตรงนั้น
      ส่วนรายการที่ผู้ใช้เพิ่มเอง (c...) ลบแล้วหายจริง จึงลงทะเบียนตรงนี้ */
-  if(dbTab==='adm'){ if(isCustom(ref)){S.customAdm=S.customAdm.filter(x=>'c'+x.id!==ref);S.adm=S.adm.filter(it=>it.ref!==ref);delete S.admEdits[ref];tombSet('customAdm',ref.slice(1));} else {if(!S.admHidden.includes(ref))S.admHidden.push(ref);tombSet('admHidden',ref,true);} renderAdmTable(); renderAdm(); renderDayTabs(); }
-  else if(dbTab==='res'){ if(isCustom(ref)){S.customRes=S.customRes.filter(x=>'c'+x.id!==ref);S.res=S.res.filter(it=>it.ref!==ref);delete S.resEdits[ref];tombSet('customRes',ref.slice(1));} else {if(!S.resHidden.includes(ref))S.resHidden.push(ref);tombSet('resHidden',ref,true);} fillResSelect(); renderRes(); }
-  else if(dbTab==='car'){ const id=ref.slice(4); S.cars=S.cars.filter(c=>c.id!==id); S.carSel=S.carSel.filter(s=>S.cars.find(c=>c.id===s.carId)); tombSet('cars',id); fillCarSelect(); renderCarItems(); }
-  else if(dbTab==='hotel'){ const id=ref.slice(6); S.hotels=S.hotels.filter(h=>h.id!==id); S.hotelSel=S.hotelSel.filter(s=>S.hotels.find(h=>h.id===s.hotelId)); tombSet('hotels',id); fillHotelSelect(); renderHotelItems(); }
+function dbRemoveCore(tab,ref){
+  if(tab==='adm'){
+    if(isCustom(ref)){ S.customAdm=(S.customAdm||[]).filter(x=>'c'+x.id!==ref); S.adm=S.adm.filter(it=>it.ref!==ref); delete S.admEdits[ref]; tombSet('customAdm',ref.slice(1)); }
+    else { if(!S.admHidden.includes(ref))S.admHidden.push(ref); tombSet('admHidden',ref,true); }
+  }
+  else if(tab==='res'){
+    if(isCustom(ref)){ S.customRes=(S.customRes||[]).filter(x=>'c'+x.id!==ref); S.res=S.res.filter(it=>it.ref!==ref); delete S.resEdits[ref]; tombSet('customRes',ref.slice(1)); }
+    else { if(!S.resHidden.includes(ref))S.resHidden.push(ref); tombSet('resHidden',ref,true); }
+  }
+  else if(tab==='car'){ const id=ref.slice(4); S.cars=(S.cars||[]).filter(c=>c.id!==id); S.carSel=(S.carSel||[]).filter(s=>S.cars.find(c=>c.id===s.carId)); tombSet('cars',id); }
+  else if(tab==='hotel'){ const id=ref.slice(6); S.hotels=(S.hotels||[]).filter(h=>h.id!==id); S.hotelSel=(S.hotelSel||[]).filter(s=>S.hotels.find(h=>h.id===s.hotelId)); tombSet('hotels',id); }
+}
+function dbDelete(ref){
+  dbRemoveCore(dbTab,ref);
+  if(dbTab==='adm'){ renderAdmTable(); renderAdm(); renderDayTabs(); }
+  else if(dbTab==='res'){ fillResSelect(); renderRes(); }
+  else if(dbTab==='car'){ fillCarSelect(); renderCarItems(); }
+  else if(dbTab==='hotel'){ fillHotelSelect(); renderHotelItems(); }
   recalc(); save(); renderDbList();
 }
 function dbRestore(ref){
@@ -6203,16 +7700,19 @@ const IMP_SCHEMA={
       {k:'type', label:'ประเภทรถ', req:true, alias:['ประเภทรถ','ชนิดรถ','รถ','type','vehicle']},
       {k:'seats',label:'ที่นั่ง', req:false, alias:['ที่นั่ง','จำนวนที่นั่ง','seats','seat','capacity']},
       {k:'price',label:'ราคา', req:true, alias:['ราคา','price','บาท','ค่าเช่า']},
-      {k:'mode', label:'คิดแบบ', req:false, alias:['คิดแบบ','คิดราคาแบบ','mode','ต่อ','per','แบบ']}
+      {k:'mode', label:'คิดแบบ', req:false, alias:['คิดแบบ','คิดราคาแบบ','mode','ต่อ','per','แบบ']},
+      {k:'fuel', label:'ค่าน้ำมัน', req:false, alias:['ค่าน้ำมัน','น้ำมัน','fuel','gas','petrol']}
     ],
-    sample:['รถตู้ Commuter','9','2500','วัน'],
+    sample:['รถตู้ Commuter','9','2500','วัน','4000'],
     build(g){
       const type=g('type'), price=impNum(g('price'));
       if(!type)return{err:'ไม่มีประเภทรถ'};
       if(price==null)return{err:'ราคาไม่ถูกต้อง'};
-      return{data:{type, seats:impNum(g('seats'))||0, price, mode:/ทริป|trip|เหมา/i.test(g('mode'))?'trip':'day'}};
+      const fu=impNum(g('fuel'));
+      return{data:{type, seats:impNum(g('seats'))||0, price, mode:/ทริป|trip|เหมา/i.test(g('mode'))?'trip':'day',
+        fuel:(fu==null?null:Math.max(0,fu))}};
     },
-    toRow:x=>[x.type||'',x.seats||'',x.price==null?'':x.price,x.mode==='trip'?'ทริป':'วัน'],
+    toRow:x=>[x.type||'',x.seats||'',x.price==null?'':x.price,x.mode==='trip'?'ทริป':'วัน',x.fuel==null?'':x.fuel],
     label:d=>d.type,
     sub:d=>`${d.seats} ที่นั่ง · ฿${d.price}${d.mode==='day'?'/วัน':'/ทริป'}`
   },
@@ -6229,27 +7729,30 @@ const IMP_SCHEMA={
       {k:'tel',    label:'เบอร์ติดต่อ', req:false, alias:['เบอร์ติดต่อ','เบอร์','โทร','เซล','tel','phone','contact']},
       {k:'abf',    label:'อาหารเช้า', req:false, alias:['อาหารเช้า','abf','breakfast','เช้า']},
       {k:'note',   label:'หมายเหตุ', req:false, alias:['หมายเหตุ','note','remark']},
-      {k:'zone',   label:'โซน', req:false, alias:['โซน','zone','พื้นที่ย่อย','อำเภอ']}
+      {k:'zone',   label:'โซน', req:false, alias:['โซน','zone','พื้นที่ย่อย','อำเภอ']},
+      {k:'checkin',label:'เวลาเช็คอิน', req:false, alias:['เวลาเช็คอิน','เช็คอิน','checkin','check-in','check in']}
     ],
     samples:[
-      ['เชียงใหม่','ยู นิมมาน','U Nimman','Standard','TWN','2600','4','081-234-5678','รวม','เช็คอิน 14.00','ในเมือง'],
-      ['เชียงใหม่','ยู นิมมาน','U Nimman','Deluxe','TWN+Extra','3000','4','081-234-5678','รวม','','ในเมือง']
+      ['เชียงใหม่','ยู นิมมาน','U Nimman','Standard','TWN','2600','4','081-234-5678','รวม','','ในเมือง','14:00-22:00'],
+      ['เชียงใหม่','ยู นิมมาน','U Nimman','Deluxe','TWN+Extra','3000','4','081-234-5678','รวม','','ในเมือง','14:00-22:00']
     ],
     build(g){
       const nameTh=g('nameTh'), nameEn=g('nameEn'), price=impNum(g('price'));
       if(!nameTh&&!nameEn)return{err:'ไม่มีชื่อโรงแรม'};
       if(price==null)return{err:'ราคาไม่ถูกต้อง'};
       const b=g('bed');
+      const ci=parseCIRange(g('checkin'))||{ci:null,ci2:null};   /* อ่านไม่ออกก็ปล่อยว่าง ไม่ต้องทิ้งทั้งแถว */
       return{data:{nameTh:nameTh||nameEn, nameEn:nameEn||nameTh, name:nameTh||nameEn,
         area:g('area')||admAreaList()[0], zone:g('zone')||null,
         stars:Math.min(5,Math.max(0,Math.round(impNum(g('stars'))||0))),
+        ci:ci.ci, ci2:ci.ci2,
         tel:g('tel')||null, abf:impBool(g('abf')), note:g('note')||null,
         _rt:{room:g('room')||'Standard',
              /* v41 · ไม่ระบุเตียงมา = ปล่อยว่าง ไม่เดาเป็นเตียงเดี่ยวให้ */
-             bedPrimary:!b.trim()?null:(/tri|สาม/i.test(b)?'TRI':(/twn|twin|คู่/i.test(b)?'TWN':'STG')),
+             bedPrimary:!b.trim()?null:(/tri|สาม/i.test(b)?'TRI':(/twn|twin|คู่/i.test(b)?'TWN':'SGL')),
              bedExtra:/extra|เสริม/i.test(b), price}}};
     },
-    toRows:x=>hotelRooms(x).map(rt=>[x.area||'',x.nameTh||x.name||'',x.nameEn||'',rt.room||'',(rt.bedPrimary||'')+(rt.bedExtra?'+Extra':''),rt.price==null?'':rt.price,x.stars||'',x.tel||'',x.abf?'รวม':'',x.note||'',x.zone||'']),
+    toRows:x=>hotelRooms(x).map(rt=>[x.area||'',x.nameTh||x.name||'',x.nameEn||'',rt.room||'',(rt.bedPrimary||'')+(rt.bedExtra?'+Extra':''),rt.price==null?'':rt.price,x.stars||'',x.tel||'',x.abf?'รวม':'',x.note||'',x.zone||'',hotelCIText(x)]),
     label:d=>(d.nameEn||d.nameTh)+' · '+d._rt.room,
     sub:d=>`${d.area} · ฿${d._rt.price}/คืน${d.stars?' · '+starStr(d.stars):''}`
   }
@@ -6272,8 +7775,12 @@ const IMP_SCHEMA={
 
     const oldBuild=sc.build.bind(sc);
     sc.build=g=>{
-      const r=oldBuild(g);
-      if(r&&r.data){ r.data._ref=String(g('ref')||'').trim(); r.data._upd=String(g('upd')||'').trim(); }
+      const r=oldBuild(g)||{};
+      const ref=String(g('ref')||'').trim();
+      if(r.data){ r.data._ref=ref; r.data._upd=String(g('upd')||'').trim(); }
+      /* v47 · แถวที่กรอกไม่ครบ (เช่นยังไม่ใส่ราคา) ก็ต้องรู้รหัสอ้างอิงไว้
+         ไม่งั้นตอน "ดึงจากชีต" จะนึกว่ารายการนั้นถูกลบออกจากชีตแล้ว แล้วไปลบของในเครื่องทิ้ง */
+      r.ref=ref;
       return r;
     };
     if(sc.toRows){
@@ -6432,6 +7939,11 @@ function impUpdateRec(ref,dRaw){
 function impApply(){
   const built=impBuild(), exist=impExistingMap(), refs=impExistingRefs();
   let added=0,updated=0,skipped=0,bad=0;
+  /* v47 · เก็บว่าแถวในชีต "อ้างถึง" ของชิ้นไหนในเครื่องบ้าง
+     ของที่ไม่ถูกอ้างถึงเลย = หายไปจากชีตแล้ว ให้ ⬇️ ดึงจากชีต เอาไปพิจารณาลบ */
+  const matched=new Set();
+  const claim=r=>{ const h=refHead(r); if(h&&refs.has(h))matched.add(h); };
+  built.forEach(b=>{ if(b.err)claim(b.ref); });     /* แถวที่กรอกไม่ครบก็ยังนับว่า "มีอยู่ในชีต" */
   if(dbTab==='hotel'){
     /* รวมแถวที่ "รหัสอ้างอิงเดียวกัน" (หรือชื่อ+จังหวัดเดียวกัน ถ้าไม่มีรหัส) เป็นโรงแรมเดียว หลายห้อง */
     const groups=new Map();
@@ -6446,6 +7958,7 @@ function impApply(){
                   stars:g.head.stars,tel:g.head.tel,abf:g.head.abf,note:g.head.note});
       const rts=g.rts.map(rt=>({id:nid(),...rt,bed:null}));
       const ref=g.ref||exist.get(k);
+      if(ref)matched.add(ref);
       if(ref&&impDupMode==='skip'){skipped++;return;}
       if(ref&&impDupMode==='update'){ const h=(S.hotels||[]).find(x=>'hotel:'+x.id===ref);
         if(h){ /* คงรหัสห้องเดิมไว้ถ้าห้อง+เตียงตรงกัน — ไม่งั้นการจองที่เลือกไว้จะเด้งไปห้องอื่นราคาอื่น */
@@ -6458,17 +7971,55 @@ function impApply(){
     });
     (S.hotelSel||[]).forEach(s=>{ const h=(S.hotels||[]).find(x=>x.id===s.hotelId);
       if(h&&!hotelRooms(h).some(rt=>rt.id===s.rtId)) s.rtId=(hotelRooms(h)[0]||{}).id; });
-    return{added,updated,skipped,bad};
+    return{added,updated,skipped,bad,matched};
   }
   built.forEach(b=>{
     if(b.err){bad++;return;}
     const ref=impMatchRef(b.data,exist,refs);
+    if(ref)matched.add(ref);
     if(ref&&impDupMode==='skip'){skipped++;return;}
     if(ref&&impDupMode==='update'){impUpdateRec(ref,b.data);updated++;return;}
     impAddRec(b.data);added++;
   });
-  return{added,updated,skipped,bad};
+  return{added,updated,skipped,bad,matched};
 }
+/* ============================================================
+   v47 · ⬇️ ดึงจากชีต = ทำให้ "เหมือนชีต" ไม่ใช่ "เพิ่มจากชีต"
+
+   ของเดิมซิงค์ทางเดียวจริง ๆ แค่ครึ่งเดียว: เพิ่มกับอัปเดตเท่านั้น
+   ลบแถวออกจากชีตแล้วกดดึง รายการนั้นก็ยังอยู่ในแอปตลอดไป ไม่มีอะไรบอกด้วย
+   ชีตกับแอปจึงค่อย ๆ ห่างกันขึ้นเรื่อย ๆ โดยไม่มีใครรู้ว่าอันไหนคือของจริง
+
+   ตัวนับ matched มาจาก impApply — คือรหัสของที่ "ยังถูกอ้างถึงในชีต"
+   ที่เหลือคือของที่หายไปจากชีต เอามาถามผู้ใช้ก่อนลบ ไม่ลบเงียบ ๆ
+   ============================================================ */
+function pullMissing(tab,matched){
+  const nameOf=(t,x)=>t==='hotel'?hotelName(x):(t==='car'?(x.type||'(ไม่มีชื่อ)')
+                    :((x.en||x.th||'(ไม่มีชื่อ)')+(x.item?' · '+x.item:'')));
+  let pool=[];
+  if(tab==='adm')       pool=admAll().filter(o=>o.x&&!o.hidden).map(o=>({ref:o.ref,nm:nameOf('adm',o.x)}));
+  else if(tab==='res')  pool=resAll().filter(o=>o.x&&!o.hidden).map(o=>({ref:o.ref,nm:nameOf('res',o.x)}));
+  else if(tab==='car')  pool=(S.cars||[]).map(c=>({ref:'car:'+c.id,nm:nameOf('car',c)}));
+  else if(tab==='hotel')pool=(S.hotels||[]).map(h=>({ref:'hotel:'+h.id,nm:nameOf('hotel',h)}));
+  return pool.filter(o=>!matched.has(o.ref));
+}
+/* ถามครั้งเดียวรวมทุกแท็บ แล้วค่อยลงมือ — ไม่เด้งถามทีละแท็บให้รำคาญ */
+function confirmPullDeletes(groups){
+  const total=groups.reduce((s,g)=>s+g.list.length,0);
+  if(!total)return false;
+  const detail=groups.filter(g=>g.list.length).map(g=>{
+    const names=g.list.slice(0,6).map(o=>'   · '+o.nm).join('\n');
+    return `${g.label} (${g.list.length})\n${names}`+(g.list.length>6?`\n   · … และอีก ${g.list.length-6}`:'');
+  }).join('\n\n');
+  /* ลบทีเดียวเกินครึ่ง = น่าจะชี้ผิดไฟล์ หรือหัวตารางเพี้ยน ไม่ใช่เจตนาลบจริง */
+  const risky=groups.some(g=>g.list.length&&g.total&&g.list.length/g.total>0.5);
+  const warn=risky?'\n\n⚠️ ลบทีเดียวเกินครึ่งของที่มีอยู่ — ตรวจก่อนว่าดึงจากชีตถูกไฟล์ และหัวตารางครบจริง\n':'';
+  return confirm(
+    `รายการต่อไปนี้ไม่มีในชีตแล้ว (${total} รายการ)\n\n${detail}\n${warn}\n`+
+    `OK = ลบออกจากเครื่องนี้ด้วย ให้ตรงกับชีต\n`+
+    `Cancel = เก็บไว้ก่อน (แค่เพิ่ม/อัปเดตตามปกติ)`);
+}
+
 /* วาดใหม่ทุกหน้าที่อ้างฐานข้อมูล — ใช้ทั้งตอนนำเข้า CSV และตอนซิงค์ชีต */
 function dbRefreshAll(){
   renderAdmTable(); renderAdm(); renderDayTabs(); fillResSelect(); renderRes();
@@ -7222,9 +8773,12 @@ async function gsSync(){
             gsBusy=false; renderGsBox(); return; }
 
   const keep={tab:dbTab,rows:impRows,map:impMap,hdr:impHasHeader,dup:impDupMode};
-  const log=[]; let tA=0,tU=0;
+  const log=[]; let tA=0,tU=0,tD=0;
+  const delGroups=[];      /* v47 · รวมของที่หายจากชีตไว้ถามทีเดียวตอนจบ */
   for(const t of GS_TABS){
     const rows=src.data[t.sheet];
+    /* แท็บว่าง = ข้ามทั้งดุ้น ห้ามตีความว่า "ลบหมดทุกอย่าง"
+       ชีตที่ยังไม่ได้สร้างแท็บ หรือเน็ตหลุดกลางทาง จะได้ไม่ล้างฐานข้อมูลทิ้ง */
     if(!rows||rows.length<2){ log.push({t:t.label,cls:'',msg:'ว่าง — ข้าม'}); continue; }
     dbTab=t.tab; impRows=rows; impHasHeader=true; impDupMode='update'; impAutoMap();
     /* v31 · เช็กเฉพาะคอลัมน์ที่จำเป็น (req) เท่านั้น
@@ -7232,11 +8786,28 @@ async function gsSync(){
        จะถูกปฏิเสธทั้งแท็บ ทั้งที่ทางนำเข้า CSV ปล่อยผ่าน — สองทางเข้าเข้มไม่เท่ากัน */
     const miss=IMP_SCHEMA[t.tab].fields.filter(f=>f.req&&!(impMap[f.k]>=0)).map(f=>f.label);
     if(miss.length){ log.push({t:t.label,cls:'er',msg:'หัวตารางไม่ตรง ขาดคอลัมน์จำเป็น: '+miss.join(', ')}); continue; }
+    /* นับ "ของที่จะโดนลบ" จากสถานะก่อนนำเข้า ไม่งั้นของที่เพิ่งถูกเพิ่มเข้ามารอบนี้จะถูกนับด้วย */
+    const totalBefore=impExistingRefs().size;
     const c=impApply(); tA+=c.added; tU+=c.updated;
+    delGroups.push({tab:t.tab, label:t.label, total:totalBefore, list:pullMissing(t.tab,c.matched)});
     log.push({t:t.label,cls:'ok',msg:`เพิ่ม ${c.added} · อัปเดต ${c.updated}`+
       (c.skipped?' · ข้าม '+c.skipped:'')+(c.bad?' · ไม่ครบ '+c.bad:'')});
   }
   dbTab=keep.tab; impRows=keep.rows; impMap=keep.map; impHasHeader=keep.hdr; impDupMode=keep.dup;
+
+  /* v47 · ทำให้เหมือนชีตจริง ๆ — ของที่ถูกลบออกจากชีตต้องหายจากเครื่องด้วย */
+  if(confirmPullDeletes(delGroups)){
+    delGroups.forEach(g=>{
+      if(!g.list.length)return;
+      g.list.forEach(o=>dbRemoveCore(g.tab,o.ref));
+      tD+=g.list.length;
+      log.push({t:g.label,cls:'',msg:`ลบตามชีต ${g.list.length} รายการ`});
+    });
+  }else{
+    const pend=delGroups.reduce((s,g)=>s+g.list.length,0);
+    if(pend)log.push({t:'ไม่มีในชีตแล้ว',cls:'er',
+      msg:`${pend} รายการ — เก็บไว้ในเครื่องตามที่เลือก · กด ⬇️ ดึงจากชีต อีกครั้งถ้าเปลี่ยนใจ`});
+  }
 
   /* v23 · แท็บอ้างอิง — ไม่มีก็ข้าม ไม่ถือว่าพัง */
   S.ref=S.ref||{};
@@ -7265,7 +8836,7 @@ async function gsSync(){
   S.gsAt=new Date().toISOString();
   gsLog=log; gsBusy=false;
   dbRefreshAll(); renderGsBox(); renderDbList();
-  toast(`ซิงค์เสร็จ · เพิ่ม ${tA} · อัปเดต ${tU}`);
+  toast(`ซิงค์เสร็จ · เพิ่ม ${tA} · อัปเดต ${tU}`+(tD?` · ลบ ${tD}`:''));
 }
 
 /* กล่องเชื่อม Google Sheet — v26 · แสดงเฉพาะสิ่งที่ตรงกับสถานะปัจจุบัน
@@ -7399,16 +8970,62 @@ function renderGsBox(){
 /* ============ TOAST ============ */
 let toastT;
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
+/* ============================================================
+   v48 · คัดลอกข้อความบนมือถือ
+
+   ของเดิมขึ้น "คัดลอกแล้ว ✓" ทุกครั้ง แม้ตอนที่ไม่ได้คัดลอกอะไรเลย เพราะ
+     1. document.execCommand('copy') "คืนค่า false เมื่อล้มเหลว ไม่ throw"
+        โค้ดเดิมไม่ได้ดูค่าที่คืนมา เลยเรียก done() เสมอ
+     2. iOS Safari เลือกข้อความใน element ที่ opacity:0 ไม่ได้
+        ต้องใช้ readOnly + contentEditable + setSelectionRange จึงจะติด
+     3. navigator.clipboard ใช้ได้เฉพาะ secure context — เปิดจาก http:// ธรรมดา
+        (เช่น IP ในออฟฟิศ) จะไม่มีให้ใช้ แล้วตกมาทางสำรองที่พังบน iOS พอดี
+
+   ผู้ใช้เห็น ✓ แล้วไปวางใน LINE ได้ของเก่าในคลิปบอร์ด หรือไม่ได้อะไรเลย
+   ตอนนี้ทางสำรองสุดท้ายคือ Web Share ซึ่งบนมือถือดีกว่าการคัดลอกด้วยซ้ำ
+   เพราะส่งเข้า LINE ได้ตรง ๆ ซึ่งเป็นสิ่งที่จะทำต่ออยู่แล้ว
+   ============================================================ */
 function copyText(txt,okMsg){
   const done=()=>toast(okMsg||'คัดลอกแล้ว ✓');
   try{
-    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done)); return; }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done));
+      return;
+    }
   }catch(e){}
   fallbackCopy(txt,done);
 }
 function fallbackCopy(txt,done){
-  try{ const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done&&done(); }
-  catch(e){ prompt('คัดลอกข้อความนี้:',txt); }
+  let ok=false;
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=txt;
+    ta.readOnly=true;              /* กัน iOS เด้งคีย์บอร์ดขึ้นมา */
+    ta.contentEditable='true';     /* iOS ยอมให้เลือกข้อความก็ต่อเมื่อมีตัวนี้ */
+    /* ห้าม opacity:0 และห้ามตัวอักษรเล็กกว่า 16px ไม่งั้น iOS จะไม่เลือกให้ / ซูมหน้า */
+    ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:.01;font-size:16px;border:none;padding:0';
+    document.body.appendChild(ta);
+    const range=document.createRange(); range.selectNodeContents(ta);
+    const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    ta.setSelectionRange(0,txt.length);
+    try{ ok=document.execCommand('copy'); }catch(e){ ok=false; }
+    sel.removeAllRanges();
+    document.body.removeChild(ta);
+  }catch(e){ ok=false; }
+  if(ok){ done&&done(); return; }
+  shareText(txt);
+}
+/* คัดลอกไม่สำเร็จจริง — อย่าบอกว่าสำเร็จ ให้ทางออกที่ใช้ได้จริงแทน */
+function shareText(txt){
+  try{
+    if(navigator.share){
+      navigator.share({text:txt})
+        .then(()=>toast('ส่งข้อความแล้ว ✓'))
+        .catch(e=>{ if(!e||e.name!=='AbortError') prompt('คัดลอกข้อความนี้:',txt); });
+      return;
+    }
+  }catch(e){}
+  prompt('คัดลอกข้อความนี้:',txt);
 }
 
 /* ============ WIRE EVENTS ============ */
@@ -7483,7 +9100,6 @@ function wire(){
 
   $('carAdd').onclick=addCar;
   /* v47 · recalc() วาด renderCarItems ให้อยู่แล้ว ไม่ต้องวาดซ้ำก่อน · และหน่วงไว้ให้พิมพ์ลื่น */
-  $('carFuel').oninput=e=>{S.carFuel=Math.max(0,+e.target.value||0); recalcSoon(); save();};
 
   $('resTags').onclick=e=>{
     if(e.target.closest('#resTagAdd')){ const t=prompt('เพิ่มแท็กใหม่ (เช่น Buffet, Vegan):'); if(t&&t.trim()){ const v=t.trim(); if(!S.resTags)S.resTags=[]; if(!S.resTags.includes(v)&&!resAreaList().includes(v)&&v!=='Halal'){S.resTags.push(v); resTagSel.add(v);} renderResTags(); fillResSelect(); save(); } return; }
@@ -7503,6 +9119,10 @@ function wire(){
   $('resAdd').onclick=addRes;
 
   $('hotelAdd').onclick=addHotel;
+  /* v49 · เปลี่ยนห้องที่เลือก = ล้างธง "พิมพ์เอง" แล้วคิดจำนวนห้องใหม่ให้
+     ส่วนพิมพ์เองเมื่อไหร่ ระบบจะไม่ทับอีก แต่ยังบอกไว้ว่าตามสูตรควรเป็นเท่าไร */
+  const hsel=$('hotelSelect'); if(hsel)hsel.onchange=()=>{ roomsTouched=false; syncHotelRoomsHint(true); };
+  const hrooms=$('hotelRooms'); if(hrooms)hrooms.oninput=()=>{ roomsTouched=true; syncHotelRoomsHint(); };
   $('hotelAreas').onclick=e=>{
     const adel=e.target.closest('[data-areadel]');
     if(adel){ e.stopPropagation(); deleteArea(adel.dataset.areadel); return; }
@@ -7571,9 +9191,41 @@ function wire(){
       S.guideRates[e.target.dataset.rate]=+e.target.value||0; renderGuideGroups(); recalc(); save();
     }
   });
+  /* v48 · สลับวันทำงานของไกด์ — เก็บเฉพาะวันที่ผู้ใช้ตั้งเอง
+     วันที่ค่ายังตรงกับที่ระบบเดาให้ ลบทิ้งไปเลย จะได้ขยับตามโปรแกรมต่อไปเองถ้ามีการแก้ */
+  $('guideDays').addEventListener('click',e=>{
+    const b=e.target.closest('[data-gday]'); if(!b)return;
+    const d=+b.dataset.gday;
+    S.guideDayOff=S.guideDayOff||{};
+    const next=!guideWorksOn(d);
+    if(next===dayHasItems(d)) delete S.guideDayOff[d];
+    else S.guideDayOff[d]=!next;
+    recalc(); save();
+    toast(next?`Day ${d} — นับค่าไกด์`:`Day ${d} — ไม่นับค่าไกด์ (Free & Easy)`);
+  });
   $('guideSelected').onclick=e=>{
     const x=e.target.closest('[data-gclear]'); if(!x)return;
     setGuideNum(x.dataset.gclear,0);
+  };
+
+  /* ============================================================
+     v48 · ช่อง "Group Code / รหัสกรุ๊ป · ชื่อโปรแกรม" ไม่เคยถูกผูกกับ state เลย
+
+     renderSettings() เขียนค่าลงช่อง (S.quoteName -> input) อยู่ทางเดียว
+     แต่ไม่มี handler อ่านกลับ สิ่งที่ผู้ใช้พิมพ์จึงไม่เคยไปถึง S.quoteName
+     ผลที่ตามมา
+       · หัวใบเสนอราคา / PDF / รูป ขึ้นเป็น "โปรแกรมทัวร์" กลาง ๆ เสมอ
+       · กด 💾 บันทึกโปรแกรม แล้วเจอ "ใส่ชื่อ/รหัสกรุ๊ปก่อนบันทึก" ทั้งที่กรอกไปแล้ว
+         แล้วระบบเด้งกลับมาโฟกัสช่องเดิม — วนอยู่อย่างนั้นไม่จบ
+       · ชื่อไฟล์ที่ดาวน์โหลดใช้ค่าสำรองแทนรหัสกรุ๊ปจริง
+     ============================================================ */
+  const qn=$('quoteName');
+  if(qn) qn.oninput=e=>{
+    S.quoteName=e.target.value;
+    save();
+    /* หัวข้อหน้า Overview กับป้าย "กำลังแก้" หน้า Home อ่านจาก S.quoteName
+       หน่วงไว้ จะได้ไม่วาดใหม่ทุกตัวอักษรที่พิมพ์ */
+    quoteNameEchoSoon();
   };
 
   // profit
@@ -7667,16 +9319,34 @@ function wire(){
   // page navigation
   $('pageTabs').addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)showPage(b.dataset.page);});
   document.body.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){e.preventDefault();showPage(g.dataset.goto);}});
-  $('langToggle').onclick=()=>{ S.lang=S.lang==='en'?'th':'en'; $('langToggle').textContent=S.lang.toUpperCase(); renderOverview(); renderConfirm(); save(); toast(S.lang==='en'?'Output: English':'Output: ไทย'); };
-  $('cfCopy').onclick=copyItinerary;
+  $('langToggle').onclick=()=>{
+    /* ============================================================
+       v48 · บันทึกภาษาเดิมก่อนสลับ แล้ววาดตัวแก้ใบเสนอราคาใหม่
+
+       ตัวแก้ใบเสนอราคาเก็บข้อความเป็นคู่ {th,en} แต่ช่องกรอกมีชุดเดียว
+       readQuoteEditor จึงเขียนกลับ "ตามภาษาที่ S.lang ชี้อยู่ตอนนั้น"
+       ของเดิมกด TH/EN แล้วไม่มีอะไรเกิดขึ้นกับกล่องนี้ ข้อความในช่องยังเป็นภาษาเก่า
+       พอออกจากโหมดแก้ ระบบก็เอาข้อความภาษาเก่าไปทับช่องของภาษาใหม่ = อีกภาษาหายทั้งชุด
+       ============================================================ */
+    const quoteOpen=$('quoteModal')&&$('quoteModal').classList.contains('open');
+    if(quoteOpen&&quoteEditing&&$('qInc'))readQuoteEditor();
+    S.lang=S.lang==='en'?'th':'en';
+    $('langToggle').textContent=S.lang.toUpperCase();
+    renderOverview(); renderConfirm(); save();
+    if(quoteOpen)renderQuoteDoc();
+    toast(S.lang==='en'?'Output: English':'Output: ไทย');
+  };
   $('cfImg').onclick=()=>programImage();
-  $('cfPdf').onclick=printItinPdf;
+  $('cfPdf').onclick=()=>programPdf();   /* v49 · ได้ไฟล์ .pdf จริง ไม่เรียกหน้าต่างสั่งพิมพ์ */
   /* v24 · สวิตช์ใส่เวลา — ใช้ค่าเดียวกับในหน้า Itinerary ทุกช่องทางจะได้ตรงกัน */
   const cft=$('cfTime');
   if(cft){ cft.checked=!!S.itinTime; cft.onchange=()=>{ S.itinTime=cft.checked; const b=$('itinTime'); if(b)b.checked=cft.checked; renderConfirm(); save(); }; }
   $('cfSave').onclick=saveTour;
-  $('btnItin').onclick=openItinerary;
-  $('itinCopy').onclick=copyItinerary;
+  /* v49 · ปุ่ม cfCopy / btnItin ถูกเอาออกจากหน้า Confirm แล้ว — ผูก handler เฉพาะตอนที่ยังมีปุ่มอยู่
+     (โมดัลโปรแกรมรายวันยังอยู่ในไฟล์และเรียกผ่าน openItinerary() ได้ ถ้าวันหนึ่งอยากเอาปุ่มกลับมา) */
+  const _cfCopy=$('cfCopy'); if(_cfCopy)_cfCopy.onclick=copyItinerary;
+  const _btnItin=$('btnItin'); if(_btnItin)_btnItin.onclick=openItinerary;
+  const _itinCopy=$('itinCopy'); if(_itinCopy)_itinCopy.onclick=copyItinerary;
   $('btnReset').onclick=()=>{
     if(!confirm('ล้างรายการทั้งหมดในใบเสนอราคานี้? (รายการรถ/โรงแรม/เรตไกด์ที่บันทึกไว้จะไม่ถูกลบ)'))return;
     S.adm=[];S.res=[];S.guideCount={};S.carSel=[];S.hotelSel=[];
@@ -7772,6 +9442,33 @@ function wire(){
   $('carManage').onclick=()=>openDb('car');
   $('hotelManage').onclick=()=>openDb('hotel');
 
+  /* v48 · ตัวเลือกร้านสำหรับตัวเลือกเสริมในใบเสนอราคา */
+  $('resPickSearch').oninput=e=>{ resPickerQ=e.target.value; renderResPicker(); };
+  /* v48 · อัปเดตเฉพาะแถวที่กด ไม่วาดรายการใหม่ทั้งก้อน
+     ร้านมี 25+ รายการ ถ้าวาดใหม่ทุกครั้งที่ติ๊ก หน้าจะเด้งกลับไปบนสุดทุกครั้ง
+     ติ๊กร้านที่ 5 เสร็จก็ต้องเลื่อนหาที่ 6 ใหม่ — ติ๊กรัว ๆ หลายร้านไม่ได้เลย */
+  $('resPickBody').onchange=e=>{
+    const c=e.target.closest('[data-rp]'); if(!c)return;
+    const o=docOf().options[resPickerFor]; if(!o)return;
+    o.res=o.res||[];
+    if(c.checked){ if(!o.res.some(r=>r.ref===c.dataset.rp))o.res.push({ref:c.dataset.rp,rec:false}); }
+    else o.res=o.res.filter(r=>r.ref!==c.dataset.rp);
+    const row=c.closest('.rp-row');
+    if(row){
+      row.classList.toggle('on',c.checked);
+      const st=row.querySelector('.rp-star');
+      if(st){ st.disabled=!c.checked; if(!c.checked)st.classList.remove('on'); }
+    }
+    save(); updateResPickCount();
+  };
+  $('resPickBody').onclick=e=>{
+    const s=e.target.closest('[data-rpstar]'); if(!s||s.disabled)return;
+    const o=docOf().options[resPickerFor]; if(!o)return;
+    const r=(o.res||[]).find(z=>z.ref===s.dataset.rpstar); if(!r)return;
+    r.rec=!r.rec; s.classList.toggle('on',r.rec); save(); updateResPickCount();
+  };
+  $('resPickDone').onclick=()=>{ $('resPickModal').classList.remove('open'); renderQuoteEditor(); };
+
   // modal close
   document.querySelectorAll('.modal-bg').forEach(bg=>{
     bg.addEventListener('click',e=>{ if(e.target===bg||e.target.dataset.close!==undefined)bg.classList.remove('open'); });
@@ -7787,14 +9484,20 @@ function wire(){
    ทางออกเดียวที่เหลือคือล้าง storage ซึ่งเท่ากับลบงานทิ้งทั้งหมด
    ตอนนี้อย่างน้อยต้องดึงข้อมูลดิบออกมาเก็บก่อนได้เสมอ
    ============================================================ */
-function showCrashScreen(err){
+/* v48 · รับ phase เพิ่ม — 'boot' คือพังตอนเปิด · 'run' คือพังระหว่างใช้งาน
+   ข้อความต้องตรงกับสิ่งที่ผู้ใช้เพิ่งเจอ ไม่งั้นเขาจะไม่เชื่อว่าเป็นจอเดียวกับปัญหาของตัวเอง */
+function showCrashScreen(err,phase){
   const msg=(err&&(err.stack||err.message))||String(err);
+  const run=phase==='run';
   const box=document.createElement('div');
   box.style.cssText='position:fixed;inset:0;z-index:9999;background:#0a0e1a;color:#eaf1fb;'+
     'padding:24px 18px;overflow:auto;font-family:var(--thai),sans-serif;font-size:14px;line-height:1.6';
   box.innerHTML=
-    '<div style="font-size:20px;font-weight:700;color:#e05b6b;margin-bottom:10px">แอปเปิดไม่ขึ้น</div>'+
-    '<div style="margin-bottom:16px">ข้อมูลที่เก็บไว้ในเครื่องน่าจะมีบางอย่างผิดรูป <b>ข้อมูลยังอยู่ครบ</b> '+
+    '<div style="font-size:20px;font-weight:700;color:#e05b6b;margin-bottom:10px">'+
+      (run?'แอปสะดุด — หยุดทำงานกลางคัน':'แอปเปิดไม่ขึ้น')+'</div>'+
+    '<div style="margin-bottom:16px">'+
+    (run?'งานที่แก้ล่าสุดถูกบันทึกลงเครื่องเรียบร้อยแล้ว <b>ข้อมูลยังอยู่ครบ</b> '
+        :'ข้อมูลที่เก็บไว้ในเครื่องน่าจะมีบางอย่างผิดรูป <b>ข้อมูลยังอยู่ครบ</b> ')+
     'กดปุ่มแรกเพื่อดึงออกมาเก็บเป็นไฟล์ก่อน แล้วค่อยส่งไฟล์นั้นให้คนดูแลระบบ</div>'+
     '<button id="crashDump" style="background:#3f8fe0;color:#fff;border:none;border-radius:9px;'+
     'padding:12px 16px;font-weight:700;font-size:14px;margin:0 8px 10px 0;font-family:inherit">💾 ดึงข้อมูลดิบออกมาเก็บ</button>'+
@@ -7831,7 +9534,6 @@ async function initRun(){
   renderHotelNightPicker();
   renderDayTabs();
   renderResDayTabs();
-  $('carFuel').value=(S.carFuel!=null?S.carFuel:4000);
   renderAdmTable(); fillResSelect();
   fillCarSelect(); fillHotelSelect();
   renderGuideGroups();
@@ -7845,10 +9547,62 @@ async function initRun(){
   renderHubBox();
   hubRestore();
   renderHome();
+  /* v48 · ตั้ง history ก่อนวาดหน้าแรก จะได้ใช้ replaceState ไม่ใช่ push
+     ไม่งั้นเปิดแอปมาแล้วกด Back หนึ่งครั้งจะยังอยู่หน้าเดิม เหมือนปุ่มค้าง */
+  wireHistory();
   showPage(S.page||'home');
   /* v47 · กันการแก้ล่าสุดที่ยังค้างอยู่ในคิว save() หายตอนปิดแท็บ */
   window.addEventListener('beforeunload',flushSave);
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')flushSave(); });
+}
+/* ============================================================
+   v48 · จับ error ที่เกิด "ระหว่างใช้งาน" ไม่ใช่แค่ตอนเปิดแอป
+
+   showCrashScreen เขียนไว้ดีมากแต่ถูกเรียกจาก init() จุดเดียว ครอบเฉพาะตอนเปิด
+   error ที่เกิดตอนกดปุ่มจึงตกพื้นเงียบ ๆ — บนมือถือแปลว่า "กดอะไรก็ไม่ขึ้น"
+   โดยไม่มีข้อความอะไรเลย และไม่มี console ให้เปิดดูด้วย
+
+   ที่สำคัญกว่านั้น: ปุ่ม "💾 ดึงข้อมูลดิบออกมาเก็บ" ในจอกู้ภัยคือทางรอดสุดท้าย
+   ก่อนงานทั้งวันหาย ของเดิมเข้าถึงไม่ได้เลยถ้าแอปพังหลังเปิดไปแล้ว
+   ============================================================ */
+let crashShown=false;
+function reportCrash(err){
+  if(crashShown)return; crashShown=true;
+  try{ console.error('runtime crash',err); }catch(e){}
+  try{ flushSave(); }catch(e){}     /* เก็บงานล่าสุดลงเครื่องก่อนโชว์จอกู้ภัย */
+  try{ showCrashScreen(err,'run'); }catch(e){ alert('แอปมีปัญหา: '+err); }
+}
+window.addEventListener('error',e=>reportCrash(e.error||e.message||'unknown error'));
+window.addEventListener('unhandledrejection',e=>reportCrash(e.reason||'unhandled rejection'));
+
+/* ============================================================
+   v48 · ปุ่ม Back ของ Android / ปัดขอบจอกลับของ iOS
+
+   แอปมี 5 หน้ากับอีก 7 โมดัล แต่ทั้งหมดอยู่ที่ URL เดียวและไม่มี popstate เลย
+   ปุ่ม Back จึงพาออกจากเว็บทันที ทั้งที่ผู้ใช้แค่อยากปิดโมดัลหรือถอยกลับหน้าก่อน
+   ผูก history เข้ากับหน้า แล้วให้ Back ปิดโมดัลที่เปิดอยู่ก่อนเป็นอันดับแรก
+   ของแถม: URL จะมี #plan / #confirm ต่อท้าย ส่งลิงก์เปิดตรงหน้าที่ต้องการได้
+   ============================================================ */
+const PAGE_NAMES=['home','input','plan','overview','confirm'];
+function openModals(){ return [...document.querySelectorAll('.modal-bg.open')]; }
+function wireHistory(){
+  const start=S.page||'home';
+  history.replaceState({page:start},'','#'+start);
+  window.addEventListener('popstate',e=>{
+    /* โมดัลมาก่อน — ปิดตัวบนสุด แล้วดัน "หน้าที่กำลังดูอยู่จริง" กลับเข้า history
+       ต้องใช้ S.page ไม่ใช่ e.state ที่เพิ่งถอยมา ไม่งั้น hash กับหน้าที่เห็นจะไม่ตรงกัน
+       แล้วกด Back ครั้งต่อไปจะข้ามหน้า */
+    const stack=openModals();
+    if(stack.length){
+      stack[stack.length-1].classList.remove('open');
+      const cur=S.page||'home';
+      history.pushState({page:cur},'','#'+cur);
+      return;
+    }
+    const p=(e.state&&e.state.page)||'home';
+    if(PAGE_NAMES.indexOf(p)<0)return;
+    navPop=true; try{ showPage(p); } finally { navPop=false; }
+  });
 }
 async function init(){
   try{ await initRun(); }
