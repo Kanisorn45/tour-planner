@@ -462,6 +462,9 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   background:transparent;border:1px dashed var(--line);color:var(--gold);
   padding:9px;border-radius:8px;font-size:13px;font-weight:600;width:100%;
 }
+/* v62 · ปุ่มที่ลบทีเดียวทั้งแท็บ ต้องดูไม่เหมือนปุ่มข้าง ๆ ที่กดเล่นได้ */
+.btn-ghost.db-danger{color:var(--bad);border-color:rgba(224,128,140,.45)}
+.btn-ghost.db-danger:hover{border-color:var(--bad);background:rgba(224,128,140,.08)}
 .btn-ghost:hover{border-color:var(--gold)}
 
 /* ---------- LINE ITEMS ---------- */
@@ -2098,6 +2101,8 @@ img,table,pre{max-width:100%}
         <button class="btn-ghost" id="dbFixBtn" type="button">🩺 ข้อมูลไม่ครบ</button>
         <button class="btn-ghost" id="dbPriceBtn" type="button">💰 ปรับราคา</button>
         <button class="btn-ghost" id="dbCapBtn" type="button" title="เพดานที่ใช้เตือนว่า &quot;ราคาสูงผิดปกติ&quot;">🚧 เพดานเตือนราคา</button>
+        <!-- v62 · ล้างทั้งแท็บ — ใช้ตอนล้างชีตแล้วอยากให้ในแอปตรงกัน -->
+        <button class="btn-ghost db-danger" id="dbClearBtn" type="button" title="ลบทุกรายการในแท็บนี้">🗑 ล้างทั้งแท็บ</button>
       </div>
       <div class="db-filter" id="dbFilter"></div>
       <div class="db-count" id="dbCount"></div>
@@ -8013,6 +8018,15 @@ function dbSrcOf(r){
 }
 function dbApplyFilter(rows){
   return rows.filter(r=>{
+    /* ============================================================
+       v62 · "ซ่อนอยู่" ต้องแปลว่าซ่อนจริง ๆ
+
+       ของเดิมรายการที่ซ่อนไว้ยังโผล่ในรายการหลักด้วย (แค่จางลงและเปลี่ยนปุ่มเป็น "คืนค่า")
+       ซึ่งขัดกับคำว่า "ซ่อน" และทำให้เมนู "ล้างทั้งแท็บ" ไม่มีความหมายเลย
+       เพราะรายการจากไฟล์ลบจริงไม่ได้ ล้างแล้วก็ยังเห็นเต็มจออยู่ดี
+       ตอนนี้ต้องกดชิป "ซ่อนอยู่" ถึงจะเห็น — ซึ่งเป็นเหตุผลที่ชิปนั้นมีอยู่ตั้งแต่แรก
+       ============================================================ */
+    if(!dbFilterSrc&&r.hidden)return false;
     if(dbFilterSrc&&dbSrcOf(r)!==dbFilterSrc)return false;
     if(dbFilterArea&&(r.area||'')!==dbFilterArea)return false;
     return true;
@@ -8033,7 +8047,8 @@ function renderDbFilter(all){
     html+=`<select id="dbFilterArea"><option value="">🌏 ทุกจังหวัด</option>`+
       areas.map(a=>`<option value="${esc(a)}" ${dbFilterArea===a?'selected':''}>${esc(a)}</option>`).join('')+`</select>`;
   }
-  html+=`<button class="dbf ${!dbFilterSrc?'on':''}" data-dbsrc="">ทั้งหมด<span class="n">${all.length}</span></button>`+
+  /* v62 · "ทั้งหมด" = ที่ใช้งานอยู่ ไม่รวมของที่ซ่อนไว้ ให้ตรงกับสิ่งที่แสดงจริง */
+  html+=`<button class="dbf ${!dbFilterSrc?'on':''}" data-dbsrc="">ทั้งหมด<span class="n">${all.filter(r=>!r.hidden).length}</span></button>`+
         chip('file','จากไฟล์')+chip('edited','แก้แล้ว')+chip('mine','เพิ่มเอง')+chip('hidden','ซ่อนอยู่');
   if(dbFilterSrc||dbFilterArea)html+=`<button class="dbf dbf-clear" data-dbclearf="1">✕ ล้างตัวกรอง</button>`;
   el.innerHTML=html;
@@ -8067,7 +8082,10 @@ function renderDbList(){
   /* v32 · บอกจำนวนคู่ที่น่าจะซ้ำไว้ตรงนี้เลย จะได้ไม่ต้องไปกดตรวจเองถึงจะรู้ */
   const dups=findDupPairs(dbTab).length;
   const fixes=dbHealth().length;
-  $('dbCount').innerHTML=(rows.length===all.length?`${all.length} รายการ`:`แสดง ${rows.length} จาก ${all.length} รายการ`)+
+  /* v62 · นับของที่ใช้งานอยู่เป็นตัวตั้ง แล้วบอกจำนวนที่ซ่อนไว้ต่อท้าย ไม่เอามาปนกัน */
+  const nLive=all.filter(r=>!r.hidden).length, nHid=all.length-nLive;
+  $('dbCount').innerHTML=(rows.length===nLive?`${nLive} รายการ`:`แสดง ${rows.length} จาก ${nLive} รายการ`)+
+    (nHid?` · <span style="color:var(--ink-faint)">ซ่อนไว้ ${nHid}</span>`:'')+
     (dups?` · <span style="color:var(--orange);font-weight:700">⚠️ น่าจะซ้ำ ${dups} คู่</span>`:'');
   $('dbDupBtn').textContent=dups?`🔍 ตรวจรายการซ้ำ (${dups})`:'🔍 ตรวจรายการซ้ำ';
   $('dbFixBtn').textContent=fixes?`🩺 ข้อมูลไม่ครบ (${fixes})`:'🩺 ข้อมูลไม่ครบ';
@@ -8663,6 +8681,46 @@ function dbDelete(ref){
   else if(dbTab==='hotel'){ fillHotelSelect(); renderHotelItems(); }
   recalc(); save(); renderDbList();
 }
+/* ============================================================
+   v62 · ล้างทั้งแท็บ
+
+   เคสจริงที่ทำให้ต้องมี: ทีมล้างข้อมูลในชีตจนเหลือแต่หัวตาราง แล้วกด ⬇️ ดึงจากชีต
+   แต่ในแอปยังมีข้อมูลครบเหมือนเดิม — ซึ่งถูกต้องตามที่ออกแบบไว้ เพราะ gsSync
+   ตั้งใจข้ามแท็บที่ว่าง ("แท็บว่าง = ข้ามทั้งดุ้น ห้ามตีความว่าลบหมดทุกอย่าง")
+   ไม่งั้นเน็ตหลุดหรือแท็บยังไม่ได้สร้าง จะกลายเป็นล้างฐานข้อมูลทั้งทีมทิ้ง
+   กฎข้อนั้นต้องอยู่ต่อไป การล้างจึงต้องเป็นสิ่งที่ "คนตั้งใจสั่ง" เท่านั้น
+
+   *** ข้อจำกัดที่ต้องบอกผู้ใช้ตรง ๆ ***
+   สถานที่ 104 แห่งกับร้านอาหาร 25 ร้าน ฝังมากับตัวไฟล์ ลบให้หายจริงไม่ได้
+   ทำได้แค่ซ่อน (S.admHidden / S.resHidden) ซึ่งเป็นกลไกเดียวกับปุ่ม "ลบ" รายตัวที่มีอยู่แล้ว
+   ข้อดีคือย้อนกลับได้ · ส่วนของที่เพิ่มเอง รถ โรงแรม ลบแล้วหายจริง
+   ============================================================ */
+function dbClearTab(){
+  const all=dbRows();                       /* ทั้งแท็บ ไม่สนคำค้นหรือตัวกรองที่เปิดอยู่ */
+  const live=all.filter(r=>!r.hidden);
+  const label=DB_META[dbTab].title;
+  if(!live.length){ toast(`แท็บ "${label}" ไม่มีรายการที่ใช้งานอยู่แล้ว`); return false; }
+  const gone=live.filter(r=>r.custom).length;
+  const hide=live.length-gone;
+  const msg=`ล้างฐานข้อมูล "${label}" ทั้งแท็บ?\n\n`+
+    `รายการที่ใช้งานอยู่ ${live.length} รายการ\n`+
+    (gone?`· ${gone} รายการที่เพิ่มเอง — ลบหายจริง กู้กลับไม่ได้\n`:'')+
+    (hide?`· ${hide} รายการที่มากับตัวโปรแกรม — ลบให้หายจริงไม่ได้ จะถูกซ่อนแทน\n`+
+          `   เอากลับมาได้ที่ชิป "ซ่อนอยู่" แล้วกด "คืนค่า"\n`:'')+
+    `\nใบเสนอราคาที่ทำไว้แล้วไม่กระทบ — ราคาถูกคัดลอกเก็บไว้ในใบตั้งแต่ตอนกดเพิ่ม\n`+
+    `\n⚠️ การลบนี้จะถูกส่งต่อให้ทุกเครื่องในทีมตอนซิงค์ครั้งถัดไป`;
+  if(!confirm(msg))return false;
+  /* ด่านที่สอง — ปุ่มนี้ลบทีเดียวเป็นร้อยรายการ กล่อง OK/Cancel อย่างเดียวไม่พอ */
+  const typed=prompt(`ยืนยันอีกครั้ง: พิมพ์คำว่า   ล้าง   แล้วกด OK\n(ล้างแท็บ "${label}" ${live.length} รายการ)`,'');
+  if(String(typed||'').trim()!=='ล้าง'){ toast('ยกเลิก — ไม่ได้ล้างอะไร'); return false; }
+
+  live.forEach(r=>dbRemoveCore(dbTab,r.ref));
+  dbFilterSrc=''; dbFilterArea=''; $('dbSearch').value='';
+  dbRefreshAll(); renderDbList(); scheduleBackup();
+  toast(`ล้างแท็บ "${label}" แล้ว · ${gone?`ลบจริง ${gone}`:''}${gone&&hide?' · ':''}${hide?`ซ่อน ${hide}`:''}`);
+  return true;
+}
+
 function dbRestore(ref){
   /* v47 · "เลิกซ่อน" = เอาชื่อออกจากรายการซ่อน จึงเป็นการลบที่ต้องลงทะเบียนไว้
      ไม่งั้นการรวมข้อมูลรอบหน้าจะเอาชื่อนั้นใส่กลับ แล้วมันจะซ่อนอีก วนแบบนี้ตลอดไป */
@@ -11064,6 +11122,7 @@ function wire(){
   };
   /* v43 · ปรับราคาหลายรายการ */
   $('dbPriceBtn').onclick=showDbPrice;
+  $('dbClearBtn').onclick=dbClearTab;      /* v62 · ล้างทั้งแท็บ (มีสองด่านยืนยันอยู่ข้างใน) */
   /* v47 · เลือกช่องที่จะแก้ก่อน แล้วค่อยใส่ตัวเลข — 5 ช่องเลยไม่เหมาะกับ prompt ต่อกันรวด */
   $('dbCapBtn').onclick=()=>{
     const list=PRICE_CAP_META.map((m,i)=>`${i+1}. ${m.label} = ${priceCap(m.k).toLocaleString()} ${m.unit}`).join('\n');
@@ -11216,6 +11275,15 @@ function tScene(opt){
   renderTripDates();          /* ให้ตัวเลข วัน/คืน ที่หัวหน้าจอตรงกับใบทดสอบด้วย */
   return recalc();
 }
+/* v62 · กดล้างทั้งแท็บโดยตอบคำยืนยันให้ถูก
+   (ตัวรันตั้ง window.prompt ให้คืน null เป็นค่าเริ่มต้น ซึ่งคือการ "กดยกเลิก") */
+function tClear(){
+  const kp=window.prompt; window.prompt=()=>'ล้าง';
+  try{ return dbClearTab(); } finally { window.prompt=kp; }
+}
+/* ตั้งแท็บฐานข้อมูลให้พร้อมตรวจ — ล้างคำค้นกับตัวกรองที่ค้างจากเทสต์ก่อนหน้า */
+function tDbTab(tab){ dbTab=tab; $('dbSearch').value=''; dbFilterSrc=''; dbFilterArea=''; }
+
 /* ยอดรวมรายหมวดจากฝั่ง Dashboard/CSV (คนละทางกับหน้า Plan โดยตั้งใจ) */
 function tDash(){
   const o={};
@@ -11592,6 +11660,81 @@ const TESTS=[
   rows[1][8]=new Date(Date.now()+60000).toISOString(); /* ให้ชีตใหม่กว่า จะได้เข้าทางอัปเดต */
   mergePrograms(rows);
   tEq(stOf(SAVED.find(x=>x.id===id)),'won','ต้องคงสถานะเดิมไว้ ไม่ใช่รีเซ็ตเป็นร่าง');
+}},
+/* ---------- v62 · ล้างฐานข้อมูลทั้งแท็บ ---------- */
+{g:'ล้างฐานข้อมูล',n:'ล้างแท็บสถานที่ — ของที่เพิ่มเองหายจริง ของจากไฟล์ถูกซ่อน',f(){
+  tScene(); S.admHidden=[]; S.tomb={};
+  tDbTab("adm");
+  const before=dbRows().filter(r=>!r.hidden).length;
+  const mine=dbRows().filter(r=>!r.hidden&&r.custom).length;
+  tOk(before>0&&mine>0,'ต้องมีทั้งของจากไฟล์และของที่เพิ่มเองก่อนล้าง');
+  tOk(tClear(),"ล้างสำเร็จ");
+  tEq(dbRows().filter(r=>!r.hidden).length,0,'ไม่เหลือรายการที่ใช้งานอยู่');
+  tEq((S.customAdm||[]).length,0,'ของที่เพิ่มเองหายจริง');
+  tEq(S.admHidden.length,before-mine,'ของจากไฟล์ถูกซ่อนครบ');
+  tOk(Object.keys(S.tomb).some(k=>k.indexOf('customAdm:')===0),'ต้องมีทะเบียนลบไว้ส่งต่อให้ทีม');
+}},
+{g:'ล้างฐานข้อมูล',n:'ล้างแล้วรายการที่ซ่อนต้องไม่โผล่ในรายการหลัก แต่ยังหาเจอที่ชิป "ซ่อนอยู่"',f(){
+  tScene(); S.admHidden=[]; S.tomb={};
+  tDbTab("adm");
+  tClear();
+  const all=dbRows();
+  tEq(dbApplyFilter(all).length,0,'รายการหลักต้องว่าง');
+  dbFilterSrc='hidden';
+  tOk(dbApplyFilter(all).length>0,'ชิป "ซ่อนอยู่" ต้องยังเห็นของเดิม');
+  dbFilterSrc='';
+}},
+{g:'ล้างฐานข้อมูล',n:'คืนค่ากลับมาได้หลังล้าง',f(){
+  tScene(); S.admHidden=[]; S.tomb={};
+  tDbTab("adm");
+  tClear();
+  const ref=S.admHidden[0];
+  tOk(!!ref,'มีรายการที่ถูกซ่อนไว้');
+  dbRestore(ref);
+  tEq(S.admHidden.indexOf(ref),-1,'เอาออกจากรายการซ่อนแล้ว');
+  tEq(dbRows().filter(r=>r.ref===ref&&!r.hidden).length,1,'กลับมาอยู่ในรายการหลัก');
+}},
+{g:'ล้างฐานข้อมูล',n:'ใบที่ทำไว้แล้วต้องไม่พังหลังล้างฐานข้อมูล',f(){
+  /* ราคาถูกคัดลอกเก็บไว้ในใบตั้งแต่ตอนกดเพิ่ม การซ่อนต้นทางจึงต้องไม่กระทบยอด
+     ถ้าข้อนี้แดงเมื่อไหร่ แปลว่าล้างฐานข้อมูลแล้วใบเก่าราคาเพี้ยนทั้งคลัง */
+  tScene();
+  const before=recalc();
+  S.admHidden=[]; S.tomb={};
+  tDbTab("adm");
+  tClear();
+  const after=recalc();
+  /* ctp/ctu เป็นของที่เพิ่มเอง จึงหายจริงพร้อมรายการในใบ — ส่วนค่ารถ/ห้อง/ไกด์ต้องอยู่ครบ */
+  tEq(after.c,before.c,'ค่ารถต้องไม่ขยับ');
+  tEq(after.h,before.h,'ค่าโรงแรมต้องไม่ขยับ');
+  tEq(after.g,before.g,'ค่าไกด์ต้องไม่ขยับ');
+  tOk(isFinite(after.cost)&&after.cost>0,'ต้นทุนรวมยังเป็นตัวเลขปกติ');
+}},
+{g:'ล้างฐานข้อมูล',n:'ล้างแท็บรถ — หายจริงพร้อมทะเบียนลบ และรายการรถในใบถูกเก็บกวาดตาม',f(){
+  tScene(); S.tomb={};
+  tDbTab("car");
+  tOk(dbRows().length>0,'มีรถอยู่ก่อนล้าง');
+  tOk(tClear(),"ล้างสำเร็จ");
+  tEq((S.cars||[]).length,0,'ฐานข้อมูลรถว่าง');
+  tEq((S.carSel||[]).length,0,'รถในใบถูกเก็บกวาดตาม (ไม่เหลือรายการที่ชี้รถผี)');
+  tOk(Object.keys(S.tomb).some(k=>k.indexOf('cars:')===0),'มีทะเบียนลบ');
+  tEq(recalc().c,carExtraTotal(),'ยอดค่ารถเหลือเฉพาะค่าใช้จ่ายก้อน');
+}},
+{g:'ล้างฐานข้อมูล',n:'พิมพ์คำยืนยันไม่ตรง = ไม่ล้างอะไรเลย',f(){
+  tScene(); S.admHidden=[]; S.tomb={};
+  tDbTab("adm");
+  const before=dbRows().filter(r=>!r.hidden).length;
+  const keep=window.prompt; window.prompt=()=>'พิมพ์มั่ว';
+  let r;
+  try{ r=dbClearTab(); } finally { window.prompt=keep; }
+  tEq(r,false,'ต้องคืนค่าว่าไม่ได้ล้าง');
+  tEq(dbRows().filter(x=>!x.hidden).length,before,'จำนวนรายการต้องเท่าเดิม');
+  tEq(S.admHidden.length,0,'ต้องไม่มีอะไรถูกซ่อน');
+}},
+{g:'ล้างฐานข้อมูล',n:'แท็บที่ว่างอยู่แล้ว กดล้างซ้ำต้องไม่พัง',f(){
+  tScene(); S.cars=[]; S.carSel=[];
+  tDbTab("car");
+  tEq(dbClearTab(),false,'บอกว่าไม่มีอะไรให้ล้าง');
+  tEq((S.cars||[]).length,0,'ยังว่างเหมือนเดิม');
 }},
 /* ---------- v60 · ราคาต่างจากฐานข้อมูล ---------- */
 {g:'ราคาต่างจากฐานข้อมูล',n:'ฐานข้อมูลขึ้นราคาแล้ว ใบต้องรู้ตัว',f(){
