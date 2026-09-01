@@ -731,8 +731,64 @@ body.dnd-active *{cursor:grabbing!important}
 .brk.grand{background:linear-gradient(90deg,var(--sel),var(--sel));margin:10px calc((var(--sumpad) + env(safe-area-inset-right)) * -1) 0 calc((var(--sumpad) + env(safe-area-inset-left)) * -1);padding:14px 16px;border:1px solid var(--gold);border-radius:var(--r-md)}
 .brk.grand .bl{color:var(--gold);font-family:var(--disp);font-size:18px;letter-spacing:.5px}
 .brk.grand .bv{color:var(--gold-bright);font-size:26px}
-.sell-formula{font-size:11px;color:var(--ink-dim);font-family:var(--mono);text-align:right;padding:6px 2px 2px;line-height:1.5}
-.sell-formula b{color:var(--gold)}
+/* ============================================================
+   v82 · "ราคาขายรวมมาจากไหน" — จากบรรทัดเดียวยาว ๆ เป็นการคิดทีละขั้น
+
+   ของเดิมเป็นข้อความบรรทัดเดียว ชิดขวา ตัวเล็ก 11px สีจาง เช่น
+     ต้นทุน ฿18,360 + กำไรรวม (฿500 × 9 คนจ่าย = ฿4,500) = ฿22,860
+     → ต่อหัวปัดขึ้นหลักร้อย ฿2,600 × 9 คน = ฿23,400 (ปัดขึ้น +฿540)
+   ซึ่งยัดการคำนวณ 3 ขั้นที่ต่างกันไว้ในประโยคเดียว มีวงเล็บซ้อนวงเล็บ
+   และตัวเลข 7 ตัวที่หน้าตาเหมือนกันหมดจนแยกไม่ออกว่าตัวไหนคือผลลัพธ์
+   ที่สำคัญที่สุดคือขั้น "ปัดขึ้นหลักร้อย" ซึ่งเป็นหัวใจของวิธีคิด
+   กลับถูกซ่อนอยู่หลังลูกศร → ตัวเดียว
+
+   ตอนนี้เป็นตารางคิดเลขทีละบรรทัด อ่านจากบนลงล่างเหมือนคิดในกระดาษ
+   เครื่องหมาย + = ↑ อยู่คอลัมน์ซ้ายสุด ตัวเลขเรียงหลักตรงกันทางขวา
+   ============================================================ */
+.calc{
+  border:1px solid var(--line-soft);border-radius:var(--r-sm);
+  background:var(--sink);padding:11px 12px 12px;margin:8px 0 4px;
+  /* คุมความยาวสายตาจากชื่อรายการไปหาตัวเลข · ชิดขวาให้คอลัมน์ตัวเลขตรงกับแถวด้านบน */
+  max-width:560px;margin-left:auto;
+}
+.calc-h{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:9px;
+}
+.calc-row{
+  display:grid;grid-template-columns:15px minmax(0,1fr) auto;
+  align-items:baseline;gap:4px 9px;padding:5px 0;font-size:12.5px;color:var(--ink-dim);
+}
+.calc-op{font-family:var(--mono);font-size:12px;color:var(--ink-faint);text-align:center}
+.calc-lab{min-width:0}
+.calc-val{font-family:var(--mono);font-size:13px;color:var(--ink);text-align:right;white-space:nowrap}
+.calc-val i{font-style:normal;font-size:10.5px;color:var(--ink-faint)}
+/* คำอธิบายของบรรทัดนั้น — ขึ้นบรรทัดใหม่ใต้ชื่อ ไม่เบียดตัวเลข */
+.calc-note{
+  grid-column:2/4;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);
+  line-height:1.6;margin-top:1px;
+}
+/* บรรทัดที่เป็นผลรวมย่อย — มีเส้นคั่นเหนือ */
+.calc-row.sub{border-top:1px solid var(--line-soft);margin-top:3px;padding-top:8px}
+.calc-row.sub .calc-val{color:var(--ink)}
+/* ขั้นปัดขึ้น — ขั้นที่คนมักงงที่สุด ให้เป็นสีส้มเหมือนของที่ "ขยับตัวเลข" */
+.calc-row.round .calc-op,.calc-row.round .calc-val{color:var(--orange)}
+.calc-row.round .calc-note{color:#C99468}
+/* ผลลัพธ์สุดท้าย */
+.calc-row.final{
+  border-top:1px solid var(--line);margin-top:3px;padding-top:9px;color:var(--ink);
+}
+.calc-row.final .calc-lab{font-weight:600}
+.calc-row.final .calc-op,.calc-row.final .calc-val{color:var(--gold-bright);font-weight:700;font-size:15px}
+.calc-foot{
+  margin-top:9px;padding-top:8px;border-top:1px dashed var(--line-soft);
+  font-size:11.5px;color:var(--ink-faint);line-height:1.65;
+}
+.calc-foot b{color:var(--good)}
+@media (max-width:480px){
+  .calc-row{grid-template-columns:14px minmax(0,1fr) auto;font-size:12px}
+  .calc-val{font-size:12.5px}
+}
 .cost-toggle-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .cost-toggle{background:var(--panel2);border:1px solid var(--line);color:var(--ink-dim);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600}
 .cost-toggle.hidden-on{background:var(--orange);border-color:var(--orange);color:#fff}
@@ -5152,6 +5208,35 @@ function marginInfo(cost,sellTotal){
   const cls=(!sellTotal||noCost)?'':(pct>=min?'ok':(pct>=min*0.7?'warn':'bad'));
   return {pct:pct,min:min,noCost:noCost,cls:cls,realProfit:realProfit};
 }
+/* ============================================================
+   v82 · ตารางที่มาของราคาขาย (ดูหมายเหตุหน้าตาที่ .calc ในสไตล์ชีต)
+
+   ลำดับเดียวกับที่โค้ดคิดจริงด้านบนเป๊ะ ๆ:
+     cost + (profitVal × pay) = sellRaw -> ต่อหัวปัดขึ้นร้อย -> × pay = sellTotal
+   ห้ามคิดเลขใหม่ในนี้เด็ดขาด รับค่าที่ recalc คิดไว้แล้วมาจัดหน้าอย่างเดียว
+   ไม่งั้นจะกลายเป็นสูตรชุดที่สองที่เพี้ยนจากของจริงได้
+   ============================================================ */
+function sellFormulaHTML(o){
+  const rawHead=o.sellRaw/o.pay;
+  const upHead=Math.round(o.roundExtra/o.pay);
+  const rawHeadTxt=(Math.abs(rawHead-Math.round(rawHead))<0.005?'':'≈')+fmt(Math.round(rawHead));
+  const row=(cls,op,lab,val,note)=>
+    `<div class="calc-row ${cls}"><span class="calc-op">${op}</span>`+
+    `<span class="calc-lab">${lab}</span><span class="calc-val">${val}</span>`+
+    (note?`<span class="calc-note">${note}</span>`:'')+`</div>`;
+  return `<div class="calc"><div class="calc-h">ราคาขายรวมมาจากไหน</div>`+
+    row('','','ต้นทุนรวม',fmt(o.cost),'')+
+    row('','+','กำไรที่ตั้งไว้',fmt(o.profitTotal),`${fmt(o.profitHead)} × ${o.pay} คนจ่าย`)+
+    row('sub','=','ราคาก่อนปัด',fmt(o.sellRaw),`หารด้วย ${o.pay} คนจ่าย = ${rawHeadTxt} ต่อหัว`)+
+    (o.roundExtra>0
+      ? row('round','↑','ปัดขึ้นหลักร้อย',`${fmt(o.sellHead)}<i> /หัว</i>`,`ขยับขึ้นอีก ${fmt(upHead)} ต่อหัว — ลูกค้าจะได้เห็นเลขกลม ๆ`)
+      : row('','·','ต่อหัวลงตัวอยู่แล้ว',`${fmt(o.sellHead)}<i> /หัว</i>`,'ไม่ต้องปัดขึ้น'))+
+    row('final','=','ราคาขายรวม',fmt(o.sellTotal),`${fmt(o.sellHead)} × ${o.pay} คน`)+
+    (o.roundExtra>0
+      ? `<div class="calc-foot">ส่วนที่ปัดขึ้น <b>${fmt(o.roundExtra)}</b> เป็นกำไรที่ได้เพิ่มมาด้วย — กำไรจริงของใบนี้จึงเป็น <b>${fmt(o.profitTotal+o.roundExtra)}</b> ไม่ใช่ ${fmt(o.profitTotal)}</div>`
+      : '')+
+    `</div>`;
+}
 function marginChipHTML(m){
   if(!m||m.noCost||!m.cls)return `<span class="mg-chip">มาร์จิ้น —</span>`;
   return `<span class="mg-chip ${m.cls}">มาร์จิ้น ${m.pct.toFixed(1)}%<i>เกณฑ์ ${m.min}%</i></span>`;
@@ -5224,7 +5309,7 @@ function recalc(){
   }
   const mIn=$('marginMin'); if(mIn&&document.activeElement!==mIn)mIn.value=minPct;
   const fEl=$('dSellFormula');
-  if(fEl){ fEl.innerHTML=`ต้นทุน ${fmt(cost)} + กำไรรวม (฿${targetProfitHead.toLocaleString()} × ${pay} คนจ่าย = ${fmt(profitTotal)}) = ${fmt(sellRaw)} → ต่อหัวปัดขึ้นหลักร้อย ${fmt(sellHead)} × ${pay} คน = <b>${fmt(sellTotal)}</b>${roundExtra?` <small>(ปัดขึ้น +${fmt(roundExtra)})</small>`:''}`; }
+  if(fEl)fEl.innerHTML=sellFormulaHTML({cost:cost,pay:pay,profitHead:targetProfitHead,profitTotal:profitTotal,sellRaw:sellRaw,sellHead:sellHead,sellTotal:sellTotal,roundExtra:roundExtra});
   $('cSellTotal').textContent=fmt(sellTotal);
   $('cSellHead').textContent=fmt(sellHead);
   $('cTotal').textContent=fmt(cost);
@@ -5241,7 +5326,10 @@ function applyHideCost(){
   const on=!!S.hideCost;
   const cr=$('costRows'); if(cr)cr.style.display=on?'none':'';
   const cw=$('cCostWrap'); if(cw)cw.style.display=on?'none':'';
-  ['cMarginChip','cfMarginChip'].forEach(id=>{ const el=$(id); if(el)el.style.display=on?'none':''; });
+  /* v82 · ตารางที่มาของราคาขายบอกต้นทุนกับกำไรตรง ๆ — ต้องหายไปพร้อมกันด้วย
+     ของเดิมมันอยู่นอก #costRows จึงยังโชว์ 'ต้นทุน ฿18,360 + กำไรรวม ฿4,500' เต็ม ๆ
+     ทั้งที่กด 'ซ่อนต้นทุน' ไปแล้ว ซึ่งเป็นโหมดที่มีไว้หันจอให้ลูกค้าดูโดยเฉพาะ */
+  ['cMarginChip','cfMarginChip','dSellFormula'].forEach(id=>{ const el=$(id); if(el)el.style.display=on?'none':''; });
   const btn=$('btnHideCost'); if(btn){ btn.classList.toggle('hidden-on',on); btn.textContent=on?'👁 แสดงต้นทุน':'👁 ซ่อนต้นทุน'; }
 }
 
